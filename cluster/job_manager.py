@@ -6,7 +6,7 @@ import random
 import collections
 import itertools
 import shutil
-import my_utils
+import .my_utils
 from subprocess import run
 
 
