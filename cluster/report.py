@@ -135,7 +135,7 @@ def latex_format(string):
   return string.replace('_', '-')
 
 
-defaults = {'path_base': os.path.join('results'),
+defaults = {'path_base': os.path.join('results', 'cluster'),
             'param_file_name': 'param_choice.csv',
             'metric_file': 'metrics.csv',
             'id_columns': ['id', 'model_dir'],
