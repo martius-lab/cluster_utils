@@ -1,37 +1,37 @@
 import os
 import shutil
-import job_manager
+import cluster
 from time import sleep
-from distributions import *
-from analyze_results import *
+from cluster.distributions import *
+from cluster.analyze_results import *
 from subprocess import run
 
-username = 'cschmitt'
+username = 'mrolinek'
 opt_procedure_name = 'optimize'
 
-base_paths_and_files = dict(project_dir='/is/ps2/cschmitt/Documents/Cluster_utils',
+base_paths_and_files = dict(project_dir='/is/sg/mrolinek/Projects/Cluster_utils',
                        main_python_script='dummy.py',
-                       general_result_dir=os.path.join('results', opt_procedure_name),
+                       general_result_dir=os.path.join('results', 'cluster', opt_procedure_name),
                        result_file_name='results.csv',
                        jobs_dir=os.path.join('jobs', opt_procedure_name))
 
 job_requirements = dict(request_cpus=1,
                         request_gpus=0,
-                        cuda_requirement=None,  # 'x.0' or None
+                        cuda_requirement=None,  # 'x.0' or None (GPU only)
                         memory_in_mb=4000,
                         bid=10)
 
 metric_to_optimize = 'result'
-number_of_samples = 200
+number_of_samples = 100
 number_of_restarts = 1
 percentage_that_need_to_finish = 0.9
 num_jobs = number_of_samples * number_of_restarts
 percentage_of_best = 0.1
-total_rounds = 10
+total_rounds = 3
 check_every_secs = 30
 
 
-other_params = {'caro':'hot'}
+other_params = {'random_param':'yay'}
 
 distribution_list = [TruncatedNormal('x', bounds=(-5.0, 5.0), sample_decimals=2),
                      TruncatedNormal('y', bounds=(-5.0, 5.0), sample_decimals=2),
@@ -63,7 +63,7 @@ all_params = [distr.param_name for distr in distribution_list]
 for i in range(total_rounds):
 
   all_args = produce_all_args(distribution_list, i)
-  job_manager.cluster_run(**all_args)
+  cluster.cluster_run(**all_args)
   print('New jobs submitted! (iteration {})'.format(i+1))
 
   result_path = os.path.join(base_paths_and_files['general_result_dir'], all_args['job_name'])
@@ -96,7 +96,7 @@ for i in range(total_rounds):
   print('Distributions updated...')
   run(['condor_rm', username])
   print('Remaining jobs killed...')
-  job_manager.rm_dir_full(result_path)
+  cluster.rm_dir_full(result_path)
   print('Intermediate results deleted...')
 
 print('Procedure finished')
