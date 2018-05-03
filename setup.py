@@ -7,6 +7,6 @@ setup(name='cluster',
       author='Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning',
       author_email='michalrolinek@gmail.com',
       license='MIT',
-      packages=['src'],
+      packages=['cluster'],
       install_requires=[],
       zip_safe=False)
