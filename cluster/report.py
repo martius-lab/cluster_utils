@@ -145,13 +145,8 @@ defaults = {'path_base': os.path.join('results'),
             'metadata_file': 'metadata.dat'}
 
 
-if __name__ == '__main__':
-  if len(sys.argv) > 1:
-    arg = sys.argv[1]
-    cmd_params = ast.literal_eval(arg)
-    defaults.update(cmd_params)
-  else:
-    raise ValueError('No command line argument given!')
+def run_report(cmd_params):
+  defaults.update(cmd_params)
   if 'job_name' not in defaults or not defaults['job_name']:
     raise ValueError('Job name not given!')
 
@@ -223,3 +218,14 @@ if __name__ == '__main__':
 
   run(['pdflatex', latex_file_name], cwd=str(pdf_dir))
   run(['xdg-open', latex_file_name[:-3]+'pdf'], cwd=str(pdf_dir))
+
+
+if __name__ == '__main__':
+  if len(sys.argv) > 1:
+    arg = sys.argv[1]
+    cmd_params = ast.literal_eval(arg)
+  else:
+    raise ValueError('No command line argument given!')
+  run_report(cmd_params)
+
+

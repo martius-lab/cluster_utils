@@ -1,1 +1,2 @@
-python3 report.py "{'job_name': '$1'}"
+python3 -c "import cluster
+cluster.run_report({'job_name': '$1'}))"

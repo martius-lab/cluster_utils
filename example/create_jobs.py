@@ -3,13 +3,13 @@
 
 import os
 import shutil
-import job_manager
-from distributions import *
+import cluster
+from cluster.distributions import *
 
 job_name = 'test'
-paths_and_files = dict(project_dir='/is/ps2/cschmitt/Documents/Cluster_utils',
+paths_and_files = dict(project_dir='/is/sg/mrolinek/Projects/Cluster_utils/example',
                        main_python_script='dummy.py',
-                       general_result_dir=os.path.join('results'),
+                       general_result_dir=os.path.join('results', 'cluster'),
                        result_file_name='results.csv',
                        jobs_dir='jobs')
 
@@ -20,7 +20,7 @@ job_requirements = dict(request_cpus=1,
                         bid=10)
 
 
-other_params = {'caro': 'hot'}
+other_params = {'random_param': 'yay'}
 
 
 
@@ -43,7 +43,7 @@ all_args = dict(job_name=job_name,
                 submit=False)
 
 if __name__ == '__main__':
-    job_manager.cluster_run(**all_args)
+    cluster.cluster_run(**all_args)
     my_path = os.path.realpath(__file__)
     shutil.copy(my_path, os.path.join(paths_and_files['project_dir'],
                                       paths_and_files['general_result_dir'],

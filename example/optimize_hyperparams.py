@@ -9,7 +9,7 @@ from subprocess import run
 username = 'mrolinek'
 opt_procedure_name = 'optimize'
 
-base_paths_and_files = dict(project_dir='/is/sg/mrolinek/Projects/Cluster_utils',
+base_paths_and_files = dict(project_dir='/is/sg/mrolinek/Projects/Cluster_utils/example',
                        main_python_script='dummy.py',
                        general_result_dir=os.path.join('results', 'cluster', opt_procedure_name),
                        result_file_name='results.csv',
