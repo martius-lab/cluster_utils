@@ -40,12 +40,12 @@ if len(sys.argv) > 1:
     create_dir(out_dir)
     param_file = os.path.join(out_dir, 'param_choice.csv')
 
-    flattened_params = flatten_nested_string_dict(params)
+    flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
     #x, y, z, w = params['x'], params['y'], params['z'], params['w']
-    x, y = params[num]['x'], params[num]['y']
-    z, w = params[num][num]['x'], params[num][num]['y']
+    x, y = params['num']['x'], params['num']['y']
+    z, w = params['num']['num']['x'], params['num']['num']['y']
     result = (x-2.0) ** 2 + (y-4.66) ** 2 + (z*w - 6) ** 2 + (z+w-5) ** 2
     metrics = {'result': -result}
 
