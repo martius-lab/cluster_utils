@@ -21,7 +21,7 @@ def flatten_nested_string_dict(nested_dict, prepend=''):
         if type(key) is not str:
             raise TypeError('Only strings as keys expected')
         if type(value) is dict:
-            for sub in flatten_nested_string_dict(value, prepend=prepend+str(key)+'-'):
+            for sub in flatten_nested_string_dict(value, prepend=prepend+str(key)+':'):
                 yield sub
         else:
             yield prepend+str(key), value
@@ -118,5 +118,5 @@ def nested_to_dict(nested_items):
 
 def distribution_list_sampler(distribution_list, num_samples):
     for i in range(num_samples):
-        nested_items = [(distr.param_name.split('/'), distr.sample()) for distr in distribution_list]
+        nested_items = [(distr.param_name.split(':'), distr.sample()) for distr in distribution_list]
         yield nested_to_dict(nested_items)

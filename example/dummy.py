@@ -45,7 +45,7 @@ if len(sys.argv) > 1:
 
     #x, y, z, w = params['x'], params['y'], params['z'], params['w']
     x, y = params['num']['x'], params['num']['y']
-    z, w = params['num']['num']['x'], params['num']['num']['y']
+    z, w = params['num']['num']['z'], params['num']['num']['w']
     result = (x-2.0) ** 2 + (y-4.66) ** 2 + (z*w - 6) ** 2 + (z+w-5) ** 2
     metrics = {'result': -result}
 
