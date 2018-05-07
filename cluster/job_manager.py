@@ -7,7 +7,7 @@ import collections
 import itertools
 import shutil
 
-from . import my_utils
+from . import utils
 from subprocess import run
 
 

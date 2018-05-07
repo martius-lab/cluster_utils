@@ -33,10 +33,10 @@ check_every_secs = 30
 
 other_params = {'random_param':'yay'}
 
-distribution_list = [TruncatedNormal('num/x', bounds=(-5.0, 5.0), sample_decimals=2),
-                     TruncatedNormal('num/y', bounds=(-5.0, 5.0), sample_decimals=2),
-                     TruncatedNormal('num/num/z', bounds=(-5.0, 5.0), sample_decimals=2),
-                     TruncatedNormal('num/num/w', bounds=(-5.0, 5.0), sample_decimals=2)]
+distribution_list = [TruncatedNormal('num:x', bounds=(-5.0, 5.0), sample_decimals=2),
+                     TruncatedNormal('num:y', bounds=(-5.0, 5.0), sample_decimals=2),
+                     TruncatedNormal('num:num:z', bounds=(-5.0, 5.0), sample_decimals=2),
+                     TruncatedNormal('num:num:w', bounds=(-5.0, 5.0), sample_decimals=2)]
 
 
 defaults = {'param_file_name': 'param_choice.csv',

@@ -11,7 +11,7 @@ from shutil import copyfile
 
 from . import analyze_results as res
 import pandas as pd
-from .my_utils import default_value_dict
+from .utils import default_value_dict
 
 
 def include_figure(filename, scale=1.0):
