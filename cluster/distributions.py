@@ -112,7 +112,6 @@ class Discrete(Distribution):
 
   def fit(self, samples):
     frequencies = Counter(samples)
-    print(frequencies)
     self.probs = [(1.0 / len(samples)) * frequencies[val] for val in self.option_list]
 
   def sample(self):

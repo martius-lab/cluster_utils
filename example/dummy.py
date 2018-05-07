@@ -14,6 +14,17 @@ def save_dict_as_one_line_csv(dct, filename):
         writer.writeheader()
         writer.writerow(dct)
 
+def flatten_nested_string_dict(nested_dict, prepend=''):
+    for key, value in nested_dict.items():
+        if type(key) is not str:
+            raise TypeError('Only strings as keys expected')
+        if type(value) is dict:
+            for sub in flatten_nested_string_dict(value, prepend=prepend + str(key) + '-'):
+                yield sub
+        else:
+            yield prepend + str(key), value
+
+
 # Default values of params
 params = {'caro': 'not that hot',
           'x': 0.0,
@@ -29,9 +40,12 @@ if len(sys.argv) > 1:
     create_dir(out_dir)
     param_file = os.path.join(out_dir, 'param_choice.csv')
 
-    save_dict_as_one_line_csv(params, param_file)
+    flattened_params = flatten_nested_string_dict(params)
+    save_dict_as_one_line_csv(flattened_params, param_file)
 
-    x, y, z, w = params['x'], params['y'], params['z'], params['w']
+    #x, y, z, w = params['x'], params['y'], params['z'], params['w']
+    x, y = params[num]['x'], params[num]['y']
+    z, w = params[num][num]['x'], params[num][num]['y']
     result = (x-2.0) ** 2 + (y-4.66) ** 2 + (z*w - 6) ** 2 + (z+w-5) ** 2
     metrics = {'result': -result}
 

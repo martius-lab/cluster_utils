@@ -4,9 +4,10 @@ import copy
 import itertools
 import random
 from copy import deepcopy
+from collections import defaultdict
 
 
-class default_value_dict(collections.defaultdict):
+class default_value_dict(defaultdict):
     def __init__(self, default):
         super().__init__(lambda: deepcopy(default))
 
@@ -98,6 +99,24 @@ def nested_dict_hyperparam_samples(nested_dict_of_lists, num_samples):
         rewrite_structured_dict_values_from_iter(template, iterator)
         yield template
 
+
+def default_to_regular(d):
+    if isinstance(d, defaultdict):
+        d = {k: default_to_regular(v) for k, v in d.items()}
+    return d
+
+
+def nested_to_dict(nested_items):
+    nested_dict = lambda: defaultdict(nested_dict)
+    result = nested_dict()
+    for nested_key, value in nested_items:
+        ptr = result
+        for key in nested_key[:-1]:
+            ptr = ptr[key]
+        ptr[nested_key[-1]] = value
+    return default_to_regular(result)
+
 def distribution_list_sampler(distribution_list, num_samples):
     for i in range(num_samples):
-        yield {distr.param_name: distr.sample() for distr in distribution_list}
+        nested_items = [(distr.param_name.split('/'), distr.sample()) for distr in distribution_list]
+        yield nested_to_dict(nested_items)
