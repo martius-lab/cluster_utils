@@ -62,13 +62,13 @@ def cluster_run(job_name, paths, job_requirements, other_params, hyperparam_dict
 
     if samples is not None:
         if hyperparam_dict is not None:
-            setting_generator = my_utils.nested_dict_hyperparam_samples(hyperparam_dict, samples)
+            setting_generator = utils.nested_dict_hyperparam_samples(hyperparam_dict, samples)
         elif distribution_list is not None:
-            setting_generator = my_utils.distribution_list_sampler(distribution_list, samples)
+            setting_generator = utils.distribution_list_sampler(distribution_list, samples)
         else:
             raise ValueError('No hyperparameter dict/distribution list given')
     else:
-        setting_generator = my_utils.nested_dict_hyperparam_product(hyperparam_dict)
+        setting_generator = utils.nested_dict_hyperparam_product(hyperparam_dict)
 
     for setting in setting_generator:
         #print(setting)
