@@ -14,5 +14,6 @@ reuse previous best jobs
 add +1 to discrete distributions
 erase only correct jobs
 automatic bidding
+hide hyperparameter optimize code
 
 

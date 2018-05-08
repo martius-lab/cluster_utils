@@ -120,3 +120,12 @@ def distribution_list_sampler(distribution_list, num_samples):
     for i in range(num_samples):
         nested_items = [(distr.param_name.split(':'), distr.sample()) for distr in distribution_list]
         yield nested_to_dict(nested_items)
+
+
+def update_recursive(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
