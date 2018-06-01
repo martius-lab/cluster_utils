@@ -3,9 +3,20 @@ import csv
 import copy
 import itertools
 import random
+import os
+import shutil
 from copy import deepcopy
 from collections import defaultdict
+from .constants import *
 
+
+def rm_dir_full(dir_name):
+    if os.path.exists(dir_name):
+        shutil.rmtree(dir_name, ignore_errors=True)
+
+def create_dir(dir_name):
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
 
 class default_value_dict(defaultdict):
     def __init__(self, default):
@@ -20,8 +31,8 @@ def flatten_nested_string_dict(nested_dict, prepend=''):
     for key, value in nested_dict.items():
         if type(key) is not str:
             raise TypeError('Only strings as keys expected')
-        if type(value) is dict:
-            for sub in flatten_nested_string_dict(value, prepend=prepend+str(key)+':'):
+        if isinstance(value, dict):
+            for sub in flatten_nested_string_dict(value, prepend=prepend+str(key)+OBJECT_SEPARATOR):
                 yield sub
         else:
             yield prepend+str(key), value
@@ -117,15 +128,8 @@ def nested_to_dict(nested_items):
     return default_to_regular(result)
 
 def distribution_list_sampler(distribution_list, num_samples):
+    for distr in distribution_list:
+        distr.prepare_samples(howmany=num_samples)
     for i in range(num_samples):
-        nested_items = [(distr.param_name.split(':'), distr.sample()) for distr in distribution_list]
+        nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
         yield nested_to_dict(nested_items)
-
-
-def update_recursive(d, u):
-    for k, v in u.items():
-        if isinstance(v, collections.Mapping):
-            d[k] = update_recursive(d.get(k, {}), v)
-        else:
-            d[k] = v
-    return d

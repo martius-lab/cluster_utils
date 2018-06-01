@@ -1,140 +1,165 @@
-#!/usr/bin/python
-# Script for a cluster run to scan the parameter space
-
 import os
-import random
-import collections
-import itertools
 import shutil
+from time import sleep
+from copy import deepcopy
+import pickle
 
-from . import utils
+from . import utils, export
+from .analyze_results import ClusterDataFrame
 from subprocess import run
+from .constants import *
+from .cluster import MPI_ClusterSubmission
+from .errors import OneTimeExceptionHandler
+from .submission import SubmissionStatus
 
 
 def rm_dir_full(dir_name):
-    if os.path.exists(dir_name):
-        shutil.rmtree(dir_name, ignore_errors=True)
+  if os.path.exists(dir_name):
+    shutil.rmtree(dir_name, ignore_errors=True)
 
 
 def create_dir(dir_name):
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+  if not os.path.exists(dir_name):
+    os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
-    vals = ['{}={}'.format(str(key)[:3], str(value)[:6]) for key, value in setting.items()]
-    res = '{}_{}'.format(id,'_'.join(vals))
-    if len(res) < 35 and smart_naming:
-        return res
-    return str(id)
+  vals = ['{}={}'.format(str(key)[:3], str(value)[:6]) for key, value in setting.items()]
+  res = '{}_{}'.format(id, '_'.join(vals))
+  if len(res) < 35 and smart_naming:
+    return res
+  return str(id)
 
 
-def cluster_run(job_name, paths, job_requirements, other_params, hyperparam_dict=None,
+@export
+def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
-                smart_naming=True, submit=False):
+                smart_naming=True):
+  # Directories and filenames
+  project_dir = paths['project_dir']
+  script_to_run_name = paths['main_python_script']
+  result_dir_abs = os.path.join(paths['result_dir'], submission_name)
+  submission_dir_name_abs = os.path.join(paths['jobs_dir'], submission_name)
 
-    # Job requirements
-    mem = job_requirements['memory_in_mb']
-    cpus = job_requirements['request_cpus']
-    gpus = job_requirements['request_gpus']
-    bid = job_requirements['bid']
+  rm_dir_full(result_dir_abs)
+  rm_dir_full(submission_dir_name_abs)
+  create_dir(submission_dir_name_abs)
+  create_dir(result_dir_abs)
 
-    if gpus > 0 and job_requirements['cuda_requirement'] is not None:
-        cuda_line = 'Requirements=CUDACapability>={}'.format(job_requirements['cuda_requirement'])
+  if samples is not None:
+    if hyperparam_dict is not None:
+      setting_generator = utils.nested_dict_hyperparam_samples(hyperparam_dict, samples)
+    elif distribution_list is not None:
+      setting_generator = utils.distribution_list_sampler(distribution_list, samples)
     else:
-        cuda_line = ''
+      raise ValueError('No hyperparameter dict/distribution list given')
+  else:
+    setting_generator = utils.nested_dict_hyperparam_product(hyperparam_dict)
 
-    # Directories and filenames
-    project_dir = paths['project_dir']
-    script_to_run_name = os.path.join(project_dir, paths['main_python_script'])
-    result_dir_abs = os.path.join(project_dir, paths['general_result_dir'], job_name)
-    job_dir_name_abs = os.path.join(project_dir, paths['jobs_dir'], job_name)
-
-    rm_dir_full(result_dir_abs)
-    rm_dir_full(job_dir_name_abs)
-    create_dir(job_dir_name_abs)
-    create_dir(result_dir_abs)
-
-    submit_file = os.path.join(job_dir_name_abs, 'submit_{}.sh'.format(job_name))
-    SUBMIT = open(submit_file, 'w')
-    SUBMIT.write('#/bin/bash\n')
-    id_number = 0
-
-    if samples is not None:
-        if hyperparam_dict is not None:
-            setting_generator = utils.nested_dict_hyperparam_samples(hyperparam_dict, samples)
-        elif distribution_list is not None:
-            setting_generator = utils.distribution_list_sampler(distribution_list, samples)
-        else:
-            raise ValueError('No hyperparameter dict/distribution list given')
-    else:
-        setting_generator = utils.nested_dict_hyperparam_product(hyperparam_dict)
-
+  def generate_commands():
     for setting in setting_generator:
-        #print(setting)
-        for iteration in range(restarts_per_setting):  # one more run if test script not done
+      for iteration in range(restarts_per_setting):
+        local_other_params = deepcopy(other_params)
+        local_other_params['id'] = generate_commands.id_number
+        job_res_dir = dict_to_dirname(setting, generate_commands.id_number, smart_naming)
+        local_other_params['model_dir'] = os.path.join(result_dir_abs, job_res_dir)
+        expected_len = len(setting) + len(local_other_params)
 
-            id_number += 1
-            other_params['id'] = id_number
-            job_res_dir = dict_to_dirname(setting, id_number, smart_naming)
-            other_params['model_dir'] = os.path.join(result_dir_abs, job_res_dir)
-            expected_len = len(setting) + len(other_params)
+        setting.update(local_other_params)
+        if len(setting) != expected_len and iteration == 0:
+          raise ValueError("Duplicate entries in hyperparam_dict and other_params!")
+        base_cmd = 'python3 {} {}'
+        cmd = base_cmd.format(script_to_run_name, '\"' + str(setting) + '\"')
+        yield cmd
+        generate_commands.id_number += 1
 
-            setting.update(other_params)
-            if len(setting) != expected_len and iteration == 0:
-                raise ValueError("Duplicate entries in hyperparam_dict and other_params!")
-            base_cmd = 'python3 {} {}'
-            cmd = base_cmd.format(script_to_run_name, '\"' + str(setting) + '\"')
+  generate_commands.id_number = 0
 
-            jobfile_name = '{}_{}.sh'.format(job_name, id_number)
-            runscriptfile_path = os.path.join(job_dir_name_abs, jobfile_name)
-            jobfile_path = os.path.join(job_dir_name_abs, jobfile_name + '.sub')
+  submission = MPI_ClusterSubmission(job_commands=generate_commands(),
+                                     submission_dir=submission_dir_name_abs,
+                                     requirements=submission_requirements,
+                                     name=submission_name,
+                                     project_dir=project_dir)
 
-            SUBMIT.write('condor_submit_bid {} {}\n'.format(bid, jobfile_path))
+  print('Jobs created:', generate_commands.id_number)
+  return submission
 
-            with open(runscriptfile_path, 'w') as FILE:      # Lines 4-6 set up my virtual environment
-                FILE.write('''\
-    #!/bin/bash
-    cd %(project_dir)s
-    # %(job_name)s%(id_number)d
 
-    export PATH=${HOME}/bin:/usr/bin:$PATH:/bin
-    export PYTHONPATH=%(project_dir)s:$PYTHONPATH
-    export LD_LIBRARY_PATH=/is/software/nvidia/cuda-9.0/lib64:/is/software/nvidia/cudnn-7.0-cu9.0/lib64:$LD_LIBRARY_PATH
-    module load cuda/9.0
-    module load cudnn/7.0-cu9.0
-    %(cmd)s
-    rc=$?
 
-    if [[ $rc == 0 ]]; then
-        rm -f %(runscriptfile_path)s
-        rm -f %(jobfile_path)s
-    elif [[ $rc == 3 ]]; then
-        echo "exit with code 3 for resume"
-        exit 3
-    fi
-    ''' % locals())
+@export
+def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
+                                number_of_samples, number_of_restarts, total_rounds, percentage_that_need_to_finish,
+                                percentage_of_best, metric_to_optimize, check_every_secs, ignore_errors=True):
 
-            with open(jobfile_path, 'w') as FILE:
-                                    FILE.write("""\
-    executable = %(runscriptfile_path)s
-    error = %(runscriptfile_path)s.err
-    output = %(runscriptfile_path)s.out
-    log = %(runscriptfile_path)s.log
-    request_memory=%(mem)s
-    request_cpus=%(cpus)s
-    request_gpus=%(gpus)s
-    %(cuda_line)s
-    on_exit_hold = (ExitCode =?= 3)
-    on_exit_hold_reason = "Checkpointed, will resume"
-    on_exit_hold_subcode = 2
-    periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
-    queue
-    """ % locals())
-            os.chmod(runscriptfile_path, 0O755)
+  def produce_cluster_run_all_args(distributions, iteration):
+    return dict(submission_name='iteration_{}'.format(iteration + 1),
+                paths=base_paths_and_files,
+                submission_requirements=submission_requirements,
+                distribution_list=distributions,
+                other_params=other_params,
+                samples=number_of_samples,
+                restarts_per_setting=number_of_restarts,
+                smart_naming=False)
 
-    SUBMIT.close()
-    os.chmod(submit_file, 0O755)  # Make submit script executable
-    print('Jobs created:', id_number)
-    if submit:
-        run(['./submit_{}.sh'.format(job_name)], cwd=str(job_dir_name_abs), shell=True)
+  cdf = None
+  all_params = [distr.param_name for distr in distribution_list]
+  num_jobs = number_of_samples * number_of_restarts
+
+  error_handler = OneTimeExceptionHandler(ignore_errors=ignore_errors)
+  submission_status = SubmissionStatus(total_jobs=num_jobs, fraction_to_finish=percentage_that_need_to_finish,
+                                       fraction_of_best=percentage_of_best)
+
+  for i in range(total_rounds):
+    # Reset all seen exceptions and messgaes
+    error_handler.clear()
+
+    all_args = produce_cluster_run_all_args(distribution_list, i)
+    submission = cluster_run(**all_args)
+    current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
+
+    if i > 0:
+      print('Last best results:')
+      best_df = cdf.best_jobs(metric_to_optimize, 10)[all_params + [metric_to_optimize]]
+      print(best_df)
+
+    print('Submitting jobs (iteration {})...'.format(i + 1))
+    with submission:
+      while True:
+        sleep(check_every_secs)
+        cdf = ClusterDataFrame(current_result_path, CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
+        completed_succesfully = len(cdf.df)
+
+        any_errors = submission.check_error_msgs()
+        if any_errors:
+          error_handler.maybe_raise('Some jobs had errors!')
+        status = submission.get_status()
+        submission_status.update(completed_succesfully, status)
+        submission_status.do_checks(error_handler)
+
+        if submission_status.finished:
+          print('Iteration {} finished ({}/{})'.format(i + 1, submission_status.completed, submission_status.total))
+          break
+
+        print(submission_status)
+
+    cdf.set_id_columns(['id', 'model_dir'])
+    best_params = cdf.best_params(metric_to_optimize, how_many=int(percentage_of_best * number_of_samples))
+    cdf.df.to_csv(os.path.join(base_paths_and_files['result_dir'],
+                               'df_from_iter{}.csv'.format(i + 1)))
+
+    best_df = cdf.best_jobs(metric_to_optimize, 10)[all_params + [metric_to_optimize]]
+
+    best_df.to_csv(os.path.join(base_paths_and_files['result_dir'],
+                                'best_from_iter{}.csv'.format(i + 1)))
+
+    for distr in distribution_list:
+      distr.fit(best_params[distr.param_name])
+
+    with open(os.path.join(base_paths_and_files['result_dir'],
+                           'distr_from_iter{}.csv'.format(i + 1)), 'wb') as f:
+      pickle.dump(distribution_list, f)
+    print('Distributions updated...')
+    rm_dir_full(current_result_path)
+    print('Intermediate results deleted...')
+
+  print('Procedure finished')

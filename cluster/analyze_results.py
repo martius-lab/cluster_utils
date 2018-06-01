@@ -1,9 +1,10 @@
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import os
-import matplotlib.pyplot as plt
-from itertools import combinations
-import numpy as np
+
 
 def walk_csv_groups_recursively(path, csv_group):
   for root, dirs, files in os.walk(path):
@@ -32,7 +33,7 @@ class ClusterDataFrame(object):
     differences = [(columns1, columns2) for columns1, columns2 in zip(columns[1:], columns[:-1])
                    if columns1 != columns2]
     if any(differences):
-      raise ValueError('Non-identical parameters!')
+      raise ValueError('Two parameter files had non-identical sets of parameters', differences)
 
     self.df = pd.concat(dfs, ignore_index=True)
     self.params = columns[0][param_name]
@@ -110,10 +111,9 @@ class ClusterDataFrame(object):
       df_to_use = self.df
     return df_to_use.iloc[0:how_many]
 
-
   def distribution(self, param, metric, filename=None, metric_logscale=False):
     if (param not in self.params or
-      metric not in self.metrics):
+            metric not in self.metrics):
       raise ValueError('Unknown parameter or metric given')
     smaller_df = self.df[[param, metric]]
     unique_vals = smaller_df[param].unique()

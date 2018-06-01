@@ -3,48 +3,51 @@
 
 import os
 import shutil
+import sys
+
+sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
+
 import cluster
 from cluster.distributions import *
 
-job_name = 'test'
-paths_and_files = dict(project_dir='/is/sg/mrolinek/Projects/Cluster_utils/example',
-                       main_python_script='dummy.py',
-                       general_result_dir=os.path.join('results', 'cluster'),
-                       result_file_name='results.csv',
-                       jobs_dir='jobs')
+submission_name = 'test'
 
-job_requirements = dict(request_cpus=1,
-                        request_gpus=0,
-                        cuda_requirement=None,  # 'x.0' or None
-                        memory_in_mb=4000,
-                        bid=10)
+main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example'
+paths_and_files = dict(project_dir=main_path,
+                       main_python_script=os.path.join(main_path, 'dummy.py'),
+                       result_dir=os.path.join(main_path, 'results', 'cluster'),
+                       jobs_dir=os.path.join(main_path, 'jobs'))
 
 
-other_params = {'random_param': 'yay'}
+submission_requirements = dict(request_cpus=1,
+                               request_gpus=0,
+                               cuda_requirement=None,  # 'x.0' or None
+                               memory_in_mb=4000,
+                               bid=10)
 
+other_params = {}
 
-
-hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 5)),
-                   'y': list(np.linspace(0.0, 4.0, 5)),
-                   'z': list(np.linspace(0.0, 4.0, 5)),
-                   'w': list(np.linspace(0.0, 4.0, 5))
+hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 3)),
+                   'y': list(np.linspace(0.0, 4.0, 3)),
+                   'z': list(np.linspace(0.0, 4.0, 3)),
+                   'w': list(np.linspace(0.0, 4.0, 3))
 }
 
 
-all_args = dict(job_name=job_name,
+all_args = dict(submission_name=submission_name,
                 paths=paths_and_files,
-                job_requirements=job_requirements,
+                submission_requirements=submission_requirements,
                 hyperparam_dict=hyperparam_dict,
                 distribution_list=None,
                 other_params=other_params,
                 samples=None,
                 restarts_per_setting=1,
-                smart_naming=True,
-                submit=False)
+                smart_naming=True)
 
 if __name__ == '__main__':
-    cluster.cluster_run(**all_args)
+    submission = cluster.cluster_run(**all_args)
+
+    # copy this script to the result dir
     my_path = os.path.realpath(__file__)
-    shutil.copy(my_path, os.path.join(paths_and_files['project_dir'],
-                                      paths_and_files['general_result_dir'],
-                                      job_name))
+    shutil.copy(my_path, os.path.join(paths_and_files['result_dir'],
+                                      submission_name))
