@@ -5,7 +5,8 @@ import os
 import shutil
 import sys
 
-#sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
+## Do NOT INCLUDE this in your code ... just my testing
+sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 import cluster
 from cluster.distributions import *
@@ -25,7 +26,8 @@ submission_requirements = dict(request_cpus=1,
                                memory_in_mb=4000,
                                bid=10)
 
-other_params = {}
+other_params = {'cool': 11,
+                'some.string.equas' : 'Woo'}
 
 hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 2)),
                    'y': list(np.linspace(0.0, 4.0, 2)),
@@ -42,7 +44,7 @@ all_args = dict(submission_name=submission_name,
                 hyperparam_dict=hyperparam_dict,
                 distribution_list=None,
                 other_params=other_params,
-                samples=12,
+                samples=None,
                 restarts_per_setting=1,
                 smart_naming=True)
 

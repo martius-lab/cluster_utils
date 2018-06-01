@@ -10,10 +10,14 @@ from copy import deepcopy
 from .constants import *
 
 
-def is_valid_name(string):
+def check_valid_name(string):
   pat = '[A-Za-z0-9_.-]*$'
-  return (bool(re.compile(pat).match(string)) and
-          not (string.endswith('.') or string.startswith('.')))
+  if type(string) is not str:
+    raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
+  if not bool(re.compile(pat).match(string)):
+    raise ValueError('Parameter \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
+  if string.endswith('.') or string.startswith('.'):
+    raise ValueError('Parameter \'{}\' not valid. \'.\' not allowed at start/end'.format(string))
 
 
 def rm_dir_full(dir_name):
@@ -49,12 +53,41 @@ def save_dict_as_one_line_csv(dct, filename):
     writer.writerow(dct)
 
 
+def get_sample_generator(samples, hyperparam_dict, distribution_list):
+  if bool(hyperparam_dict) == bool(distribution_list):
+    raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
+  if distribution_list and not samples:
+    raise TypeError('Number of samples not specified')
+  if distribution_list:
+    return distribution_list_sampler(distribution_list, samples)
+  if samples:
+    assert hyperparam_dict
+    return hyperparam_dict_samples(hyperparam_dict, samples)
+  else:
+    return hyperparam_dict_product(hyperparam_dict)
+
+def process_other_params(other_params, hyperparam_dict, distribution_list):
+  if hyperparam_dict:
+    name_list = hyperparam_dict.keys()
+  else:
+    name_list = [distr.param_name for distr in distribution_list]
+  for name, value in other_params.items():
+    check_valid_name(name)
+    if name in name_list:
+      raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
+    if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
+      raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
+  nested_items = [(name.split('.'), value) for name, value in other_params.items()]
+  return nested_to_dict(nested_items)
+
 def validate_hyperparam_dict(hyperparam_dict):
   for name, option_list in hyperparam_dict.items():
-    if not is_valid_name(name):
-      raise ValueError('Parameter name \'{}\' not valid. Only \'[a-z][A-Z]_-.\' allowed.'.format(name))
+    check_valid_name(name)
     if type(option_list) is not list:
       raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
+    for item in option_list:
+      if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
+        raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
 
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):

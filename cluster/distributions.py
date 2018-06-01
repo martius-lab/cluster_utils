@@ -5,8 +5,9 @@ import numpy as np
 import scipy
 import scipy.stats
 import re
+from .constants import *
 
-from .utils import is_valid_name
+from .utils import check_valid_name
 
 def clip(number, bounds):
   low, high = bounds
@@ -18,8 +19,7 @@ class Distribution(object):
   def __init__(self, *, param, **kwargs):
     self.param_name = param
 
-    if not is_valid_name(self.param_name):
-      raise ValueError('Parameter name \'{}\' not valid. Only [a-z][A-Z]_-. allowed.'.format(self.param_name))
+    check_valid_name(self.param_name)
 
     self.samples = []
     self.iter = None
@@ -144,10 +144,9 @@ class Discrete(Distribution):
   def __init__(self, *, options, **kwargs):
     super().__init__(**kwargs)
     self.option_list = options
-    good_types = (bool, str, int, float, tuple)
     for item in options:
-      if type(item) not in good_types:
-        raise TypeError('Discrete options must from the following types: {}, {} failed'.format(good_types, item))
+      if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
+        raise TypeError('Discrete options must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
       if not hashable(item):
         raise TypeError('Discrete options must be hashable, {} failed'.format(item))
 

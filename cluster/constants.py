@@ -4,6 +4,8 @@ JSON_SETTINGS_FILE = 'settings.json'
 JSON_FILE_KEY = 'default_json'
 OBJECT_SEPARATOR = '.'
 
+PARAM_TYPES = (bool, str, int, float, tuple)
+
 
 MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash

@@ -4,12 +4,14 @@ import shutil
 from copy import deepcopy
 from time import sleep
 
-from . import utils, export
+from . import export
+from .utils import get_sample_generator, process_other_params
 from .analyze_results import ClusterDataFrame
 from .cluster import Condor_ClusterSubmission
 from .constants import *
 from .errors import OneTimeExceptionHandler
 from .submission import SubmissionStatus
+from .settings import update_recursive
 
 
 def rm_dir_full(dir_name):
@@ -45,29 +47,22 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   create_dir(submission_dir_name_abs)
   create_dir(result_dir_abs)
 
-  if samples is not None:
-    if hyperparam_dict is not None:
-      setting_generator = utils.hyperparam_dict_samples(hyperparam_dict, samples)
-    elif distribution_list is not None:
-      setting_generator = utils.distribution_list_sampler(distribution_list, samples)
-    else:
-      raise ValueError('No hyperparameter dict/distribution list given')
-  else:
-    setting_generator = utils.hyperparam_dict_product(hyperparam_dict)
+
+  setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list)
+  processed_other_params = process_other_params(other_params, hyperparam_dict, distribution_list)
 
   def generate_commands():
     for setting in setting_generator:
       for iteration in range(restarts_per_setting):
         current_setting = deepcopy(setting)
-        local_other_params = deepcopy(other_params)
+        local_other_params = deepcopy(processed_other_params)
+
         local_other_params['id'] = generate_commands.id_number
         job_res_dir = dict_to_dirname(current_setting, generate_commands.id_number, smart_naming)
         local_other_params['model_dir'] = os.path.join(result_dir_abs, job_res_dir)
-        expected_len = len(current_setting) + len(local_other_params)
 
-        current_setting.update(local_other_params)
-        if len(current_setting) != expected_len:
-          raise ValueError("Duplicate entries in hyperparam_dict and other_params!")
+        update_recursive(current_setting, local_other_params)
+
         base_cmd = 'python3 {} {}'
         cmd = base_cmd.format(script_to_run_name, '\"' + str(current_setting) + '\"')
         yield cmd

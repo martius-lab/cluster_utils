@@ -1,7 +1,8 @@
 import os
 import sys
 
-#sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
+## Do NOT INCLUDE this in your code ... just my testing
+sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 from cluster.distributions import *
 from cluster import hyperparameter_optimization
@@ -25,10 +26,10 @@ optimization_setting = dict(metric_to_optimize='result',
                             number_of_restarts=1,
                             percentage_that_need_to_finish=0.9,
                             percentage_of_best=0.1,
-                            total_rounds=6,
+                            total_rounds=2,
                             check_every_secs=20)
 
-other_params = {}
+other_params = {'dc.num2': 14}
 
 distribution_list = [TruncatedNormal(param='x', bounds=(-5.0, 5.0)),
                      TruncatedNormal(param='y', bounds=(-5.0, 5.0)),
