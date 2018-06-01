@@ -24,8 +24,6 @@ output also std over restarts
 
 some way of testing
 
-sanitize smart naming (fix restarts)
-
 
 ## Low priority TODO:
 
@@ -64,3 +62,9 @@ rounding interface change ... Done
 factor out error handling ... Done
 
 factor out submission status ... Done
+
+sanitize smart naming ... Done
+
+regexp sanitizing ... Done
+
+hyperparam dicts switch to 'object.param' format (no longer nested) ... Done
