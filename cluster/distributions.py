@@ -4,16 +4,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import scipy.stats
+import re
 
+from .utils import is_valid_name
 
 def clip(number, bounds):
   low, high = bounds
   return min(max(number, low), high)
 
 
+
 class Distribution(object):
   def __init__(self, *, param, **kwargs):
     self.param_name = param
+
+    if not is_valid_name(self.param_name):
+      raise ValueError('Parameter name \'{}\' not valid. Only [a-z][A-Z]_-. allowed.'.format(self.param_name))
+
     self.samples = []
     self.iter = None
 

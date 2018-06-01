@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
+#sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 from cluster.distributions import *
 from cluster import hyperparameter_optimization
@@ -21,7 +21,7 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=100,
+                            number_of_samples=40,
                             number_of_restarts=1,
                             percentage_that_need_to_finish=0.9,
                             percentage_of_best=0.1,
@@ -34,8 +34,8 @@ distribution_list = [TruncatedNormal(param='x', bounds=(-5.0, 5.0)),
                      TruncatedNormal(param='y', bounds=(-5.0, 5.0)),
                      TruncatedNormal(param='z', bounds=(-5.0, 5.0)),
                      TruncatedNormal(param='w', bounds=(-5.0, 5.0)),
-                     Discrete(param='dc.num1', options=[0, 1]),
-                     Discrete(param='dc.num2', options=[0, 0, 1])]
+                     Discrete(param='dc.num1', options=[0, 1, 2]),
+                     ]
 
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
                             submission_requirements=submission_requirements,

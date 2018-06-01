@@ -45,7 +45,7 @@ CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
 
 
-class MPI_ClusterSubmission(ClusterSubmission):
+class Condor_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, project_dir):
     super().__init__()
     self.cmds = job_commands
@@ -124,7 +124,7 @@ class MPI_ClusterSubmission(ClusterSubmission):
     self.finished = True
 
   def get_status(self):
-    parsed_condor = MPI_ClusterSubmission._parse_condor_info()
+    parsed_condor = self._parse_condor_info()
     if not parsed_condor:
       return None
     id_set = set(self.id_nums)

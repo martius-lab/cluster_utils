@@ -26,8 +26,6 @@ some way of testing
 
 sanitize smart naming (fix restarts)
 
-check out chainmap
-
 
 ## Low priority TODO:
 

@@ -5,7 +5,7 @@ import os
 import shutil
 import sys
 
-sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
+#sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 import cluster
 from cluster.distributions import *
@@ -27,10 +27,12 @@ submission_requirements = dict(request_cpus=1,
 
 other_params = {}
 
-hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 3)),
-                   'y': list(np.linspace(0.0, 4.0, 3)),
-                   'z': list(np.linspace(0.0, 4.0, 3)),
-                   'w': list(np.linspace(0.0, 4.0, 3))
+hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 2)),
+                   'y': list(np.linspace(0.0, 4.0, 2)),
+                   'z': [1.0],
+                   'w': [1.0],
+                   'dc.num1': [2, 4],
+                   'some.string.equals': ['asdasd', '3415d']
 }
 
 
@@ -40,7 +42,7 @@ all_args = dict(submission_name=submission_name,
                 hyperparam_dict=hyperparam_dict,
                 distribution_list=None,
                 other_params=other_params,
-                samples=None,
+                samples=12,
                 restarts_per_setting=1,
                 smart_naming=True)
 

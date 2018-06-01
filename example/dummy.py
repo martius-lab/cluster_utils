@@ -2,8 +2,7 @@ import sys
 from time import sleep
 import numpy as np
 
-sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
-
+# sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 from cluster import save_metrics_params, update_params_from_cmdline
 

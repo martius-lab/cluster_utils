@@ -1,14 +1,13 @@
 import os
-import shutil
-from time import sleep
-from copy import deepcopy
 import pickle
+import shutil
+from copy import deepcopy
+from time import sleep
 
 from . import utils, export
 from .analyze_results import ClusterDataFrame
-from subprocess import run
+from .cluster import Condor_ClusterSubmission
 from .constants import *
-from .cluster import MPI_ClusterSubmission
 from .errors import OneTimeExceptionHandler
 from .submission import SubmissionStatus
 
@@ -24,7 +23,7 @@ def create_dir(dir_name):
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
-  vals = ['{}={}'.format(str(key)[:3], str(value)[:6]) for key, value in setting.items()]
+  vals = ['{}={}'.format(str(key)[:3], str(value)[:6]) for key, value in setting.items() if not isinstance(value, dict)]
   res = '{}_{}'.format(id, '_'.join(vals))
   if len(res) < 35 and smart_naming:
     return res
@@ -48,49 +47,48 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   if samples is not None:
     if hyperparam_dict is not None:
-      setting_generator = utils.nested_dict_hyperparam_samples(hyperparam_dict, samples)
+      setting_generator = utils.hyperparam_dict_samples(hyperparam_dict, samples)
     elif distribution_list is not None:
       setting_generator = utils.distribution_list_sampler(distribution_list, samples)
     else:
       raise ValueError('No hyperparameter dict/distribution list given')
   else:
-    setting_generator = utils.nested_dict_hyperparam_product(hyperparam_dict)
+    setting_generator = utils.hyperparam_dict_product(hyperparam_dict)
 
   def generate_commands():
     for setting in setting_generator:
       for iteration in range(restarts_per_setting):
+        current_setting = deepcopy(setting)
         local_other_params = deepcopy(other_params)
         local_other_params['id'] = generate_commands.id_number
-        job_res_dir = dict_to_dirname(setting, generate_commands.id_number, smart_naming)
+        job_res_dir = dict_to_dirname(current_setting, generate_commands.id_number, smart_naming)
         local_other_params['model_dir'] = os.path.join(result_dir_abs, job_res_dir)
-        expected_len = len(setting) + len(local_other_params)
+        expected_len = len(current_setting) + len(local_other_params)
 
-        setting.update(local_other_params)
-        if len(setting) != expected_len and iteration == 0:
+        current_setting.update(local_other_params)
+        if len(current_setting) != expected_len:
           raise ValueError("Duplicate entries in hyperparam_dict and other_params!")
         base_cmd = 'python3 {} {}'
-        cmd = base_cmd.format(script_to_run_name, '\"' + str(setting) + '\"')
+        cmd = base_cmd.format(script_to_run_name, '\"' + str(current_setting) + '\"')
         yield cmd
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
 
-  submission = MPI_ClusterSubmission(job_commands=generate_commands(),
-                                     submission_dir=submission_dir_name_abs,
-                                     requirements=submission_requirements,
-                                     name=submission_name,
-                                     project_dir=project_dir)
+  submission = Condor_ClusterSubmission(job_commands=generate_commands(),
+                                        submission_dir=submission_dir_name_abs,
+                                        requirements=submission_requirements,
+                                        name=submission_name,
+                                        project_dir=project_dir)
 
   print('Jobs created:', generate_commands.id_number)
   return submission
-
 
 
 @export
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, number_of_restarts, total_rounds, percentage_that_need_to_finish,
                                 percentage_of_best, metric_to_optimize, check_every_secs, ignore_errors=True):
-
   def produce_cluster_run_all_args(distributions, iteration):
     return dict(submission_name='iteration_{}'.format(iteration + 1),
                 paths=base_paths_and_files,
