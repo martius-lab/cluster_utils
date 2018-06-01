@@ -4,29 +4,39 @@ python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_util
 
 or 
 
-python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git --upgrade
 
 to upgrade
 
-Todo:
+High priority TODO:
 
-make nested dicts and distributions compatible... Done
-warn on 'rounding gets you out of range', change sample_decimals interface
 pdf output
 keep best runs
-shuffle jobs for submission
-save dataframes
-reuse previous best jobs
-add +1 to discrete distributions
 add adaptive distributions
-erase only correct jobs
-automatic bidding
-hide hyperparameter optimize code
-support list as discrete choices
+warm restarts
 choose between minimize/maximize
+output also std over restarts
+some way of testing
+sanitize smart naming (fix restarts)
+check out chainmap
+
+Low priority TODO:
+reuse previous best jobs
 Add more examples
-separate cluster operating code
 Write better readme
-separate setting code, write easier interface
 
-
+Done
+save dataframes ... Done
+hide hyperparameter optimize code ... Done
+separate cluster operating code ... Done
+separate setting code, write easier interface ... Done
+erase only correct jobs ... Done
+make nested dicts and distributions compatible... Done
+support list as discrete choices ... Done (tuples supported instead)
+add +1 to discrete distributions ... Done
+shuffle jobs for submission ... Done
+change all paths to absolute ... Done
+change object access symbol from ':' to '.' ... Done
+rounding interface change ... Done
+factor out error handling ... Done
+factor out submission status ... Done
