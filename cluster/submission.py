@@ -1,9 +1,17 @@
+from .errors import OneTimeExceptionHandler
+from .constants import *
+from time import sleep
+import os
+import pandas as pd
+from warnings import warn
+from . import export
+
 class SubmissionStatus(object):
-  def __init__(self, total_jobs, fraction_to_finish, fraction_of_best):
+  def __init__(self, total_jobs, fraction_to_finish, min_fraction_to_finish):
 
     self.total = total_jobs
     self.fraction_to_finish = fraction_to_finish
-    self.fraction_of_best = fraction_of_best
+    self.min_fraction_to_finish = min_fraction_to_finish
 
     self.completed = 0
     self.running = 0
@@ -40,7 +48,7 @@ class SubmissionStatus(object):
 
   @property
   def total_need_to_finish(self):
-    bare_minimum = self.total * self.fraction_of_best
+    bare_minimum = self.total * self.min_fraction_to_finish
     fraction_of_completable = int(self.fraction_to_finish * self.max_completable)
     return max(bare_minimum, fraction_of_completable)
 
@@ -68,3 +76,59 @@ class SubmissionStatus(object):
   def __repr__(self):
     return ('Total: {.total}, Completed with output: {.completed}, Failed: {.failed}, '
             'Running: {.running_for_print}, Idle: {.idle}, Still need to finish: {.still_need_to_finish}').format(*(6 * [self]))
+
+
+@export
+def execute_submission(submission, collect_data_directory, fraction_need_to_finish=1.0, min_fraction_to_finish=0.5,
+                      ignore_errors=True):
+
+  error_handler = OneTimeExceptionHandler(ignore_errors=ignore_errors)
+  submission_status = SubmissionStatus(total_jobs=submission.total_jobs,
+                                       fraction_to_finish=fraction_need_to_finish,
+                                       min_fraction_to_finish=min_fraction_to_finish)
+
+  print('Submitting jobs ...')
+  df, params, metrics = None, None, None
+  with submission:
+    while not submission_status.finished:
+      print(submission_status)
+      sleep(60)
+      df, params, metrics = load_cluster_results(collect_data_directory)
+      completed_succesfully = len(df)
+
+      any_errors = submission.check_error_msgs()
+      if any_errors:
+        error_handler.maybe_raise('Some jobs had errors!')
+      status = submission.get_status()
+      submission_status.update(completed_succesfully, status)
+      submission_status.do_checks(error_handler)
+
+
+  print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
+  assert df is not None
+  return df, params, metrics
+
+def load_dirs_containing_cluster_output(base_path):
+  job_output_files = (CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
+  for root, dirs, files in os.walk(base_path):
+    if all([filename in files for filename in job_output_files]):
+      param_df, metric_df = (pd.read_csv(os.path.join(root, filename)) for filename in job_output_files)
+      resulting_df = pd.concat([param_df, metric_df], axis=1)
+      yield resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
+
+
+def load_cluster_results(base_path):
+  output = list(zip(*load_dirs_containing_cluster_output(base_path)))
+
+  if not output:
+    return [], [], []
+
+  all_dfs, all_params, all_metrics = output
+
+  if not len(set(all_params)) == 1:
+    warn("Two files had non-identical parameters. Missing data?")
+
+  if not len(set(all_metrics)) == 1:
+    warn("Two files had non-identical metrics. Missing data?")
+
+  return pd.concat(all_dfs, ignore_index=True), all_params[0], all_metrics[0]

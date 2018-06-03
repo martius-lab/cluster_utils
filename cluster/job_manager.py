@@ -1,27 +1,24 @@
 import os
-import pickle
 import shutil
 from copy import deepcopy
-from time import sleep
 
 from . import export
 from .utils import get_sample_generator, process_other_params
-from .analyze_results import ClusterDataFrame
 from .cluster import Condor_ClusterSubmission
-from .constants import *
-from .errors import OneTimeExceptionHandler
-from .submission import SubmissionStatus
+from .submission import execute_submission
 from .settings import update_recursive
+from .analyze_results import Metaoptimizer
+
+
+def ensure_empty_dir(dir_name):
+  if os.path.exists(dir_name):
+    shutil.rmtree(dir_name, ignore_errors=True)
+  os.makedirs(dir_name)
 
 
 def rm_dir_full(dir_name):
   if os.path.exists(dir_name):
     shutil.rmtree(dir_name, ignore_errors=True)
-
-
-def create_dir(dir_name):
-  if not os.path.exists(dir_name):
-    os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -37,16 +34,8 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
                 samples=None, distribution_list=None, restarts_per_setting=1,
                 smart_naming=True):
   # Directories and filenames
-  project_dir = paths['project_dir']
-  script_to_run_name = paths['main_python_script']
-  result_dir_abs = os.path.join(paths['result_dir'], submission_name)
-  submission_dir_name_abs = os.path.join(paths['jobs_dir'], submission_name)
-
-  rm_dir_full(result_dir_abs)
-  rm_dir_full(submission_dir_name_abs)
-  create_dir(submission_dir_name_abs)
-  create_dir(result_dir_abs)
-
+  ensure_empty_dir(paths['result_dir'])
+  ensure_empty_dir(paths['jobs_dir'])
 
   setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list)
   processed_other_params = process_other_params(other_params, hyperparam_dict, distribution_list)
@@ -59,22 +48,22 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
         local_other_params['id'] = generate_commands.id_number
         job_res_dir = dict_to_dirname(current_setting, generate_commands.id_number, smart_naming)
-        local_other_params['model_dir'] = os.path.join(result_dir_abs, job_res_dir)
+        local_other_params['model_dir'] = os.path.join(paths['result_dir'], job_res_dir)
 
         update_recursive(current_setting, local_other_params)
-
-        base_cmd = 'python3 {} {}'
-        cmd = base_cmd.format(script_to_run_name, '\"' + str(current_setting) + '\"')
-        yield cmd
+        setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(os.path.dirname(paths['script_to_run']))
+        base_exec_cmd = 'python3 {} {}'
+        exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+        yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
 
   submission = Condor_ClusterSubmission(job_commands=generate_commands(),
-                                        submission_dir=submission_dir_name_abs,
+                                        submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name,
-                                        project_dir=project_dir)
+                                        name=submission_name)
 
   print('Jobs created:', generate_commands.id_number)
   return submission
@@ -82,11 +71,14 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
 @export
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
-                                number_of_samples, number_of_restarts, total_rounds, percentage_that_need_to_finish,
-                                percentage_of_best, metric_to_optimize, check_every_secs, ignore_errors=True):
+                                number_of_samples, number_of_restarts, total_rounds, fraction_that_need_to_finish,
+                                best_fraction_to_use_for_update, metric_to_optimize, minimize, calling_script):
   def produce_cluster_run_all_args(distributions, iteration):
-    return dict(submission_name='iteration_{}'.format(iteration + 1),
-                paths=base_paths_and_files,
+    submission_name = 'iteration_{}'.format(iteration + 1)
+    return dict(submission_name=submission_name,
+                paths={'script_to_run': base_paths_and_files['script_to_run'],
+                       'result_dir': os.path.join(base_paths_and_files['result_dir'], submission_name),
+                       'jobs_dir': os.path.join(base_paths_and_files['jobs_dir'], submission_name)},
                 submission_requirements=submission_requirements,
                 distribution_list=distributions,
                 other_params=other_params,
@@ -94,65 +86,28 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                 restarts_per_setting=number_of_restarts,
                 smart_naming=False)
 
-  cdf = None
-  all_params = [distr.param_name for distr in distribution_list]
-  num_jobs = number_of_samples * number_of_restarts
-
-  error_handler = OneTimeExceptionHandler(ignore_errors=ignore_errors)
-  submission_status = SubmissionStatus(total_jobs=num_jobs, fraction_to_finish=percentage_that_need_to_finish,
-                                       fraction_of_best=percentage_of_best)
+  best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
+  meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize=minimize)
 
   for i in range(total_rounds):
-    # Reset all seen exceptions and messgaes
-    error_handler.clear()
-
+    print('Iteration {} started.'.format(i+1))
     all_args = produce_cluster_run_all_args(distribution_list, i)
     submission = cluster_run(**all_args)
     current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
 
-    if i > 0:
-      print('Last best results:')
-      best_df = cdf.best_jobs(metric_to_optimize, 10)[all_params + [metric_to_optimize]]
-      print(best_df)
+    print(meta_opt.get_best())
 
-    print('Submitting jobs (iteration {})...'.format(i + 1))
-    with submission:
-      while True:
-        sleep(check_every_secs)
-        cdf = ClusterDataFrame(current_result_path, CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
-        completed_succesfully = len(cdf.df)
-
-        any_errors = submission.check_error_msgs()
-        if any_errors:
-          error_handler.maybe_raise('Some jobs had errors!')
-        status = submission.get_status()
-        submission_status.update(completed_succesfully, status)
-        submission_status.do_checks(error_handler)
-
-        if submission_status.finished:
-          print('Iteration {} finished ({}/{})'.format(i + 1, submission_status.completed, submission_status.total))
-          break
-
-        print(submission_status)
-
-    cdf.set_id_columns(['id', 'model_dir'])
-    best_params = cdf.best_params(metric_to_optimize, how_many=int(percentage_of_best * number_of_samples))
-    cdf.df.to_csv(os.path.join(base_paths_and_files['result_dir'],
-                               'df_from_iter{}.csv'.format(i + 1)))
-
-    best_df = cdf.best_jobs(metric_to_optimize, 10)[all_params + [metric_to_optimize]]
-
-    best_df.to_csv(os.path.join(base_paths_and_files['result_dir'],
-                                'best_from_iter{}.csv'.format(i + 1)))
-
-    for distr in distribution_list:
-      distr.fit(best_params[distr.param_name])
-
-    with open(os.path.join(base_paths_and_files['result_dir'],
-                           'distr_from_iter{}.csv'.format(i + 1)), 'wb') as f:
-      pickle.dump(distribution_list, f)
-    print('Distributions updated...')
+    df, params, metrics = execute_submission(submission, current_result_path,
+                                             fraction_need_to_finish=fraction_that_need_to_finish,
+                                             min_fraction_to_finish=best_fraction_to_use_for_update,
+                                             ignore_errors=True)
+    meta_opt.process_new_df(df)
+    df.to_csv(os.path.join(base_paths_and_files['result_dir'],
+                           'full_df_iter_{}.csv'.format(i + 1)))
+    meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
+    pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
+    meta_opt.save_pdf_report(pdf_output, calling_script)
     rm_dir_full(current_result_path)
     print('Intermediate results deleted...')
 
-  print('Procedure finished')
+  print('Procedure successfully finished')

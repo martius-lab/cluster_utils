@@ -13,7 +13,7 @@ default_params = {'model_dir': '.',
                   'y': 2.0,
                   'z': -7.5,
                   'w': 2.4,
-                  'dc': {'num1': 0,'num2': 1}}
+                  'dc': {'num1': 1,'num2': 1}}
 
 
 params = update_params_from_cmdline(default_params=default_params)
@@ -21,12 +21,11 @@ x, y, z, w = params.x, params.y, params.z, params.w
 
 result = (x-2.0) ** 2 + (y-4.66) ** 2 + (z*w - 6) ** 2 + (z+w-5) ** 2
 result += np.random.normal()
-sleep(10)
 
 num1, num2 = params.dc.num1, params.dc.num2
 dummy = num1/num2 + num2/num1
 
-metrics = {'result': -result}
+metrics = {'result': result}
 save_metrics_params(metrics, params, model_dir=params.model_dir)
 
 

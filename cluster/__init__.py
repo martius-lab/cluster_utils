@@ -18,9 +18,11 @@ def custom_formatwarning(msg, *args, **kwargs):
 warnings.formatwarning = custom_formatwarning
 
 
-from .job_manager import *
+from . import job_manager
 from . import distributions
 from . import analyze_results
 from . import utils
 from . import settings
-from .report import run_report
+from . import submission
+from . import report
+#from .report import produce_basic_report

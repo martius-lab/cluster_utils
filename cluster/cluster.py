@@ -4,18 +4,19 @@ from copy import copy
 from random import shuffle
 from subprocess import run, PIPE
 from warnings import warn
+from abc import ABC, abstractmethod
 
 from .constants import *
 
 
-class ClusterSubmission(object):
+class ClusterSubmission(ABC):
   def __init__(self):
     self.submitted = False
     self.finished = False
 
+  @abstractmethod
   def submit(self):
-    """ Submit jobs """
-    raise NotImplementedError('submit not provided')
+    pass
 
   def __enter__(self):
     try:
@@ -26,19 +27,18 @@ class ClusterSubmission(object):
       raise
 
   def close(self):
-    """ Submission cleanup """
-    raise NotImplementedError('close not provided')
+    pass
 
   def __exit__(self, *args):
     self.close()
 
+  @abstractmethod
   def get_status(self):
-    """ Submission status """
-    raise NotImplementedError('get_submission_status not provided')
+    pass
 
+  @abstractmethod
   def check_error_msgs(self):
-    """ Submission status """
-    raise NotImplementedError('print_error_msgs not provided')
+    pass
 
 
 CondorRecord = namedtuple('CondorRecord',
@@ -46,13 +46,12 @@ CondorRecord = namedtuple('CondorRecord',
 
 
 class Condor_ClusterSubmission(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name, project_dir):
+  def __init__(self, job_commands, submission_dir, requirements, name):
     super().__init__()
     self.cmds = job_commands
     self.submission_dir = submission_dir
     self._process_requirements(requirements)
     self.name = name
-    self.project_dir = project_dir
     self.exceptions_seen = set({})
 
     # Prepare all submission files
@@ -87,6 +86,10 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
     os.chmod(self.submit_all_file, 0O755)  # Make executable
 
+  @property
+  def total_jobs(self):
+    return len(self.submission_cmds)
+
   def _process_requirements(self, requirements):
     # Job requirements
     self.mem = requirements['memory_in_mb']
@@ -100,6 +103,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
       self.cuda_line = ''
 
   def submit(self):
+    if self.submitted:
+      raise RuntimeError('Attempt for second submission!')
     self.submitted = True
     self.id_nums = []
     for submit_cmd in self.submission_cmds:

@@ -6,14 +6,16 @@ OBJECT_SEPARATOR = '.'
 
 PARAM_TYPES = (bool, str, int, float, tuple)
 
+RESERVED_PARAMS = ('model_dir', 'id', 'iteration')
+
+DISTR_COLOR = (0.999, 0.786, 0.409)
+
 
 MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash
-cd %(project_dir)s
 # %(name)s%(id)d
 
 export PATH=${HOME}/bin:/usr/bin:$PATH:/bin
-export PYTHONPATH=%(project_dir)s:$PYTHONPATH
 export LD_LIBRARY_PATH=/is/software/nvidia/cuda-9.0/lib64:/is/software/nvidia/cudnn-7.0-cu9.0/lib64:$LD_LIBRARY_PATH
 module load cuda/9.0
 module load cudnn/7.0-cu9.0

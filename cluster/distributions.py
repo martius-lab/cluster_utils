@@ -6,6 +6,7 @@ import scipy
 import scipy.stats
 import re
 from .constants import *
+from abc import ABC, abstractmethod
 
 from .utils import check_valid_name
 
@@ -15,7 +16,7 @@ def clip(number, bounds):
 
 
 
-class Distribution(object):
+class Distribution(ABC):
   def __init__(self, *, param, **kwargs):
     self.param_name = param
 
@@ -24,8 +25,9 @@ class Distribution(object):
     self.samples = []
     self.iter = None
 
+  @abstractmethod
   def fit(self, data):
-    raise NotImplementedError()
+    pass
 
   def sample(self):
     return next(self.iter)
@@ -150,7 +152,7 @@ class Discrete(Distribution):
       if not hashable(item):
         raise TypeError('Discrete options must be hashable, {} failed'.format(item))
 
-    self.probs = [1.0 / len(options) for item in options]
+    self.probs = [1.0 / len(options) for _ in options]
 
   def fit(self, samples):
     frequencies = Counter(samples)

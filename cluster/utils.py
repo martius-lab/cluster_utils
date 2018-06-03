@@ -14,10 +14,12 @@ def check_valid_name(string):
   pat = '[A-Za-z0-9_.-]*$'
   if type(string) is not str:
     raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
+  if string in RESERVED_PARAMS:
+    raise ValueError('Parameter name {} is reserved'.format(string))
   if not bool(re.compile(pat).match(string)):
-    raise ValueError('Parameter \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
+    raise ValueError('Parameter name \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
   if string.endswith('.') or string.startswith('.'):
-    raise ValueError('Parameter \'{}\' not valid. \'.\' not allowed at start/end'.format(string))
+    raise ValueError('Parameter name \'{}\' not valid. \'.\' not allowed at start/end'.format(string))
 
 
 def rm_dir_full(dir_name):
@@ -28,11 +30,6 @@ def rm_dir_full(dir_name):
 def create_dir(dir_name):
   if not os.path.exists(dir_name):
     os.makedirs(dir_name)
-
-
-class default_value_dict(defaultdict):
-  def __init__(self, default):
-    super().__init__(lambda: deepcopy(default))
 
 
 def flatten_nested_string_dict(nested_dict, prepend=''):
