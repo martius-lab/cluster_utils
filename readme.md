@@ -8,32 +8,38 @@ python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_util
 
 to upgrade
 
+Also recommended to add this line to your .bashrc (.zshrc)
+
+export MPLBACKEND="agg"
+
 ## High priority TODO:
 
-pdf output
-
-keep best runs
+pdf output ... on the way
 
 add adaptive distributions
 
-warm restarts
-
-choose between minimize/maximize
-
-output also std over restarts
+warm restarts ... on the way
 
 some way of testing
 
 
 ## Low priority TODO:
 
-reuse previous best jobs
-
 Add more examples
 
 Write better readme
 
 ## Done
+
+reuse previous best jobs ... Done
+
+output also std over restarts ... Done
+
+choose between minimize/maximize ... Done
+
+expose manage_submission as api ... Done
+
+reuse submission code for both main scripts ... Done
 
 save dataframes ... Done
 
