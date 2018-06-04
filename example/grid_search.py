@@ -1,14 +1,5 @@
-#!/usr/bin/python
-# Script for a cluster run to scan the parameter space
-
 import os
 import shutil
-import sys
-import pandas as pd
-from subprocess import run
-
-## Do NOT INCLUDE this in your code ... just my testing
-sys.path = ['/is/sg/mrolinek/Projects/Cluster_utils'] + sys.path
 
 from cluster import cluster_run, execute_submission, init_plotting
 from cluster.distributions import *
@@ -31,11 +22,12 @@ submission_requirements = dict(request_cpus=1,
 
 other_params = {}
 
-hyperparam_dict = {'x': list(np.linspace(0.0, 4.0, 5)),
-                   'y': list(np.linspace(0.0, 4.0, 5)),
-                   'z': [1.0],
-                   'w': [1.0],
-                   'dc.num1': [2],
+hyperparam_dict = {'u': list(np.linspace(-3.0, 3.0, 3)),
+                   'v': list(np.linspace(-3.0, 3.0, 3)),
+                   'w': list(np.linspace(-3.0, 3.0, 3)),
+                   'x': list(np.linspace(-3.0, 3.0, 3)),
+                   'y': list(np.linspace(-3.0, 3.0, 3)),
+                   'z': list(np.linspace(-3.0, 3.0, 3)),
                    }
 
 submit = True
@@ -46,7 +38,7 @@ all_args = dict(submission_name=submission_name,
                 hyperparam_dict=hyperparam_dict,
                 other_params=other_params,
                 samples=None,
-                restarts_per_setting=2,
+                restarts_per_setting=1,
                 smart_naming=True)
 
 if __name__ == '__main__':
@@ -57,10 +49,8 @@ if __name__ == '__main__':
 
     relevant_params = list(hyperparam_dict.keys())
     output_pdf = os.path.join(paths_and_files['result_dir'], '{}_report.pdf'.format(submission_name))
-    produce_basic_report(df, relevant_params, metrics,  python_file=__file__, procedure_name=submission_name,
-                 output_file=output_pdf)
-
-
+    produce_basic_report(df, relevant_params, metrics, procedure_name=submission_name,
+                         output_file=output_pdf)
 
   # copy this script to the result dir
   my_path = os.path.realpath(__file__)

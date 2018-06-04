@@ -1,6 +1,12 @@
 CLUSTER_PARAM_FILE = 'param_choice.csv'
 CLUSTER_METRIC_FILE = 'metrics.csv'
 JSON_SETTINGS_FILE = 'settings.json'
+
+STATUS_PICKLE_FILE = 'status.pickle'
+FULL_DF_FILE = 'all_data.csv'
+REDUCED_DF_FILE = 'reduced_data.csv'
+STD_ENDING = '_std'
+
 JSON_FILE_KEY = 'default_json'
 OBJECT_SEPARATOR = '.'
 
@@ -8,8 +14,7 @@ PARAM_TYPES = (bool, str, int, float, tuple)
 
 RESERVED_PARAMS = ('model_dir', 'id', 'iteration')
 
-DISTR_COLOR = (0.999, 0.786, 0.409)
-
+DISTR_BASE_COLORS = [(0.99, 0.7, 0.18), (0.7, 0.7, 0.9), (0.56, 0.692, 0.195), (0.923, 0.386, 0.209)]
 
 MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash

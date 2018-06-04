@@ -1,19 +1,19 @@
+from abc import ABC, abstractmethod
 from collections import Counter
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import scipy.stats
-import re
-from .constants import *
-from abc import ABC, abstractmethod
 
+from .constants import *
 from .utils import check_valid_name
+
 
 def clip(number, bounds):
   low, high = bounds
   return min(max(number, low), high)
-
 
 
 class Distribution(ABC):
@@ -31,7 +31,6 @@ class Distribution(ABC):
 
   def sample(self):
     return next(self.iter)
-
 
   def prepare_samples(self, howmany):
     self.iter = iter(self.samples)
@@ -98,7 +97,8 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
 
   def fit(self, data_points):
     self.mean, self.std = scipy.stats.norm.fit(np.array(data_points))
-    assert (self.lower <= self.mean <= self.upper)
+    if not (self.lower <= self.mean <= self.upper):
+      warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
     self.samples = np.random.normal(size=howmany) * self.std + self.mean
@@ -122,7 +122,8 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
 
   def fit(self, data_points):
     self.log_mean, self.log_std = scipy.stats.norm.fit(np.log(np.array(data_points)))
-    assert (self.log_lower <= self.log_mean <= self.log_upper)
+    if not (self.log_lower <= self.log_mean <= self.log_upper):
+      warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
     self.samples = np.exp(np.random.normal(size=howmany) * self.log_std + self.log_mean)
@@ -158,6 +159,10 @@ class Discrete(Distribution):
     frequencies = Counter(samples)
     # Add plus one to all frequencies to keep all options
     self.probs = [(1.0 / (len(samples) + len(self.option_list))) * (1.0 + frequencies[val]) for val in self.option_list]
+    sum = np.sum(self.probs)
+    if not np.isclose(sum, 1.0):
+      warn('Probabilities of \'{}\' do not sum up to one.'.format(self.param_name))
+      self.probs = list(np.array(self.probs) / sum)
 
   def prepare_samples(self, howmany):
     self.samples = np.random.choice(self.option_list, p=self.probs, size=howmany)

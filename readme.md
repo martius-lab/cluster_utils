@@ -8,28 +8,26 @@ python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_util
 
 to upgrade
 
-Also recommended to add this line to your .bashrc (.zshrc)
+Also recommended to add this line to your .bashrc (.zshrc) on the cluster
 
 export MPLBACKEND="agg"
 
-## High priority TODO:
-
-pdf output ... on the way
-
-add adaptive distributions
-
-warm restarts ... on the way
-
-some way of testing
-
 
 ## Low priority TODO:
+
+add histogram based distribution distributions
+
+some way of testing
 
 Add more examples
 
 Write better readme
 
 ## Done
+
+warm restarts ... done
+
+pdf output ... done
 
 reuse previous best jobs ... Done
 

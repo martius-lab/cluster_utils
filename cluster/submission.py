@@ -1,10 +1,12 @@
-from .errors import OneTimeExceptionHandler
-from .constants import *
-from time import sleep
 import os
-import pandas as pd
+from time import sleep
 from warnings import warn
-from . import export
+
+import pandas as pd
+
+from .constants import *
+from .errors import OneTimeExceptionHandler
+
 
 class SubmissionStatus(object):
   def __init__(self, total_jobs, fraction_to_finish, min_fraction_to_finish):
@@ -75,13 +77,12 @@ class SubmissionStatus(object):
 
   def __repr__(self):
     return ('Total: {.total}, Completed with output: {.completed}, Failed: {.failed}, '
-            'Running: {.running_for_print}, Idle: {.idle}, Still need to finish: {.still_need_to_finish}').format(*(6 * [self]))
+            'Running: {.running_for_print}, Idle: {.idle}, Still need to finish: {.still_need_to_finish}').format(
+      *(6 * [self]))
 
 
-@export
 def execute_submission(submission, collect_data_directory, fraction_need_to_finish=1.0, min_fraction_to_finish=0.5,
-                      ignore_errors=True):
-
+                       ignore_errors=True):
   error_handler = OneTimeExceptionHandler(ignore_errors=ignore_errors)
   submission_status = SubmissionStatus(total_jobs=submission.total_jobs,
                                        fraction_to_finish=fraction_need_to_finish,
@@ -103,10 +104,10 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
       submission_status.update(completed_succesfully, status)
       submission_status.do_checks(error_handler)
 
-
   print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
   assert df is not None
   return df, params, metrics
+
 
 def load_dirs_containing_cluster_output(base_path):
   job_output_files = (CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)

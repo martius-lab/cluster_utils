@@ -1,12 +1,13 @@
-from copy import deepcopy
-import os
-import json
-import collections
 import ast
+import collections
+import json
+import os
 import sys
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
+from copy import deepcopy
+from warnings import warn
+
 from .constants import *
-from . import export
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
 
 
 class ParamDict(dict):
@@ -58,16 +59,17 @@ def save_settings_to_json(setting_dict, model_dir):
     file.write(json.dumps(setting_dict))
 
 
-@export
-def save_metrics_params(metrics, params, model_dir):
-  create_dir(model_dir)
-  save_settings_to_json(params, model_dir)
+def save_metrics_params(metrics, params, save_dir=None):
+  if save_dir is None:
+    save_dir = params.model_dir
+  create_dir(save_dir)
+  save_settings_to_json(params, save_dir)
 
-  param_file = os.path.join(model_dir, CLUSTER_PARAM_FILE)
+  param_file = os.path.join(save_dir, CLUSTER_PARAM_FILE)
   flattened_params = dict(flatten_nested_string_dict(params))
   save_dict_as_one_line_csv(flattened_params, param_file)
 
-  metric_file = os.path.join(model_dir, CLUSTER_METRIC_FILE)
+  metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
 
 
@@ -75,7 +77,7 @@ def is_json_file(cmd_line):
   try:
     return os.path.isfile(cmd_line)
   except Exception as e:
-    print('JSON parsing suppressed exception: ', e)
+    warn('JSON parsing suppressed exception: ', e)
     return False
 
 
@@ -84,13 +86,12 @@ def is_parseable_dict(cmd_line):
     res = ast.literal_eval(cmd_line)
     return isinstance(res, dict)
   except Exception as e:
-    print('Dict literal eval suppressed exception: ', e)
+    warn('Dict literal eval suppressed exception: ', e)
     return False
 
 
-@export
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, verbose=True):
-  """
+  """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
   :param default_params: Dictionary of default params

@@ -1,37 +1,36 @@
-
+import datetime
 import os
 from itertools import combinations
-from .latex_utils import LatexFile
-import datetime
-from .data_analysis import *
-from tempfile import TemporaryDirectory
-from . import export
 from itertools import count
-import seaborn as sns
+from tempfile import TemporaryDirectory
+
 from matplotlib import rc
 
+from .data_analysis import *
+from .latex_utils import LatexFile
+from .utils import get_caller_file
 
-@export
+
 def init_plotting():
-  sns.set_style("darkgrid", {'legend.frameon':True})
-  rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+  sns.set_style("darkgrid", {'legend.frameon': True})
+  rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
   rc('text', usetex=True)
 
 
-@export
-def produce_basic_report(df, params, metrics, python_file, procedure_name, output_file,
-                 maximized_metrics=None, log_scale_list=None):
-
+def produce_basic_report(df, params, metrics, procedure_name, output_file,
+                         maximized_metrics=None, log_scale_list=None):
   if log_scale_list is None:
     log_scale_list = []
   if maximized_metrics is None:
     maximized_metrics = []
 
+  caller_python_file = get_caller_file(depth=2)
+
   today = datetime.datetime.now().strftime("%B %d, %Y")
   latex_title = 'Cluster job \'{}\' results ({})'.format(procedure_name, today)
   latex = LatexFile(title=latex_title)
 
-  latex.add_section_from_python_script('Specification', python_file)
+  latex.add_section_from_python_script('Specification', caller_python_file)
 
   summary_df = performance_summary(df, metrics)
   latex.add_section_from_dataframe('Summary of results', summary_df)
@@ -43,7 +42,7 @@ def produce_basic_report(df, params, metrics, python_file, procedure_name, outpu
   tmp_nums = count()
   with TemporaryDirectory() as tmpdir:
     for metric in metrics:
-      distr_files = [os.path.join(tmpdir,'{}.pdf'.format(next(tmp_nums))) for param in params]
+      distr_files = [os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums))) for param in params]
 
       distr_files = [fname for fname, param in zip(distr_files, params) if
                      distribution(df, param, metric, fname, metric_logscale=(metric in log_scale_list))]
@@ -61,4 +60,3 @@ def produce_basic_report(df, params, metrics, python_file, procedure_name, outpu
       latex.add_section_from_figures(section_name, heat_map_files)
 
     latex.produce_pdf(output_file)
-

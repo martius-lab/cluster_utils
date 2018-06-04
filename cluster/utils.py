@@ -1,13 +1,18 @@
 import csv
+import inspect
 import itertools
 import os
 import random
 import re
 import shutil
 from collections import defaultdict
-from copy import deepcopy
 
 from .constants import *
+
+
+def get_caller_file(depth=2):
+  _, filename, _, _, _, _ = inspect.stack()[depth]
+  return filename
 
 
 def check_valid_name(string):
@@ -16,6 +21,9 @@ def check_valid_name(string):
     raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
   if string in RESERVED_PARAMS:
     raise ValueError('Parameter name {} is reserved'.format(string))
+  if string.endswith(STD_ENDING):
+    raise ValueError('Parameter name \'{}\' not valid.'
+                     'Ends with \'{}\' (may cause collisions)'.format(string, STD_ENDING))
   if not bool(re.compile(pat).match(string)):
     raise ValueError('Parameter name \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
   if string.endswith('.') or string.startswith('.'):
@@ -63,6 +71,7 @@ def get_sample_generator(samples, hyperparam_dict, distribution_list):
   else:
     return hyperparam_dict_product(hyperparam_dict)
 
+
 def process_other_params(other_params, hyperparam_dict, distribution_list):
   if hyperparam_dict:
     name_list = hyperparam_dict.keys()
@@ -76,6 +85,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
       raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
   nested_items = [(name.split('.'), value) for name, value in other_params.items()]
   return nested_to_dict(nested_items)
+
 
 def validate_hyperparam_dict(hyperparam_dict):
   for name, option_list in hyperparam_dict.items():

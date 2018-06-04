@@ -1,10 +1,10 @@
 import os
+from abc import ABC, abstractmethod
 from collections import namedtuple, Counter
 from copy import copy
 from random import shuffle
 from subprocess import run, PIPE
 from warnings import warn
-from abc import ABC, abstractmethod
 
 from .constants import *
 

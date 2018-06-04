@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from .constants import *
+
 
 def performance_summary(df, metrics):
   perf = {}
@@ -19,7 +21,7 @@ def performance_summary(df, metrics):
   return pd.DataFrame.from_dict(perf, orient='index')
 
 
-def average_out(df, metrics, params_to_keep, std_ending='_std', add_std=True):
+def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True):
   new_df = df[params_to_keep + metrics]
   result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
   if not add_std:
@@ -32,32 +34,45 @@ def average_out(df, metrics, params_to_keep, std_ending='_std', add_std=True):
       result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg({metric: np.std})[metric]
   return result
 
-def darker(color, factor=0.92):
+
+def darker(color, factor=0.85):
   if color is None:
     return None
   r, g, b = color
   return (r * factor, g * factor, b * factor)
 
-def distribution(df, param, metric, filename=None, metric_logscale=False, darken_from_color=None):
+
+def color_scheme():
+  while True:
+    for color in DISTR_BASE_COLORS:
+      for i in range(5):
+        yield color
+        color = darker(color)
+
+
+def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
   smaller_df = df[[param, metric]]
   unique_vals = smaller_df[param].unique()
   if not len(unique_vals):
     return False
   ax = None
-  color = darken_from_color
+  if transition_colors:
+    color_gen = color_scheme()
   for val in sorted(unique_vals):
     filtered = smaller_df.loc[smaller_df[param] == val][metric]
     if filtered.nunique() == 1:
       warn('Singular matrix for {}, skipping'.format(metric))
       continue
     with suppress(Exception):
-      ax = sns.distplot(filtered, hist=False, label=str(val), color=color)
-    color = darker(color)
+      ax = sns.distplot(filtered, hist=False, label=str(val), color=next(color_gen) if transition_colors else None)
 
   if ax is None:
     return False
   if metric_logscale:
     ax.set_xscale("log")
+
+  if x_bounds is not None:
+    ax.set_xlim(*x_bounds)
   ax.set_title('Distribution of {} by {}'.format(metric, param))
   fig = plt.gcf()
   if filename:
@@ -91,3 +106,16 @@ def best_params(df, params, metric, how_many, minimum=False):
 def best_jobs(df, metric, how_many, minimum=False):
   sorted_df = df.sort_values([metric], ascending=minimum)
   return sorted_df.iloc[0:how_many]
+
+
+def count_plot_horizontal(df, time, count_over, filename=None):
+  smaller_df = df[[time, count_over]]
+
+  ax = sns.countplot(y=time, hue=count_over, data=smaller_df)
+  ax.set_title('Evolving frequencies of {} over {}'.format(count_over, time))
+  fig = plt.gcf()
+  if filename:
+    fig.savefig(filename, format='pdf', dpi=1200)
+  else:
+    plt.show()
+  plt.clf()

@@ -2,12 +2,12 @@ import os
 import shutil
 from copy import deepcopy
 
-from . import export
-from .utils import get_sample_generator, process_other_params
-from .cluster import Condor_ClusterSubmission
-from .submission import execute_submission
-from .settings import update_recursive
 from .analyze_results import Metaoptimizer
+from .cluster import Condor_ClusterSubmission
+from .constants import *
+from .settings import update_recursive
+from .submission import execute_submission
+from .utils import get_sample_generator, process_other_params, get_caller_file
 
 
 def ensure_empty_dir(dir_name):
@@ -29,7 +29,6 @@ def dict_to_dirname(setting, id, smart_naming=True):
   return str(id)
 
 
-@export
 def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
                 smart_naming=True):
@@ -69,10 +68,9 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   return submission
 
 
-@export
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, number_of_restarts, total_rounds, fraction_that_need_to_finish,
-                                best_fraction_to_use_for_update, metric_to_optimize, minimize, calling_script):
+                                best_fraction_to_use_for_update, metric_to_optimize, minimize):
   def produce_cluster_run_all_args(distributions, iteration):
     submission_name = 'iteration_{}'.format(iteration + 1)
     return dict(submission_name=submission_name,
@@ -86,12 +84,20 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                 restarts_per_setting=number_of_restarts,
                 smart_naming=False)
 
+  calling_script = get_caller_file(depth=2)
+  print(calling_script)
+
   best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
-  meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize=minimize)
+
+  possible_pickle = os.path.join(base_paths_and_files['result_dir'], STATUS_PICKLE_FILE)
+  meta_opt = Metaoptimizer.try_load_from_pickle(possible_pickle, distribution_list, metric_to_optimize,
+                                                best_jobs_to_take, minimize)
+  if meta_opt is None:
+    meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize)
 
   for i in range(total_rounds):
-    print('Iteration {} started.'.format(i+1))
-    all_args = produce_cluster_run_all_args(distribution_list, i)
+    print('Iteration {} started.'.format(meta_opt.iteration + 1))
+    all_args = produce_cluster_run_all_args(distribution_list, meta_opt.iteration)
     submission = cluster_run(**all_args)
     current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
 
@@ -103,7 +109,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                                              ignore_errors=True)
     meta_opt.process_new_df(df)
     df.to_csv(os.path.join(base_paths_and_files['result_dir'],
-                           'full_df_iter_{}.csv'.format(i + 1)))
+                           'full_df_iter_{}.csv'.format(meta_opt.iteration + 1)))
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
     meta_opt.save_pdf_report(pdf_output, calling_script)
