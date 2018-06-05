@@ -20,7 +20,7 @@ submission_requirements = dict(request_cpus=1,
 
 optimization_setting = dict(metric_to_optimize='result',
                             number_of_samples=100,
-                            number_of_restarts=2,
+                            number_of_restarts=1,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
                             total_rounds=6,
@@ -28,12 +28,12 @@ optimization_setting = dict(metric_to_optimize='result',
 
 other_params = {}
 
-distribution_list = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='v', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='w', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='x', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
+distribution_list = [TruncatedNormal(param='numbers.u', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='numbers.v', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='numbers.w', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='numbers.x', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='numbers.y', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='numbers.z', bounds=(-3.0, 3.0)),
                      ]
 
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
