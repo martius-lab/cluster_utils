@@ -3,7 +3,7 @@ import shutil
 from copy import deepcopy
 
 from .analyze_results import Metaoptimizer
-from .cluster import Condor_ClusterSubmission
+from .cluster import Slurm_ClusterSubmission as ClusterSubmission
 from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
@@ -59,7 +59,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   generate_commands.id_number = 0
 
-  submission = Condor_ClusterSubmission(job_commands=generate_commands(),
+  submission = ClusterSubmission(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
                                         name=submission_name)

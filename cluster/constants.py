@@ -53,3 +53,39 @@ on_exit_hold_subcode = 2
 periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
 queue
 '''
+
+
+
+SLURM_CLUSTER_JOB_SPEC_FILE = '''#!/bin/bash -l
+# Standard output and error:
+#SBATCH -o %(run_script_file_path)s.out
+#SBATCH -e %(run_script_file_path)s.err
+# Initial working directory:
+#SBATCH -D ./
+# Job Name:
+#SBATCH -J %(name)s
+# Queue (Partition):
+#SBATCH --partition=%(partition)s
+# Node feature:
+#SBATCH --constraint=%(constraint)s
+# Number of nodes and MPI tasks per node:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=%(cpus)s
+#SBATCH --mem=%(mem)s
+#
+#SBATCH --mail-type=None
+#SBATCH --mail-user=your.name@tuebingen.mpg.de
+#
+# Wall clock limit:
+#SBATCH --time=24:00:00
+
+# Run the program:
+srun %(run_script_file_path)s > %(run_script_file_path)s.log
+'''
+
+
+SLURM_CLUSTER_RUN_SCRIPT = '''#!/bin/bash -l
+%(cuda_line)s
+%(cmd)s
+'''
