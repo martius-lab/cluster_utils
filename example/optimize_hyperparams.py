@@ -5,7 +5,7 @@ from cluster.distributions import *
 
 init_plotting()
 
-opt_procedure_name = 'big_test'
+opt_procedure_name = 'big_test2'
 main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example'
 
 base_paths_and_files = dict(script_to_run=os.path.join(main_path, 'dummy.py'),

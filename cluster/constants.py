@@ -26,7 +26,6 @@ module load cuda/9.0
 module load cudnn/7.0-cu9.0
 %(cmd)s
 rc=$?
-
 if [[ $rc == 0 ]]; then
     rm -f %(run_script_file_path)s
     rm -f %(job_spec_file_path)s

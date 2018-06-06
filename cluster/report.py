@@ -13,7 +13,6 @@ from .utils import get_caller_file
 
 def init_plotting():
   sns.set_style("darkgrid", {'legend.frameon': True})
-  rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
   rc('text', usetex=True)
 
 

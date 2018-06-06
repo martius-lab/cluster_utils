@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import shutil
 from copy import deepcopy
@@ -84,8 +85,10 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                 restarts_per_setting=number_of_restarts,
                 smart_naming=False)
 
+  if not os.path.exists(base_paths_and_files['script_to_run']):
+    raise FileNotFoundError('File {} does not exist'.format(base_paths_and_files['script_to_run']))
+
   calling_script = get_caller_file(depth=2)
-  print(calling_script)
 
   best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
 
@@ -107,9 +110,12 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                                              fraction_need_to_finish=fraction_that_need_to_finish,
                                              min_fraction_to_finish=best_fraction_to_use_for_update,
                                              ignore_errors=True)
+    if metric_to_optimize not in metrics:
+      raise ValueError('Optimized metric \'{}\' not found in output'.format(metric_to_optimize))
+    if not np.issubdtype(df[metric_to_optimize].dtype, np.number):
+      raise ValueError('Optimized metric \'{}\' is not a numerical type'.format(metric_to_optimize))
+
     meta_opt.process_new_df(df)
-    df.to_csv(os.path.join(base_paths_and_files['result_dir'],
-                           'full_df_iter_{}.csv'.format(meta_opt.iteration + 1)))
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
     meta_opt.save_pdf_report(pdf_output, calling_script)
