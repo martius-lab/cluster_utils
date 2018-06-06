@@ -4,6 +4,7 @@ import sys
 from multiprocessing import cpu_count
 from subprocess import run, PIPE
 from time import sleep
+import argparse
 
 defaults = {'std_out_file_extension': '.out',
             'std_err_file_extension': '.err',
@@ -51,14 +52,20 @@ def execute_parallel_shell_scripts(scripts, cpus_per_job, std_out_file_extension
       print(info_str.format(done_success, running, idle, done_fail))
 
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cpus_per_job', type=int, default=1, help='Number of CPUs per a single job')
+    parser.add_argument('--file_with_scripts', type=str,
+                        help='Absolute path to a file containing list of executables to run')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-  if len(sys.argv) != 3:
-    raise ValueError('Invalid usage, give one command line argument')
-  file_to_open = sys.argv[1]
-  cpus_per_job = int(sys.argv[2])
-  if not os.path.exists(file_to_open):
-    raise FileNotFoundError('File {} does not exist'.format(file_to_open))
-  with open(file_to_open) as f:
+  params = parse_args()
+  if not os.path.exists(params.file_with_scripts):
+    raise FileNotFoundError('File {} does not exist'.format(params.file_with_scripts))
+  with open(params.file_with_scripts) as f:
     raw_script_names = f.readlines()
   script_names = [name.strip() for name in raw_script_names]
-  execute_parallel_shell_scripts(script_names, cpus_per_job, **defaults)
+  execute_parallel_shell_scripts(script_names, params.cpus_per_job, **defaults)
