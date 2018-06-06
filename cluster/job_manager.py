@@ -4,7 +4,7 @@ import shutil
 from copy import deepcopy
 
 from .analyze_results import Metaoptimizer
-from .cluster import Condor_ClusterSubmission
+from .cluster_system import Condor_ClusterSubmission
 from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
