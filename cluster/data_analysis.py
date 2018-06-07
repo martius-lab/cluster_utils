@@ -31,7 +31,7 @@ def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True
     if std_name in result.columns:
       warn('Name {} already used. Skipping ...'.format(std_name))
     else:
-      result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg({metric: np.std})[metric]
+      result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg({metric: np.nanstd})[metric]
   return result
 
 
