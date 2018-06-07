@@ -69,8 +69,6 @@ SLURM_CLUSTER_JOB_SPEC_FILE = '''#!/bin/bash -l
 # Node feature:
 #SBATCH --constraint=%(constraint)s
 # Number of nodes and MPI tasks per node:
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=%(cpus)s
 #SBATCH --mem=%(mem)s
 #
