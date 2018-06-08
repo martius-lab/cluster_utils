@@ -7,7 +7,7 @@ from cluster.report import produce_basic_report
 
 init_plotting()
 
-submission_name = 'test_parallel'
+submission_name = 'test'
 main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example1'
 
 paths_and_files = dict(script_to_run=os.path.join(main_path, 'dummy.py'),
@@ -22,12 +22,12 @@ submission_requirements = dict(request_cpus=1,
 
 other_params = {}
 
-hyperparam_dict = {'numbers.u': list(np.linspace(-3.0, 3.0, 3)),
-                   'numbers.v': list(np.linspace(-3.0, 3.0, 3)),
-                   'numbers.w': list(np.linspace(-3.0, 3.0, 3)),
-                   'numbers.x': list(np.linspace(-3.0, 3.0, 3)),
-                   'numbers.y': list(np.linspace(-3.0, 3.0, 3)),
-                   'numbers.z': list(np.linspace(-3.0, 3.0, 3)),
+hyperparam_dict = {'u': list(np.linspace(-3.0, 3.0, 3)),
+                   'v': list(np.linspace(-3.0, 3.0, 3)),
+                   'w': list(np.linspace(-3.0, 3.0, 3)),
+                   'x': list(np.linspace(-3.0, 3.0, 3)),
+                   'y': list(np.linspace(-3.0, 3.0, 3)),
+                   'z': list(np.linspace(-3.0, 3.0, 3)),
                    }
 
 submit = True
