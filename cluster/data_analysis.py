@@ -50,10 +50,6 @@ def color_scheme():
         color = darker(color)
 
 
-def tex_escape(string):
-  return string.replace('_', ' ')
-
-
 def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
   smaller_df = df[[param, metric]]
   unique_vals = smaller_df[param].unique()
@@ -77,7 +73,7 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
 
   if x_bounds is not None:
     ax.set_xlim(*x_bounds)
-  ax.set_title('Distribution of {} by {}'.format(tex_escape(metric), tex_escape(param)))
+  ax.set_title('Distribution of {} by {}'.format(metric, param))
   fig = plt.gcf()
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200)

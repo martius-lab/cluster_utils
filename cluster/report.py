@@ -13,8 +13,13 @@ from .utils import get_caller_file
 
 def init_plotting():
   sns.set_style("darkgrid", {'legend.frameon': True})
-  rc('text', usetex=True)
+  font = {'family': 'serif',
+          'serif': 'Ubuntu',
+          'weight': 'bold',
+          'monospace': 'Ubuntu Mono'}
 
+  rc('font', **font)
+  
 
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
                          maximized_metrics=None, log_scale_list=None):
