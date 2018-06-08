@@ -88,7 +88,7 @@ def heat_map(df, param1, param2, metric, filename=None, annot=False):
   grouped_df = reduced_df.groupby([param1, param2], as_index=False).mean()
   pivoted_df = grouped_df.pivot(index=param1, columns=param2, values=metric)
   ax = sns.heatmap(pivoted_df, annot=annot)
-  ax.set_title(tex_escape(metric))
+  ax.set_title(metric)
   fig = plt.gcf()
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200)

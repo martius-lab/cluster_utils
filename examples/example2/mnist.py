@@ -1,6 +1,7 @@
 import os
 import struct
 from array import array
+import numpy as np
 
 
 class MNIST(object):
@@ -27,7 +28,7 @@ class MNIST(object):
         self.test_images = ims
         self.test_labels = labels
 
-        return ims, labels
+        return np.array(ims), np.array(labels)
 
     def load_training(self):
         ims, labels = self.load(os.path.join(self.path, self.train_img_fname), os.path.join(self.path, self.train_lbl_fname))
@@ -35,7 +36,7 @@ class MNIST(object):
         self.train_images = ims
         self.train_labels = labels
 
-        return ims, labels
+        return np.array(ims), np.array(labels)
 
     @classmethod
     def load(cls, path_img, path_lbl):

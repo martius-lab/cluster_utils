@@ -10,7 +10,7 @@ STD_ENDING = '_std'
 JSON_FILE_KEY = 'default_json'
 OBJECT_SEPARATOR = '.'
 
-PARAM_TYPES = (bool, str, int, float, tuple, type(None))
+PARAM_TYPES = (bool, str, int, float, tuple)
 
 RESERVED_PARAMS = ('model_dir', 'id', 'iteration')
 

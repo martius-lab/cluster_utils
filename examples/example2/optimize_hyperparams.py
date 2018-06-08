@@ -28,10 +28,12 @@ optimization_setting = dict(metric_to_optimize='RFC Score',
 
 other_params = {'dataset': 'MNIST'}
 
-distribution_list = [IntLogNormal(param='random_forest_args.n_estimators', bounds=(2, 100)),
+distribution_list = [IntLogNormal(param='random_forest_args.n_estimators', bounds=(80, 500)),
                      Discrete(param='random_forest_args.criterion', options=['gini', 'entropy']),
-                     Discrete(param='random_forest_args.max_features', options=['auto', None, 'log2']),
-                     IntNormal(param='random_forest_args.max_depth', bounds=(2, 15))
+                     TruncatedNormal(param='random_forest_args.max_features', bounds=(0.0, 1.0)),
+                     IntNormal(param='random_forest_args.max_depth', bounds=(10, 50)),
+                     Discrete(param='bootstrap', options=[True, False]),
+                     Discrete(param='oob_score', options=[True, False])
                      ]
 
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
