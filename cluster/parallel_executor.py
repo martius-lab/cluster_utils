@@ -69,3 +69,5 @@ if __name__ == '__main__':
     raw_script_names = f.readlines()
   script_names = [name.strip() for name in raw_script_names]
   execute_parallel_shell_scripts(script_names, params.cpus_per_job, **defaults)
+
+### Example call: python3 -m cluster.parallel_executor --file_with_scripts=files.txt --cpus_per_job=2

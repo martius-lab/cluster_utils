@@ -5,10 +5,10 @@ from cluster.distributions import *
 
 init_plotting()
 
-opt_procedure_name = 'big_test2'
-main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example'
+opt_procedure_name = 'plotting'
+main_path = '/is/sg/mrolinek/Projects/Cluster_utils/examples/example1'
 
-base_paths_and_files = dict(script_to_run=os.path.join(main_path, 'dummy.py'),
+base_paths_and_files = dict(script_to_run=os.path.join(main_path, 'main.py'),
                             result_dir=os.path.join(main_path, 'results', 'cluster', opt_procedure_name),
                             jobs_dir=os.path.join(main_path, 'jobs', opt_procedure_name))
 
@@ -19,7 +19,7 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=100,
+                            number_of_samples=20,
                             number_of_restarts=1,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
@@ -28,12 +28,13 @@ optimization_setting = dict(metric_to_optimize='result',
 
 other_params = {}
 
-distribution_list = [TruncatedNormal(param='numbers.u', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='numbers.v', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='numbers.w', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='numbers.x', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='numbers.y', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='numbers.z', bounds=(-3.0, 3.0)),
+distribution_list = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='v', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='w', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='x', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='_dumm__y', bounds=(-3.0, 3.0)),
                      ]
 
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,

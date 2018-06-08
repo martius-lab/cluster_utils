@@ -50,6 +50,10 @@ def color_scheme():
         color = darker(color)
 
 
+def tex_escape(string):
+  return string.replace('_', ' ')
+
+
 def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
   smaller_df = df[[param, metric]]
   unique_vals = smaller_df[param].unique()
@@ -73,7 +77,7 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
 
   if x_bounds is not None:
     ax.set_xlim(*x_bounds)
-  ax.set_title('Distribution of {} by {}'.format(metric, param))
+  ax.set_title('Distribution of {} by {}'.format(tex_escape(metric), tex_escape(param)))
   fig = plt.gcf()
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200)
@@ -88,7 +92,7 @@ def heat_map(df, param1, param2, metric, filename=None, annot=False):
   grouped_df = reduced_df.groupby([param1, param2], as_index=False).mean()
   pivoted_df = grouped_df.pivot(index=param1, columns=param2, values=metric)
   ax = sns.heatmap(pivoted_df, annot=annot)
-  ax.set_title(metric)
+  ax.set_title(tex_escape(metric))
   fig = plt.gcf()
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200)

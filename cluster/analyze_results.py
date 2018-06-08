@@ -38,6 +38,7 @@ class Metaoptimizer(object):
 
     metaopt.best_jobs_to_take = best_jobs_to_take
     metaopt.distribution_list = distribution_list
+    metaopt.params = [distr.param_name for distr in metaopt.distribution_list]
     return metaopt
 
   def process_new_df(self, df):

@@ -8,7 +8,7 @@ from cluster.report import produce_basic_report
 init_plotting()
 
 submission_name = 'test_parallel'
-main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example'
+main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example1'
 
 paths_and_files = dict(script_to_run=os.path.join(main_path, 'dummy.py'),
                        result_dir=os.path.join(main_path, 'results', 'cluster', submission_name),
