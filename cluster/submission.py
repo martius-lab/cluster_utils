@@ -71,7 +71,7 @@ class SubmissionStatus(object):
     if self.held > 0:
       error_handler.maybe_raise('Some jobs held!')
     if self.no_output > 0:
-      error_handler.maybe_raise('Some jobs exited without output!')
+      error_handler.maybe_raise('Some jobs exited without output! Possible explanation: filesystem lag.')
     if self.hopeful_to_finish < self.still_need_to_finish:
       raise RuntimeError('Too many jobs failed. Impossible to continue.')
 

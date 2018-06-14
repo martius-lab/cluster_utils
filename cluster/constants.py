@@ -56,9 +56,6 @@ queue
 
 
 SLURM_CLUSTER_JOB_SPEC_FILE = '''#!/bin/bash -l
-# Standard output and error:
-#SBATCH -o %(run_script_file_path)s.out
-#SBATCH -e %(run_script_file_path)s.err
 # Initial working directory:
 #SBATCH -D ./
 # Job Name:
@@ -78,7 +75,7 @@ SLURM_CLUSTER_JOB_SPEC_FILE = '''#!/bin/bash -l
 #SBATCH --time=24:00:00
 
 # Run the program:
-srun %(run_script_file_path)s > %(run_script_file_path)s.log
+srun -o %(run_script_file_path)s.out -e %(run_script_file_path)s.err --slurmd-debug=2 %(run_script_file_path)s > %(run_script_file_path)s.log
 '''
 
 

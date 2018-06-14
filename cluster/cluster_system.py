@@ -46,16 +46,16 @@ from .slurm_parallel_cluster_system import Slurm_ClusterSubmissionParallel
 
 def get_cluster_type(requirements):
   if is_command_available('condor_q'):
-    print('# CONDOR detected, running CONDOR job submission')
+    print('CONDOR detected, running CONDOR job submission')
     return Condor_ClusterSubmission
   elif is_command_available('squeue'):
-    print('# SLURM detected, running SLURM job submission')
+    print('SLURM detected, running SLURM job submission')
     gpus = requirements['request_gpus']
     if gpus > 0:
-      print('## GPU requested, on-node parallelisation impossible')
+      print('GPU requested, on-node parallelisation impossible')
       return Slurm_ClusterSubmission
     else:
-      print('## No GPU requested, on-node parallelisation used')
+      print('No GPU requested, on-node parallelisation used')
       return Slurm_ClusterSubmissionParallel
   else:
     return None
