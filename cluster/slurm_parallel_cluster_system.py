@@ -8,8 +8,8 @@ from warnings import warn
 import numpy as np
 from .constants import *
 
-CondorRecord = namedtuple('CondorRecord',
-                          ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
+SlurmRecord = namedtuple('SlurmRecord',
+                          ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
 
 class Slurm_ClusterSubmissionParallel(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, njobs):
