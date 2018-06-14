@@ -22,15 +22,8 @@ class Slurm_ClusterSubmission(ClusterSubmission):
     self.exceptions_seen = set({})
 
 
-    if self.parallel:
-      RUN_SCRIPT = SLURM_PARALLEL_CLUSTER_RUN_SCRIPT
-      JOB_SPEC_FILE_START = SLURM_PARALLEL_CLUSTER_JOB_SPEC_FILE_START
-      TASK_SPEC_FILE = SLURM_PARALLEL_CLUSTER_TASK_SPEC_FILE
-      JOB_SPEC_FILE_END = SLURM_PARALLEL_CLUSTER_JOB_SPEC_FILE_END
-      self.tasks_per_submission = self.nnodes_per_submit * self.jobs_per_node
-    else:
-      RUN_SCRIPT = SLURM_CLUSTER_RUN_SCRIPT
-      JOB_SPEC_FILE = SLURM_CLUSTER_JOB_SPEC_FILE
+    RUN_SCRIPT = SLURM_CLUSTER_RUN_SCRIPT
+    JOB_SPEC_FILE = SLURM_CLUSTER_JOB_SPEC_FILE
 
     # Prepare all submission files
 
@@ -49,29 +42,12 @@ class Slurm_ClusterSubmission(ClusterSubmission):
         # Prepare namespace for string formatting (class vars + locals)
         namespace = copy(vars(self))
         namespace.update(locals())
-        if self.parallel:
-          with open(job_spec_file_path, 'w') as spec_file:
-            spec_file.write(JOB_SPEC_FILE_START % namespace)
-            for idPerSubmission in range(self.tasks_per_submission):
-              with open(run_script_file_path, 'w') as script_file:
-                script_file.write(RUN_SCRIPT % namespace)
-              os.chmod(run_script_file_path, 0O755)  # Make executable
-              spec_file.write(TASK_SPEC_FILE % namespace)
-              if idPerSubmission < self.tasks_per_submission-1:
-                cmd = next(cmd_enum, None)
-                id += 1
-              if not cmd:
-                break
 
-              job_file_name = '{}_{}.sh'.format(self.name, id)
-              run_script_file_path = os.path.join(self.submission_dir, job_file_name)
-            spec_file.write(JOB_SPEC_FILE_END % namespace)
-        else:
-          with open(run_script_file_path, 'w') as script_file:
-            script_file.write(RUN_SCRIPT % namespace)
-          os.chmod(run_script_file_path, 0O755)  # Make executable
-          with open(job_spec_file_path, 'w') as spec_file:
-            spec_file.write(JOB_SPEC_FILE % namespace)
+        with open(run_script_file_path, 'w') as script_file:
+          script_file.write(RUN_SCRIPT % namespace)
+        os.chmod(run_script_file_path, 0O755)  # Make executable
+        with open(job_spec_file_path, 'w') as spec_file:
+          spec_file.write(JOB_SPEC_FILE % namespace)
 
         submit_cmd = 'sbatch {}\n'.format(job_spec_file_path)
         submit_file.write(submit_cmd)
@@ -96,7 +72,6 @@ class Slurm_ClusterSubmission(ClusterSubmission):
       self.cuda_line = 'Requirements=CUDACapability>={}'.format(requirements['cuda_requirement'])
       self.partition = 'gpu'
       self.constraint = 'gpu'
-      self.parallel = False
       if not self.cpus==32:
         self.cpus = 32
         warn('you requested a GPU -> no parallel execution on node. requested CPU count increased to 32')
@@ -104,19 +79,7 @@ class Slurm_ClusterSubmission(ClusterSubmission):
       self.cuda_line = ''
       self.partition = 'general'
       self.constraint = ''
-      self.parallel = True
 
-      self.jobs_per_node = int(np.minimum(np.floor(32.0/self.cpus), np.floor(32000.0/self.mem)))
-      self.nnodes = int(np.ceil(self.njobs/self.jobs_per_node))
-      self.nnodes_per_submit = int(np.ceil(self.nnodes/15))
-      self.ntasks = self.nnodes_per_submit*self.jobs_per_node
-      print(self.nnodes)
-      print(self.nnodes_per_submit)
-      print(self.jobs_per_node)
-      print(self.cpus)
-      print(int(self.mem*self.njobs*self.cpus/(self.nnodes*32)))
-      self.mem_per_cpu = int(self.mem*self.njobs*self.cpus/(self.nnodes*32))
-      self.nodeMem = self.mem_per_cpu*self.cpus*self.jobs_per_node
   def submit(self):
     if self.submitted:
       raise RuntimeError('Attempt for second submission!')
@@ -152,11 +115,7 @@ class Slurm_ClusterSubmission(ClusterSubmission):
     my_submissions = [sub for sub in parsed_slurm if sub.ID in id_set]
     stati = [sub.status for sub in my_submissions]
     nums = Counter(stati)
-    if self.parallel:
-      raise NotImplementedError
-      return None
-    else:
-      return nums['R'], nums['PD'], nums['TO']+nums['S']+nums['ST']
+    return nums['R'], nums['PD'], nums['TO']+nums['S']+nums['ST']
 
   @staticmethod
   def _parse_slurm_info():
