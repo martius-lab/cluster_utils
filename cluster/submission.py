@@ -93,7 +93,7 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
   with submission:
     while not submission_status.finished:
       print(submission_status)
-      sleep(10)
+      sleep(60)
       df, params, metrics = load_cluster_results(collect_data_directory)
       completed_succesfully = len(df)
 
