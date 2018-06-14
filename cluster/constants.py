@@ -86,3 +86,42 @@ SLURM_CLUSTER_RUN_SCRIPT = '''#!/bin/bash -l
 %(cuda_line)s
 %(cmd)s
 '''
+
+SLURM_PARALLEL_CLUSTER_JOB_SPEC_FILE_START = '''#!/bin/bash -l
+# Standard output and error:
+# Initial working directory:
+#SBATCH -D ./
+# Job Name:
+#SBATCH -J %(name)s
+# Queue (Partition):
+#SBATCH --partition=%(partition)s
+# Number of nodes and MPI tasks per node:
+#SBATCH --nodes=%(nnodes_per_submit)s
+#SBATCH --ntasks=%(ntasks)s
+#SBATCH --ntasks-per-node=%(jobs_per_node)s
+#SBATCH --cpus-per-task=%(cpus)s
+#SBATCH --mem-per-cpu=%(mem_per_cpu)s
+#
+#SBATCH --mail-type=None
+#SBATCH --mail-user=your.name@tuebingen.mpg.de
+#
+# Wall clock limit:
+#SBATCH --time=24:00:00
+
+# Run the program:
+'''
+
+SLURM_PARALLEL_CLUSTER_TASK_SPEC_FILE = '''
+srun -N 1 -n 1 --exclusive -o %(run_script_file_path)s.out -e %(run_script_file_path)s.err --slurmd-debug=2 %(run_script_file_path)s > %(run_script_file_path)s.log &
+'''
+
+SLURM_PARALLEL_CLUSTER_JOB_SPEC_FILE_END = '''
+wait
+'''
+
+
+
+SLURM_PARALLEL_CLUSTER_RUN_SCRIPT = '''#!/bin/bash -l
+%(cuda_line)s
+%(cmd)s
+'''
