@@ -4,7 +4,7 @@ import shutil
 from copy import deepcopy
 
 from .analyze_results import Metaoptimizer
-from .cluster_system import Condor_ClusterSubmission
+from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
@@ -60,10 +60,14 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   generate_commands.id_number = 0
 
-  submission = Condor_ClusterSubmission(job_commands=generate_commands(),
+  cluster_type = get_cluster_type(requirements=submission_requirements)
+  if cluster_type is None:
+      raise OSError('Neither CONDOR nor SLURM was found')
+  submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name)
+                                        name=submission_name,
+                                        njobs=samples*restarts_per_setting)
 
   print('Jobs created:', generate_commands.id_number)
   return submission
