@@ -19,9 +19,13 @@ add histogram based distribution distributions
 
 some way of testing
 
-Add more examples
+Polish examples
 
 Write better readme
+
+Write docstrings
+
+Incorporate GIT info (talk with Sebastian)
 
 ## Done
 
