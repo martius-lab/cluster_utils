@@ -66,8 +66,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name,
-                                        njobs=samples*restarts_per_setting)
+                                        name=submission_name)
 
   print('Jobs created:', generate_commands.id_number)
   return submission

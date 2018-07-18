@@ -14,7 +14,7 @@ SlurmRecord = namedtuple('SlurmRecord',
 class Slurm_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, njobs):
     super().__init__()
-    self.njobs = njobs
+    self.njobs = len(job_commands)
     self.cmds = job_commands
     self.submission_dir = submission_dir
     self._process_requirements(requirements)

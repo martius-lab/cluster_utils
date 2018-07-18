@@ -10,7 +10,7 @@ init_plotting()
 submission_name = 'test'
 main_path = '/is/sg/mrolinek/Projects/Cluster_utils/example1'
 
-paths_and_files = dict(script_to_run=os.path.join(main_path, 'dummy.py'),
+paths_and_files = dict(script_to_run=os.path.join(main_path, 'main.py'),
                        result_dir=os.path.join(main_path, 'results', 'cluster', submission_name),
                        jobs_dir=os.path.join(main_path, 'jobs', submission_name))
 
