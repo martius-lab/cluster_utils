@@ -94,7 +94,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
     if not self.submitted:
       raise RuntimeError('Submission cleanup called before submission completed')
     for id in self.id_nums:
-      run(['condor_rm {}&'.format(id)], shell=True)
+      run(['condor_rm {}'.format(id)], shell=True, stderr=PIPE, stdout=PIPE)
     print('Remaining jobs killed')
     self.finished = True
 
@@ -104,6 +104,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
       return None
     id_set = set(self.id_nums)
     my_submissions = [sub for sub in parsed_condor if sub.ID.split('.')[0] in id_set]
+    self.id_nums = [sub.ID.split('.')[0] for sub in my_submissions]
     nums = Counter([sub.status for sub in my_submissions])
     return nums['R'], nums['I'], nums['H']
 
