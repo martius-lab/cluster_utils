@@ -119,7 +119,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
     condor_lines = raw.split('\n')
     condor_parsed_lines = [[item for item in line.split(' ') if item] for line in condor_lines]
     condor_parsed_lines = [line for line in condor_parsed_lines if len(line) > 8]
-    if len(condor_parsed_lines) == 0:
+    if len(condor_parsed_lines) == 0 or 'SUBMITTED' not in raw:q
       warn('Condor_q currently unavailable')
       return None
 
