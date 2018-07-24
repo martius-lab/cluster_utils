@@ -34,6 +34,8 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
   latex_title = 'Cluster job \'{}\' results ({})'.format(procedure_name, today)
   latex = LatexFile(title=latex_title)
 
+  latex.add_section_from_git()
+
   latex.add_section_from_python_script('Specification', caller_python_file)
 
   summary_df = performance_summary(df, metrics)
