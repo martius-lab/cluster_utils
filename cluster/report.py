@@ -9,6 +9,7 @@ from matplotlib import rc
 from .data_analysis import *
 from .latex_utils import LatexFile
 from .utils import get_caller_file
+from .git_utils import GitConnector
 
 
 def init_plotting():
@@ -34,7 +35,10 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
   latex_title = 'Cluster job \'{}\' results ({})'.format(procedure_name, today)
   latex = LatexFile(title=latex_title)
 
-  latex.add_section_from_git()
+  # Checks if 'pwd' is part of a git repo
+  gc = GitConnector(path=os.path.dirname(caller_python_file))
+  if gc._repo is not None:
+    latex.add_generic_section('Git Meta Information', content=gc.formatted_meta_information)
 
   latex.add_section_from_python_script('Specification', caller_python_file)
 

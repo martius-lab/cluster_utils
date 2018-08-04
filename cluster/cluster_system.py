@@ -1,11 +1,7 @@
 import os
 from abc import ABC, abstractmethod
-from collections import namedtuple, Counter
-from copy import copy
-from random import shuffle
-from subprocess import run, PIPE, DEVNULL
+from subprocess import run, DEVNULL
 from warnings import warn
-import numpy as np
 
 
 class ClusterSubmission(ABC):
@@ -40,9 +36,11 @@ class ClusterSubmission(ABC):
   def check_error_msgs(self):
     pass
 
+
 from .condor_cluster_system import Condor_ClusterSubmission
 from .slurm_cluster_system import Slurm_ClusterSubmission
 from .slurm_parallel_cluster_system import Slurm_ClusterSubmissionParallel
+
 
 def get_cluster_type(requirements):
   if is_command_available('condor_q'):
@@ -60,6 +58,7 @@ def get_cluster_type(requirements):
   else:
     return None
 
+
 def is_command_available(cmd):
   try:
     run(cmd, stderr=DEVNULL, stdout=DEVNULL)
@@ -67,6 +66,6 @@ def is_command_available(cmd):
     if e.errno == os.errno.ENOENT:
       return False
     else:
-      warn('Found command, but '+cmd+' could not be executed')
+      warn('Found command, but ' + cmd + ' could not be executed')
       return True
   return True

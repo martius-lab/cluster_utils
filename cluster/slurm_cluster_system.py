@@ -1,15 +1,16 @@
 import os
-from .cluster_system import ClusterSubmission
 from collections import namedtuple, Counter
 from copy import copy
 from random import shuffle
 from subprocess import run, PIPE
 from warnings import warn
-import numpy as np
+
+from .cluster_system import ClusterSubmission
 from .constants import *
 
 SlurmRecord = namedtuple('SlurmRecord',
-                          ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
+                         ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
+
 
 class Slurm_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name):
@@ -20,7 +21,6 @@ class Slurm_ClusterSubmission(ClusterSubmission):
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})
-
 
     RUN_SCRIPT = SLURM_CLUSTER_RUN_SCRIPT
     JOB_SPEC_FILE = SLURM_CLUSTER_JOB_SPEC_FILE
@@ -36,8 +36,6 @@ class Slurm_ClusterSubmission(ClusterSubmission):
         job_file_name = '{}_{}.sh'.format(self.name, id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
         job_spec_file_path = os.path.join(self.submission_dir, 'submission_' + job_file_name)
-
-
 
         # Prepare namespace for string formatting (class vars + locals)
         namespace = copy(vars(self))
@@ -72,7 +70,7 @@ class Slurm_ClusterSubmission(ClusterSubmission):
       self.cuda_line = 'Requirements=CUDACapability>={}'.format(requirements['cuda_requirement'])
       self.partition = 'gpu'
       self.constraint = 'gpu'
-      if not self.cpus==32:
+      if not self.cpus == 32:
         self.cpus = 32
         warn('you requested a GPU -> no parallel execution on node. requested CPU count increased to 32')
     else:
@@ -115,7 +113,7 @@ class Slurm_ClusterSubmission(ClusterSubmission):
     my_submissions = [sub for sub in parsed_slurm if sub.ID in id_set]
     stati = [sub.status for sub in my_submissions]
     nums = Counter(stati)
-    return nums['R'], nums['PD'], nums['TO']+nums['S']+nums['ST']
+    return nums['R'], nums['PD'], nums['TO'] + nums['S'] + nums['ST']
 
   @staticmethod
   def _parse_slurm_info():

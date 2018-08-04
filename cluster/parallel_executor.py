@@ -1,6 +1,5 @@
 import concurrent.futures
 import os
-import sys
 from multiprocessing import cpu_count
 from subprocess import run, PIPE
 from time import sleep

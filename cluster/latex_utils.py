@@ -51,6 +51,10 @@ class LatexFile(object):
     content = '\\begin{{lstlisting}}[language=Python]\n {}\\end{{lstlisting}}'.format(raw)
     self.sections.append(section(name, content))
 
+  def add_generic_section(self, name, content):
+    self.sections.append(section(name, content))
+
+
   def add_section_from_git(self, name='Git Meta Information'):
     """
     Adds section with git meta information to the output

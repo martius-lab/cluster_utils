@@ -27,8 +27,12 @@ class ParamDict(dict):
     """ In order to support deepcopy"""
     return ParamDict([(deepcopy(k, memo), deepcopy(v, memo)) for k, v in self.items()])
 
+  def __repr__(self):
+    return json.dumps(self, indent=4, sort_keys=True)
+
 
 def recursive_objectify(nested_dict):
+  "Turns a nested_dict into a nested ParamDict"
   result = deepcopy(nested_dict)
   for k, v in result.items():
     if isinstance(v, collections.Mapping):
@@ -36,9 +40,21 @@ def recursive_objectify(nested_dict):
   return ParamDict(result)
 
 
+class SafeDict(dict):
+  """ A dict with prohibiting init from a list of pairs containing duplicates"""
+  def __init__(self, *args, **kwargs):
+    if args and not isinstance(args[0], dict):
+      keys, _ = zip(*args[0])
+      duplicates =[item for item, count in collections.Counter(keys).items() if count > 1]
+      if duplicates:
+        raise TypeError("Keys {} repeated in json parsing".format(duplicates))
+    super().__init__(*args, **kwargs)
+
+
 def load_json(file):
+  """ Safe load of a json file (doubled entries raise exception)"""
   with open(file, 'r') as f:
-    data = json.load(f)
+    data = json.load(f, object_pairs_hook=SafeDict)
   return data
 
 
@@ -128,5 +144,5 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   update_recursive(default_params, cmd_params)
   final_params = recursive_objectify(default_params)
   if verbose:
-    print(json.dumps(final_params, indent=4, sort_keys=True))
+    print(final_params)
   return final_params

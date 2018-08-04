@@ -1,6 +1,6 @@
 import os
 from .cluster_system import ClusterSubmission
-from collections import namedtuple, Counter
+from collections import namedtuple
 from copy import copy
 from random import shuffle
 from subprocess import run, PIPE

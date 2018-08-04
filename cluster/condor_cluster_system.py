@@ -5,7 +5,6 @@ from copy import copy
 from random import shuffle
 from subprocess import run, PIPE
 from warnings import warn
-import numpy as np
 from .constants import *
 
 CondorRecord = namedtuple('CondorRecord',
