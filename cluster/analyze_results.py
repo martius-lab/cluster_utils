@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from .data_analysis import *
 from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete
 from .latex_utils import LatexFile
+from .git_utils import GitConnector
 
 
 class Metaoptimizer(object):
@@ -70,6 +71,10 @@ class Metaoptimizer(object):
     today = datetime.datetime.now().strftime("%B %d, %Y")
     latex_title = 'Results of optimization procedure from ({})'.format(today)
     latex = LatexFile(latex_title)
+
+    gc = GitConnector(path=os.path.dirname(calling_script))
+    if gc._repo is not None:
+      latex.add_generic_section('Git Meta Information', content=gc.formatted_meta_information)
 
     latex.add_section_from_python_script('Specification', calling_script)
 

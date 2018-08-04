@@ -8,5 +8,5 @@ setup(name='cluster',
       author_email='michalrolinek@gmail.com',
       license='MIT',
       packages=['cluster'],
-      install_requires=['gitpython', 'pandas', 'numpy', 'matplotlib', 'pandas', 'seaborn'],
+      install_requires=[],
       zip_safe=False)
