@@ -143,6 +143,16 @@ def hashable(v):
   return True
 
 
+class RelaxedCounter(Counter):
+  """Counter class that potentially falls back to a string representation of a key"""
+  def __getitem__(self, key):
+    if key not in self.keys():
+      if str(key) in self.keys():
+        warn('String comparison used for key {}'.format(key))
+        return super().__getitem__(str(key))
+    return super().__getitem__(key)
+
+
 class Discrete(Distribution):
   def __init__(self, *, options, **kwargs):
     super().__init__(**kwargs)
@@ -156,7 +166,7 @@ class Discrete(Distribution):
     self.probs = [1.0 / len(options) for _ in options]
 
   def fit(self, samples):
-    frequencies = Counter(samples)
+    frequencies = RelaxedCounter(samples)
     # Add plus one to all frequencies to keep all options
     self.probs = [(1.0 / (len(samples) + len(self.option_list))) * (1.0 + frequencies[val]) for val in self.option_list]
     sum = np.sum(self.probs)
