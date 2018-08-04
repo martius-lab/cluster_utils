@@ -3,7 +3,7 @@ import os
 from shutil import copyfile
 from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
-
+from .git_utils import GitConnector
 
 def subsection(section_name, content):
   begin = '\\begin{{subsection}}{{{}}}\n'.format(section_name)
@@ -49,6 +49,22 @@ class LatexFile(object):
     with open(python_file) as f:
       raw = f.read()
     content = '\\begin{{lstlisting}}[language=Python]\n {}\\end{{lstlisting}}'.format(raw)
+    self.sections.append(section(name, content))
+
+  def add_section_from_git(self, name='Git Meta Information'):
+    """
+    Adds section with git meta information to the output
+
+    :return: None
+    """
+
+    gc = GitConnector()
+
+    if gc._repo is None:
+      return
+
+    content = gc.formatted_meta_information
+
     self.sections.append(section(name, content))
 
   def produce_pdf(self, output_file):
