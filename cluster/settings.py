@@ -138,8 +138,11 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if JSON_FILE_KEY in default_params:
     json_params = load_json(default_params[JSON_FILE_KEY])
     if 'default_json' in json_params:
-      print('WARNING: JSON file referencing another JSON! Ignoring...')
-    update_recursive(default_params, json_params)
+      json_base = load_json(json_params[JSON_FILE_KEY])
+    else:
+      json_base = {}
+    update_recursive(json_base, json_params)
+    update_recursive(default_params, json_base)
 
   update_recursive(default_params, cmd_params)
   final_params = recursive_objectify(default_params)
