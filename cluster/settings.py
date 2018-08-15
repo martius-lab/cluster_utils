@@ -12,7 +12,7 @@ from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
-  __getattr__ = dict.get
+  __getattr__ = dict.__getitem__
 
   def __delattr__(self, item):
     raise TypeError("Setting object not mutable after settings are fixed!")
