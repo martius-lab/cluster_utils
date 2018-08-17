@@ -1,15 +1,23 @@
-import sys
 import os
+import shutil
 from warnings import warn
+
+import git # TODO: remove
 
 class GitConnector(object):
     '''
     Class that provides meta information for git repository
     '''
 
-    def __init__(self, path=None):
-        self._path = path
+    def __init__(self, path=None, url=None, branch=None, commit=None, remove_local_copy=True):
+        self._local_path = path # local working path
+        self._orig_url = url # if given, make local copy of repo in local working path
         self._repo = None
+        self._remove_local_copy = remove_local_copy
+
+        # make local copy of repo
+        if self._orig_url is not None:
+            self._make_local_copy(branch, commit)
 
         self._init()
 
@@ -26,14 +34,29 @@ class GitConnector(object):
             return
 
         try:
-            self._repo = git.Repo(path=self._path, search_parent_directories=True)
+            self._repo = self._connect_local_repo(self._local_path)
         except git.exc.InvalidGitRepositoryError:
-            path = os.getcwd() if self._path is None else self._path
+            # Here we ignore the exception, should not affect of execution of the script
+            pass
+
+    def _connect_local_repo(self, local_path):
+        '''
+        Connects to local repo
+        :param path: path to local repo
+        :return: git.Repo object
+        '''
+
+        repo = None
+        try:
+            repo = git.Repo(path=local_path, search_parent_directories=True)
+        except git.exc.InvalidGitRepositoryError as e:
+            path = os.getcwd() if self._local_path is None else self._local_path
             warn('Could not find git repository at localtion {} or any of the parent directories'.format(path))
-            return
-        except:
-            print(sys.exc_info()[0])
             raise
+        except Exception as e:
+            raise
+
+        return repo
 
     def _get_remote_meta(self, remote_name):
         '''
@@ -76,6 +99,7 @@ class GitConnector(object):
         '''
 
         template = '''\\begin{{tabular}}{{ l l }}
+    Use local copy: & {use_local_copy}\\\\
     Working dir: & {working_dir}\\\\
     Origin: & {origin_url}\\\\
     Active branch: & {active_branch}\\\\
@@ -85,6 +109,47 @@ class GitConnector(object):
 
         return template
 
+    def _make_local_copy(self, branch='master', commit=None):
+        '''
+        Clones local working copy of the repo to avoid side effects
+
+        Exceptions that are thrown here, should be somehow handeled
+
+        :param url: path to local git repo or url to remote repo
+        :param copy_to_path: location in which repo is cloned
+        :param branch: branch to clone from
+        :param commit: checkout particular commit
+        :return: None
+        '''
+
+        remote_url = self._orig_url
+
+        # if url is local path, get url of origin from repo
+        if os.path.exists(self._orig_url):
+
+            try:
+                local_repo = self._connect_local_repo(self._orig_url)
+            except git.exc.InvalidGitRepositoryError:
+                raise
+
+            try:
+                remote = local_repo.remote('origin')
+            except ValueError:
+                warn('Remote \'origin\' does not exists in repo at {}'.format(self._orig_url))
+                raise
+
+            remote_url = remote.url
+
+        cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch)
+
+        if commit is not None:
+            # Hard reset HEAD to specific commit
+            cloned_repo.head.reset(commit=commit)
+
+    def remove_local_copy(self):
+        if self._orig_url and self._remove_local_copy:
+            shutil.rmtree(self._local_path)
+
     @property
     def meta_information(self):
 
@@ -93,6 +158,7 @@ class GitConnector(object):
             return
 
         res = dict()
+        res['use_local_copy'] = str(self._orig_url is not None) + ' (removed after done)' if self._remove_local_copy else ''
         res['working_dir'] = self._repo.working_dir
         res['origin_url'] = self._get_remote_meta('origin')['remote_url']
         res['active_branch'] = self._repo.active_branch.name
