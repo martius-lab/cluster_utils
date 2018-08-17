@@ -7,7 +7,6 @@ import pandas as pd
 from .constants import *
 from .errors import OneTimeExceptionHandler
 
-
 class SubmissionStatus(object):
   def __init__(self, total_jobs, fraction_to_finish, min_fraction_to_finish):
 
@@ -88,6 +87,9 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
                                        fraction_to_finish=fraction_need_to_finish,
                                        min_fraction_to_finish=min_fraction_to_finish)
 
+  if submission.git_conn:
+    git_conn = submission.git_conn()
+
   print('Submitting jobs ...')
   df, params, metrics = None, None, None
   with submission:
@@ -105,8 +107,12 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
       submission_status.do_checks(error_handler)
 
   print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
+  git_meta = None
+  if submission.git_conn:
+      git_meta = git_conn.formatted_meta_information
+      git_conn.remove_local_copy()
   assert df is not None
-  return df, params, metrics
+  return df, params, metrics, git_meta
 
 
 def load_dirs_containing_cluster_output(base_path):

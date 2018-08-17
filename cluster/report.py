@@ -23,7 +23,7 @@ def init_plotting():
 
 
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
-                         maximized_metrics=None, log_scale_list=None):
+                         git_meta=None, maximized_metrics=None, log_scale_list=None):
   if log_scale_list is None:
     log_scale_list = []
   if maximized_metrics is None:
@@ -36,9 +36,8 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
   latex = LatexFile(title=latex_title)
 
   # Checks if 'pwd' is part of a git repo
-  gc = GitConnector(path=os.path.dirname(caller_python_file))
-  if gc._repo is not None:
-    latex.add_generic_section('Git Meta Information', content=gc.formatted_meta_information)
+  if git_meta is not None:
+    latex.add_generic_section('Git Meta Information', content=git_meta)
 
   latex.add_section_from_python_script('Specification', caller_python_file)
 

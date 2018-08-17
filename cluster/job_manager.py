@@ -9,6 +9,7 @@ from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
+from .git_utils import GitConnector
 
 
 def ensure_empty_dir(dir_name):
@@ -32,7 +33,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
 
 def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
-                smart_naming=True):
+                smart_naming=True, git_params=None):
   # Directories and filenames
   ensure_empty_dir(paths['result_dir'])
   ensure_empty_dir(paths['jobs_dir'])
@@ -51,22 +52,30 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
         local_other_params['model_dir'] = os.path.join(paths['result_dir'], job_res_dir)
 
         update_recursive(current_setting, local_other_params)
-        setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(os.path.dirname(paths['script_to_run']))
+        setting_cwd = 'cd {}'.format(paths['git_local_path'])
+        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(paths['git_local_path'])
         base_exec_cmd = 'python3 {} {}'
-        exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+        exec_cmd = base_exec_cmd.format(os.path.join(paths['git_local_path'], paths['script_to_run']), '\"' + str(current_setting) + '\"')
         yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
 
+  git_conn = None
+  if git_params:
+      git_params['path'] = paths['git_local_path']
+      git_conn = lambda: GitConnector(**git_params)
+
   cluster_type = get_cluster_type(requirements=submission_requirements)
+  from .condor_cluster_system import Condor_ClusterSubmission
+  cluster_type = Condor_ClusterSubmission # TODO: Remove
   if cluster_type is None:
       raise OSError('Neither CONDOR nor SLURM was found')
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name)
+                                        name=submission_name,
+                                        git_conn=git_conn)
 
   print('Jobs created:', generate_commands.id_number)
   return submission

@@ -15,6 +15,12 @@ class GitConnector(object):
         self._repo = None
         self._remove_local_copy = remove_local_copy
 
+        try:
+            import git
+        except:
+            warn('Could not import git. Please install GitPython if you want to include git meta information in your report')
+            return
+
         # make local copy of repo
         if self._orig_url is not None:
             self._make_local_copy(branch, commit)
@@ -26,12 +32,6 @@ class GitConnector(object):
         Import library in a non-breaking fashion, connect to git repo
         :return: None
         '''
-
-        try:
-            import git
-        except:
-            warn('Could not import git. Please install GitPython if you want to include git meta information in your report')
-            return
 
         try:
             self._repo = self._connect_local_repo(self._local_path)
@@ -140,15 +140,21 @@ class GitConnector(object):
 
             remote_url = remote.url
 
+        print('Create local git clone of {} in {}...'.format(remote_url, self._local_path), end='')
+
         cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch)
 
         if commit is not None:
             # Hard reset HEAD to specific commit
             cloned_repo.head.reset(commit=commit)
 
+        print('Done')
+
     def remove_local_copy(self):
         if self._orig_url and self._remove_local_copy:
+            print('Remove local git clone in {}...'.format(self._local_path), end='')
             shutil.rmtree(self._local_path)
+            print('Done')
 
     @property
     def meta_information(self):

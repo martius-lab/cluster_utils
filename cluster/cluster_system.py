@@ -5,9 +5,10 @@ from warnings import warn
 
 
 class ClusterSubmission(ABC):
-  def __init__(self):
+  def __init__(self, git_conn):
     self.submitted = False
     self.finished = False
+    self.git_conn = git_conn
 
   @abstractmethod
   def submit(self):
