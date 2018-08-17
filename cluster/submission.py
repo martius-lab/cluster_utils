@@ -87,8 +87,7 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
                                        fraction_to_finish=fraction_need_to_finish,
                                        min_fraction_to_finish=min_fraction_to_finish)
 
-  if submission.git_conn:
-    git_conn = submission.git_conn()
+  git_conn = submission.git_conn()
 
   print('Submitting jobs ...')
   df, params, metrics = None, None, None
@@ -108,7 +107,7 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
 
   print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
   git_meta = None
-  if submission.git_conn:
+  if git_conn:
       git_meta = git_conn.formatted_meta_information
       git_conn.remove_local_copy()
   assert df is not None

@@ -1,8 +1,12 @@
+import sys
 import os
 import shutil
 from warnings import warn
 
-import git # TODO: remove
+try:
+    import git
+except:
+    warn('Could not import git. Please install GitPython if you want to include git meta information in your report')
 
 class GitConnector(object):
     '''
@@ -15,10 +19,7 @@ class GitConnector(object):
         self._repo = None
         self._remove_local_copy = remove_local_copy
 
-        try:
-            import git
-        except:
-            warn('Could not import git. Please install GitPython if you want to include git meta information in your report')
+        if 'git' not in sys.modules:
             return
 
         # make local copy of repo
@@ -140,7 +141,10 @@ class GitConnector(object):
 
             remote_url = remote.url
 
-        print('Create local git clone of {} in {}...'.format(remote_url, self._local_path), end='')
+        print('Create local git clone of {} in {} using branch {} and commit {}...'.format(remote_url,
+                                                                                           self._local_path,
+                                                                                           branch,
+                                                                                           commit if commit else 'latest'), end='')
 
         cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch)
 

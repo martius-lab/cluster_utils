@@ -61,21 +61,25 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   generate_commands.id_number = 0
 
-  git_conn = None
-  if git_params:
-      git_params['path'] = paths['git_local_path']
-      git_conn = lambda: GitConnector(**git_params)
+  def gen_git_conn(git_params, paths):
+    if not git_params:
+      git_params = dict()
+    git_params['path'] = paths['git_local_path']
+    def gen_git_conn_fn():
+      git_conn = GitConnector(**git_params)
+      if not git_conn._repo:
+        git_conn = None
+      return git_conn
+    return gen_git_conn_fn
 
   cluster_type = get_cluster_type(requirements=submission_requirements)
-  from .condor_cluster_system import Condor_ClusterSubmission
-  cluster_type = Condor_ClusterSubmission # TODO: Remove
   if cluster_type is None:
       raise OSError('Neither CONDOR nor SLURM was found')
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
                                         name=submission_name,
-                                        git_conn=git_conn)
+                                        git_conn=gen_git_conn(git_params, paths))
 
   print('Jobs created:', generate_commands.id_number)
   return submission
@@ -83,7 +87,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, number_of_restarts, total_rounds, fraction_that_need_to_finish,
-                                best_fraction_to_use_for_update, metric_to_optimize, minimize):
+                                eest_fraction_to_use_for_update, metric_to_optimize, minimize):
   def produce_cluster_run_all_args(distributions, iteration):
     submission_name = 'iteration_{}'.format(iteration + 1)
     return dict(submission_name=submission_name,
