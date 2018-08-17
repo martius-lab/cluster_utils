@@ -28,6 +28,7 @@ class ClusterSubmission(ABC):
 
   def __exit__(self, *args):
     self.close()
+    self.git_conn.
 
   @abstractmethod
   def get_status(self):

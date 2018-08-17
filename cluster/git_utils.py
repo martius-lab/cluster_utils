@@ -1,6 +1,8 @@
 import sys
 import os
 import shutil
+import datetime
+import tempfile
 from warnings import warn
 
 try:
@@ -180,3 +182,6 @@ class GitConnector(object):
     def formatted_meta_information(self):
 
         return self._get_latex_template().format(**self.meta_information)
+
+def temp_dir():
+    return os.path.join(tempfile.gettempdir(), datetime.datetime.now().strftime("cluster-%Y-%m-%d-%H-%M-%S-%f"))

@@ -64,7 +64,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   def gen_git_conn(git_params, paths):
     if not git_params:
       git_params = dict()
-    git_params['path'] = paths['git_local_path']
+    git_params['path'] = os.path.dirname(paths['script_to_run'])
     def gen_git_conn_fn():
       git_conn = GitConnector(**git_params)
       if not git_conn._repo:

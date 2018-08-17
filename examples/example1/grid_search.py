@@ -1,27 +1,30 @@
 import os
 import shutil
 from pathlib import Path
+import tempfile
 
 from cluster import cluster_run, execute_submission, init_plotting
 from cluster.distributions import *
 from cluster.report import produce_basic_report
+import cluster.git_utils as git_utils
 
 init_plotting()
 
 submission_name = 'test'
 home = str(Path.home())
-git_url = 'git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git' # can be url or path to local git repo
-git_local_path = os.path.join(home, 'tmp/repo') # location of local copy
+project_path = git_utils.temp_dir() # location of project files (either just some folder, a local git repo or a location
+                                  # where the specified git repo will be cloned in)
 results_path = os.path.join(home, 'tmp/results') # where results go to
+jobs_path = tempfile.mkdtemp() # where job files go to
 
-git_params = dict(url=git_url,
+git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git', # can be url or path to local repo from
+                                                                                # which url is retrieved from
+                  git_local_path=project_path,
                   branch='git_integration', # checkout specific branch
                   commit=None, # hard reset to specific commit within branch
-                  remove_local_copy=True, # remove local copy after job is done
                   ) # Set to None if not needed
 
-paths_and_files = dict(git_local_path=git_local_path,
-                       script_to_run='examples/sbl/main.py', # relative to git_local_path
+paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/sbl/main.py'),
                        result_dir=os.path.join(results_path, 'examples/sbl/results', submission_name),
                        jobs_dir=os.path.join(results_path, 'examples/sbl/jobs', submission_name))
 
