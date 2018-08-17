@@ -36,12 +36,12 @@ submission_requirements = dict(request_cpus=1,
 
 other_params = {}
 
-hyperparam_dict = {'u': list(np.linspace(-3.0, 3.0, 3)),
-                   'v': list(np.linspace(-3.0, 3.0, 3)),
-                   'w': list(np.linspace(-3.0, 3.0, 3)),
-                   'x': list(np.linspace(-3.0, 3.0, 3)),
-                   'y': list(np.linspace(-3.0, 3.0, 3)),
-                   'z': list(np.linspace(-3.0, 3.0, 3)),
+hyperparam_dict = {'u': [1],
+                   'v': [1],
+                   'w': [1],
+                   'x': [1],
+                   'y': [1],
+                   'z': [1],
                    }
 
 submit = True
