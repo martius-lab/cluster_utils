@@ -19,9 +19,9 @@ jobs_path = tempfile.mkdtemp() # where job files go to
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git', # can be url or path to local repo from
                                                                                 # which url is retrieved from
-                  git_local_path=project_path,
                   branch='git_integration', # checkout specific branch
                   commit=None, # hard reset to specific commit within branch
+                  remove_local_copy=True,
                   ) # Set to None if not needed
 
 paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/sbl/main.py'),
