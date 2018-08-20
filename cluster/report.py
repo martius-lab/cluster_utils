@@ -23,7 +23,7 @@ def init_plotting():
 
 
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
-                         git_meta=None, maximized_metrics=None, log_scale_list=None):
+                         submission_hook_stats=None, maximized_metrics=None, log_scale_list=None):
   if log_scale_list is None:
     log_scale_list = []
   if maximized_metrics is None:
@@ -35,9 +35,8 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
   latex_title = 'Cluster job \'{}\' results ({})'.format(procedure_name, today)
   latex = LatexFile(title=latex_title)
 
-  # Checks if 'pwd' is part of a git repo
-  if git_meta is not None:
-    latex.add_generic_section('Git Meta Information', content=git_meta)
+  if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
+    latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
 
   latex.add_section_from_python_script('Specification', caller_python_file)
 

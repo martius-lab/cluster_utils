@@ -6,23 +6,20 @@ import tempfile
 from cluster import cluster_run, execute_submission, init_plotting
 from cluster.distributions import *
 from cluster.report import produce_basic_report
-import cluster.git_utils as git_utils
 
 init_plotting()
 
 submission_name = 'test'
 home = str(Path.home())
-project_path = git_utils.temp_dir() # location of project files (either just some folder, a local git repo or a location
-                                  # where the specified git repo will be cloned in)
-results_path = os.path.join(home, 'tmp/results') # where results go to
-jobs_path = tempfile.mkdtemp() # where job files go to
+project_path = tempfile.mkdtemp()
+results_path = os.path.join(home, 'tmp/results')
+jobs_path = tempfile.mkdtemp()
 
-git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git', # can be url or path to local repo from
-                                                                                # which url is retrieved from
-                  branch='git_integration', # checkout specific branch
-                  commit=None, # hard reset to specific commit within branch
+git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
+                  branch='git_integration',
+                  commit=None,
                   remove_local_copy=True,
-                  ) # Set to None if not needed
+                  )
 
 paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/sbl/main.py'),
                        result_dir=os.path.join(results_path, 'examples/sbl/results', submission_name),
@@ -60,13 +57,13 @@ all_args = dict(submission_name=submission_name,
 if __name__ == '__main__':
   submission = cluster_run(**all_args)
   if submit:
-    df, all_params, metrics, git_meta = execute_submission(submission, paths_and_files['result_dir'])
+    df, all_params, metrics, submission_hook_stats = execute_submission(submission, paths_and_files['result_dir'])
     df.to_csv(os.path.join(paths_and_files['result_dir'], 'results_raw.csv'))
 
     relevant_params = list(hyperparam_dict.keys())
     output_pdf = os.path.join(paths_and_files['result_dir'], '{}_report.pdf'.format(submission_name))
-    produce_basic_report(df, relevant_params, metrics, git_meta=git_meta, procedure_name=submission_name,
-                         output_file=output_pdf)
+    produce_basic_report(df, relevant_params, metrics, submission_hook_stats=submission_hook_stats,
+                         procedure_name=submission_name, output_file=output_pdf)
 
   # copy this script to the result dir
   my_path = os.path.realpath(__file__)

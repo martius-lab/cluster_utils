@@ -5,10 +5,34 @@ from warnings import warn
 
 
 class ClusterSubmission(ABC):
-  def __init__(self, git_conn):
+  def __init__(self):
     self.submitted = False
     self.finished = False
-    self.git_conn = git_conn
+    self.submission_hooks = dict()
+
+  def register_submission_hook(self, hook):
+    assert isinstance(hook, ClusterSubmissionHook)
+    print('Register submission hook {}'.format(hook.identifier))
+    self.submission_hooks[hook.identifier] = hook
+
+  def unregister_submission_hook(self, identifier):
+    if identifier in self.submission_hooks:
+      print('Unregister submission hook {}'.format(identifier))
+      del self.submission_hooks[identifier]
+
+  def exec_pre_submission_routines(self):
+    for hook in self.submission_hooks.values():
+      hook.pre_submission_routine()
+
+  def exec_post_submission_routines(self):
+    for hook in self.submission_hooks.values():
+      hook.post_submission_routine()
+
+  def collect_stats_from_hooks(self):
+    stats = dict()
+    for hook in self.submission_hooks.values():
+      stats[hook.identifier] = hook.status
+    return stats
 
   @abstractmethod
   def submit(self):
@@ -16,15 +40,15 @@ class ClusterSubmission(ABC):
 
   def __enter__(self):
     try:
+      self.exec_pre_submission_routines()
       self.submit()
     except:
       self.close()
       print('Emergency cleanup! Check manually!')
       raise
 
-  @abstractmethod
   def close(self):
-    pass
+    self.exec_post_submission_routines()
 
   def __exit__(self, *args):
     self.close()
@@ -70,3 +94,22 @@ def is_command_available(cmd):
       warn('Found command, but ' + cmd + ' could not be executed')
       return True
   return True
+
+class ClusterSubmissionHook(ABC):
+  def __init__(self, identifier):
+    self.identifier = identifier
+    self.status = None
+
+  @abstractmethod
+  def pre_submission_routine(self):
+    pass
+
+  def post_submission_routine(self):
+    self.update_status()
+
+  @abstractmethod
+  def update_status(self):
+    pass
+
+  def __del__(self):
+    self.post_submission_routine()

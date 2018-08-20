@@ -11,8 +11,8 @@ CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
 
 class Condor_ClusterSubmission(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name, git_conn=None):
-    super().__init__(git_conn=git_conn)
+  def __init__(self, job_commands, submission_dir, requirements, name):
+    super().__init__()
     self.cmds = job_commands
     self.submission_dir = submission_dir
     self._process_requirements(requirements)
@@ -96,6 +96,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
       run(['condor_rm {}'.format(id)], shell=True, stderr=PIPE, stdout=PIPE)
     print('Remaining jobs killed')
     self.finished = True
+    super().close()
 
   def get_status(self):
     parsed_condor = self._parse_condor_info()

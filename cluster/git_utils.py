@@ -5,6 +5,8 @@ import datetime
 import tempfile
 from warnings import warn
 
+from .cluster_system import ClusterSubmissionHook
+
 try:
     import git
 except:
@@ -173,6 +175,9 @@ class GitConnector(object):
             shutil.rmtree(self._local_path)
             print('Done')
 
+    def __del__(self):
+        self.remove_local_copy()
+
     @property
     def meta_information(self):
 
@@ -194,5 +199,22 @@ class GitConnector(object):
 
         return self._get_latex_template().format(**self.meta_information)
 
-def temp_dir():
-    return os.path.join(tempfile.gettempdir(), datetime.datetime.now().strftime("cluster-%Y-%m-%d-%H-%M-%S-%f"))
+class ClusterSubmissionGitHook(ClusterSubmissionHook):
+    def __init__(self, params):
+        super().__init__(identifier='GitConnector')
+        self.params = params
+        self.git_conn = None
+
+    def pre_submission_routine(self):
+        self.git_conn = GitConnector(**self.params)
+        return self.git_conn
+
+    def post_submission_routine(self):
+        super().post_submission_routine()
+        if self.git_conn:
+            del self.git_conn
+            self.git_conn = None
+
+    def update_status(self):
+        if self.git_conn:
+            self.status = self.git_conn.formatted_meta_information

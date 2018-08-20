@@ -9,7 +9,8 @@ from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
-from .git_utils import GitConnector
+from .git_utils import ClusterSubmissionGitHook
+# from .condor_cluster_system import Condor_ClusterSubmission # TODO: remove
 
 
 def ensure_empty_dir(dir_name):
@@ -52,34 +53,28 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
         local_other_params['model_dir'] = os.path.join(paths['result_dir'], job_res_dir)
 
         update_recursive(current_setting, local_other_params)
-        setting_cwd = 'cd {}'.format(paths['git_local_path'])
-        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(paths['git_local_path'])
+        setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(os.path.dirname(paths['script_to_run']))
         base_exec_cmd = 'python3 {} {}'
-        exec_cmd = base_exec_cmd.format(os.path.join(paths['git_local_path'], paths['script_to_run']), '\"' + str(current_setting) + '\"')
+        exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
         yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
 
-  def gen_git_conn(git_params, paths):
-    if not git_params:
-      git_params = dict()
-    git_params['path'] = os.path.dirname(paths['script_to_run'])
-    def gen_git_conn_fn():
-      git_conn = GitConnector(**git_params)
-      if not git_conn._repo:
-        git_conn = None
-      return git_conn
-    return gen_git_conn_fn
-
   cluster_type = get_cluster_type(requirements=submission_requirements)
+  # cluster_type = Condor_ClusterSubmission # TODO: remove
   if cluster_type is None:
       raise OSError('Neither CONDOR nor SLURM was found')
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name,
-                                        git_conn=gen_git_conn(git_params, paths))
+                                        name=submission_name)
+
+  if not git_params:
+    git_params = dict()
+  git_params['path'] = os.path.dirname(paths['script_to_run'])
+  submission.register_submission_hook(ClusterSubmissionGitHook(git_params))
 
   print('Jobs created:', generate_commands.id_number)
   return submission

@@ -87,8 +87,6 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
                                        fraction_to_finish=fraction_need_to_finish,
                                        min_fraction_to_finish=min_fraction_to_finish)
 
-  git_conn = submission.git_conn()
-
   print('Submitting jobs ...')
   df, params, metrics = None, None, None
   with submission:
@@ -106,11 +104,9 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
       submission_status.do_checks(error_handler)
 
   print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
-  git_meta = None
-  if git_conn:
-      git_meta = git_conn.formatted_meta_information
+  submission_hook_stats = submission.collect_stats_from_hooks()
   assert df is not None
-  return df, params, metrics, git_meta
+  return df, params, metrics, submission_hook_stats
 
 
 def load_dirs_containing_cluster_output(base_path):
