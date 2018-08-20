@@ -32,8 +32,6 @@ class GitConnector(object):
         self._repo = None
         self._remove_local_copy = remove_local_copy
 
-        print('bla')
-
         if 'git' not in sys.modules:
             return
 
@@ -186,7 +184,7 @@ class GitConnector(object):
             return
 
         res = dict()
-        res['use_local_copy'] = str(self._orig_url is not None) + ' (removed after done)' if self._remove_local_copy else ''
+        res['use_local_copy'] = str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else '')
         res['working_dir'] = self._repo.working_dir
         res['origin_url'] = self._get_remote_meta('origin')['remote_url']
         res['active_branch'] = self._repo.active_branch.name
@@ -200,9 +198,16 @@ class GitConnector(object):
         return self._get_latex_template().format(**self.meta_information)
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
-    def __init__(self, params):
+    def __init__(self, params=None, paths=None):
         super().__init__(identifier='GitConnector')
         self.params = params
+
+        if not self.params:
+            self.params = dict()
+        if 'local_path' not in self.params and 'script_to_run' in paths:
+            self.params['local_path'] = os.path.dirname(paths['script_to_run'])
+
+        self.params['path'] = self.params.pop('local_path')
         self.git_conn = None
 
     def pre_submission_routine(self):

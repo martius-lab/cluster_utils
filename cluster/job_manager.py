@@ -10,7 +10,6 @@ from .settings import update_recursive
 from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
 from .git_utils import ClusterSubmissionGitHook
-# from .condor_cluster_system import Condor_ClusterSubmission # TODO: remove
 
 
 def ensure_empty_dir(dir_name):
@@ -63,7 +62,6 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   generate_commands.id_number = 0
 
   cluster_type = get_cluster_type(requirements=submission_requirements)
-  # cluster_type = Condor_ClusterSubmission # TODO: remove
   if cluster_type is None:
       raise OSError('Neither CONDOR nor SLURM was found')
   submission = cluster_type(job_commands=generate_commands(),
@@ -71,10 +69,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
                                         requirements=submission_requirements,
                                         name=submission_name)
 
-  if not git_params:
-    git_params = dict()
-  git_params['path'] = os.path.dirname(paths['script_to_run'])
-  submission.register_submission_hook(ClusterSubmissionGitHook(git_params))
+  submission.register_submission_hook(ClusterSubmissionGitHook(git_params, paths))
 
   print('Jobs created:', generate_commands.id_number)
   return submission
