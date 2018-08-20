@@ -21,9 +21,9 @@ git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   remove_local_copy=True,
                   )
 
-paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/sbl/main.py'),
-                       result_dir=os.path.join(results_path, 'examples/sbl/results', submission_name),
-                       jobs_dir=os.path.join(results_path, 'examples/sbl/jobs', submission_name))
+paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
+                       result_dir=os.path.join(results_path, 'examples/example1/results', submission_name),
+                       jobs_dir=os.path.join(results_path, 'examples/example1/jobs', submission_name))
 
 submission_requirements = dict(request_cpus=1,
                                request_gpus=0,
