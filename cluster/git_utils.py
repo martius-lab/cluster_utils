@@ -17,15 +17,6 @@ class GitConnector(object):
     Class that provides meta information for git repository
     '''
 
-    def __new__(cls, *args, **kwargs):
-        # def instanciator():
-        #    print(args, kwargs)
-        instance = super(GitConnector, cls).__new__(cls)
-        #    print(instance)
-        #    print(instance.__dict__)
-        return instance
-        #return instanciator
-
     def __init__(self, path=None, url=None, branch=None, commit=None, remove_local_copy=True):
         self._local_path = path # local working path
         self._orig_url = url # if given, make local copy of repo in local working path
