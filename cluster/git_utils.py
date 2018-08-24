@@ -164,9 +164,6 @@ class GitConnector(object):
             shutil.rmtree(self._local_path)
             print('Done')
 
-    def __del__(self):
-        self.remove_local_copy()
-
     @property
     def meta_information(self):
 
@@ -208,6 +205,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def post_submission_routine(self):
         super().post_submission_routine()
         if self.git_conn:
+            self.git_conn.remove_local_copy()
             del self.git_conn
             self.git_conn = None
 

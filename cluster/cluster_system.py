@@ -14,11 +14,15 @@ class ClusterSubmission(ABC):
     assert isinstance(hook, ClusterSubmissionHook)
     print('Register submission hook {}'.format(hook.identifier))
     self.submission_hooks[hook.identifier] = hook
+    hook.manager = self
 
   def unregister_submission_hook(self, identifier):
     if identifier in self.submission_hooks:
       print('Unregister submission hook {}'.format(identifier))
-      del self.submission_hooks[identifier]
+      self.submission_hooks.manager = None
+      self.submission_hooks.pop(identifier)
+    else:
+      raise HookNotFoundException('Hook not found. Can not unregister')
 
   def exec_pre_submission_routines(self):
     for hook in self.submission_hooks.values():
@@ -29,10 +33,7 @@ class ClusterSubmission(ABC):
       hook.post_submission_routine()
 
   def collect_stats_from_hooks(self):
-    stats = dict()
-    for hook in self.submission_hooks.values():
-      stats[hook.identifier] = hook.status
-    return stats
+    stats = {hook.identifier: hook.status for hook in self.submission_hooks.values()}
 
   @abstractmethod
   def submit(self):
@@ -62,6 +63,7 @@ class ClusterSubmission(ABC):
     pass
 
 
+from .dummy_cluster_system import Dummy_ClusterSubmission
 from .condor_cluster_system import Condor_ClusterSubmission
 from .slurm_cluster_system import Slurm_ClusterSubmission
 from .slurm_parallel_cluster_system import Slurm_ClusterSubmissionParallel
@@ -81,7 +83,11 @@ def get_cluster_type(requirements):
       print('No GPU requested, on-node parallelisation used')
       return Slurm_ClusterSubmissionParallel
   else:
-    return None
+    answere = input('No cluster detected. Do you want to run locally? [y/N]: ')
+    if answere.lower() == 'y':
+      return Dummy_ClusterSubmission
+    else:
+        return None
 
 
 def is_command_available(cmd):
@@ -99,6 +105,7 @@ class ClusterSubmissionHook(ABC):
   def __init__(self, identifier):
     self.identifier = identifier
     self.status = None
+    self.manager = None
 
   @abstractmethod
   def pre_submission_routine(self):
@@ -111,5 +118,5 @@ class ClusterSubmissionHook(ABC):
   def update_status(self):
     pass
 
-  def __del__(self):
-    self.post_submission_routine()
+class HookNotFoundException(Exception):
+  pass

@@ -11,7 +11,6 @@ from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
 from .git_utils import ClusterSubmissionGitHook
 
-
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
     shutil.rmtree(dir_name, ignore_errors=True)
@@ -63,7 +62,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   cluster_type = get_cluster_type(requirements=submission_requirements)
   if cluster_type is None:
-      raise OSError('Neither CONDOR nor SLURM was found')
+      raise OSError('Neither CONDOR nor SLURM was found. Not running locally')
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
