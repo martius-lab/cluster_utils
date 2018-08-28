@@ -145,7 +145,7 @@ class GitConnector(object):
 
             remote_url = remote.url
 
-        print('Create local git clone of {} in {} using branch {} and commit {}...'.format(remote_url,
+        print('Create local git clone of {} in {} using branch {} and commit {} ... '.format(remote_url,
                                                                                            self._local_path,
                                                                                            branch,
                                                                                            commit if commit else 'latest'), end='')
@@ -160,7 +160,7 @@ class GitConnector(object):
 
     def remove_local_copy(self):
         if self._orig_url and self._remove_local_copy:
-            print('Remove local git clone in {}...'.format(self._local_path), end='')
+            print('Remove local git clone in {} ... '.format(self._local_path), end='')
             shutil.rmtree(self._local_path)
             print('Done')
 

@@ -1,19 +1,17 @@
 import os
 import shutil
-from pathlib import Path
-import tempfile
 
 from cluster import cluster_run, execute_submission, init_plotting
 from cluster.distributions import *
 from cluster.report import produce_basic_report
+from cluster.utils import mkdtemp
 
 init_plotting()
 
-submission_name = 'test'
-home = str(Path.home())
-project_path = tempfile.mkdtemp()
-results_path = os.path.join(home, 'tmp/results')
-jobs_path = tempfile.mkdtemp()
+submission_name = 'test123'
+project_path = mkdtemp(suffix=submission_name + '-' + 'project')
+results_path = mkdtemp(suffix=submission_name + '-' + 'results')
+jobs_path = mkdtemp(suffix=submission_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
@@ -24,7 +22,7 @@ git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
 
 paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
                        result_dir=os.path.join(results_path, 'examples/example1/results', submission_name),
-                       jobs_dir=os.path.join(jobs_path, 'examples/example1/jobs', submission_name))
+                       jobs_dir=jobs_path)
 
 submission_requirements = dict(request_cpus=1,
                                request_gpus=0,

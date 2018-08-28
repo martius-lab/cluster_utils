@@ -39,8 +39,8 @@ class Dummy_ClusterSubmission(ClusterSubmission):
 
   def _process_requirements(self, requirements):
     self.cpus_per_job = requirements['request_cpus']
-    self.max_cpus = requirements.get('max_cpus', 0)
-    self.available_cpus =  min(requirements['max_cpus'], cpu_count())
+    self.max_cpus = requirements.get('max_cpus', 1)
+    self.available_cpus =  min(self.max_cpus, cpu_count())
     self.concurrent_jobs = self.available_cpus // self.cpus_per_job
 
   def submit(self):
@@ -58,9 +58,8 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     if not self.submitted:
       raise RuntimeError('Submission cleanup called before submission completed')
     for future in self.futures:
-      if future.running():
-        future.cancel()
-      concurrent.futures.wait(self.futures)
+      future.cancel()
+    concurrent.futures.wait(self.futures)
     print('Remaining jobs killed')
     self.finished = True
     super().close()

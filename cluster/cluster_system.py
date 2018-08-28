@@ -37,6 +37,7 @@ class ClusterSubmission(ABC):
 
   def collect_stats_from_hooks(self):
     stats = {hook.identifier: hook.status for hook in self.submission_hooks.values()}
+    return stats
 
   @abstractmethod
   def submit(self):
@@ -54,8 +55,9 @@ class ClusterSubmission(ABC):
   def close(self):
     self.exec_post_submission_routines()
     if self.remove_jobs_dir:
-      print('Removing jobs dir {}'.format(self.submission_dir))
+      print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
       shutil.rmtree(self.submission_dir)
+      print('Done')
 
   def __exit__(self, *args):
     self.close()
