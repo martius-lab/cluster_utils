@@ -1,11 +1,14 @@
 import os
+import shutil
 from abc import ABC, abstractmethod
 from subprocess import run, DEVNULL
 from warnings import warn
 
 
 class ClusterSubmission(ABC):
-  def __init__(self):
+  def __init__(self, submission_dir, remove_jobs_dir=True):
+    self.remove_jobs_dir = remove_jobs_dir
+    self.submission_dir = submission_dir
     self.submitted = False
     self.finished = False
     self.submission_hooks = dict()
@@ -50,6 +53,9 @@ class ClusterSubmission(ABC):
 
   def close(self):
     self.exec_post_submission_routines()
+    if self.remove_jobs_dir:
+      print('Removing jobs dir {}'.format(self.submission_dir))
+      shutil.rmtree(self.submission_dir)
 
   def __exit__(self, *args):
     self.close()

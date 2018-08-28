@@ -12,11 +12,10 @@ SlurmRecord = namedtuple('SlurmRecord',
                           ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
 
 class Slurm_ClusterSubmissionParallel(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name):
-    super().__init__()
+  def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
+    super().__init__(submission_dir, remove_jobs_dir)
     self.njobs = len(job_commands)
     self.cmds = job_commands
-    self.submission_dir = submission_dir
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})

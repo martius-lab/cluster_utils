@@ -32,7 +32,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
 
 def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
-                smart_naming=True, git_params=None):
+                smart_naming=True, remove_jobs_dir=True, git_params=None):
   # Directories and filenames
   ensure_empty_dir(paths['result_dir'])
   ensure_empty_dir(paths['jobs_dir'])
@@ -67,7 +67,8 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name)
+                                        name=submission_name,
+                                        remove_jobs_dir=remove_jobs_dir)
 
   submission.register_submission_hook(ClusterSubmissionGitHook(git_params, paths))
 
