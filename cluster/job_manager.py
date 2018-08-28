@@ -52,7 +52,8 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
         update_recursive(current_setting, local_other_params)
         setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = 'export PYTHONPATH={}'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = ':'.join([setting_pythonpath] + paths.get('custom_pythonpaths', []) + ['$PYTHONPATH'])
         base_exec_cmd = 'python3 {} {}'
         exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
         yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
