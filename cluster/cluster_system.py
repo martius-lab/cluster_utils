@@ -56,7 +56,7 @@ class ClusterSubmission(ABC):
     self.exec_post_submission_routines()
     if self.remove_jobs_dir:
       print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
-      shutil.rmtree(self.submission_dir)
+      shutil.rmtree(self.submission_dir, ignore_errors=True)
       print('Done')
 
   def __exit__(self, *args):
@@ -77,7 +77,7 @@ from .slurm_cluster_system import Slurm_ClusterSubmission
 from .slurm_parallel_cluster_system import Slurm_ClusterSubmissionParallel
 
 
-def get_cluster_type(requirements):
+def get_cluster_type(requirements, run_local=None):
   if is_command_available('condor_q'):
     print('CONDOR detected, running CONDOR job submission')
     return Condor_ClusterSubmission
@@ -91,8 +91,14 @@ def get_cluster_type(requirements):
       print('No GPU requested, on-node parallelisation used')
       return Slurm_ClusterSubmissionParallel
   else:
-    answere = input('No cluster detected. Do you want to run locally? [y/N]: ')
-    if answere.lower() == 'y':
+    if run_local is None:
+      answere = input('No cluster detected. Do you want to run locally? [y/N]: ')
+      if answere.lower() == 'y':
+        run_local = True
+      else:
+        run_local = False
+
+    if run_local:
       return Dummy_ClusterSubmission
     else:
         return None

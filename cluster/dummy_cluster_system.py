@@ -76,4 +76,5 @@ class Dummy_ClusterSubmission(ClusterSubmission):
 
   def check_error_msgs(self):
     found_err = False
+    # failed = [future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1]
     return found_err

@@ -17,8 +17,8 @@ class GitConnector(object):
     Class that provides meta information for git repository
     '''
 
-    def __init__(self, path=None, url=None, branch=None, commit=None, remove_local_copy=True):
-        self._local_path = path # local working path
+    def __init__(self, local_path=None, url=None, branch=None, commit=None, remove_local_copy=True):
+        self._local_path = local_path # local working path
         self._orig_url = url # if given, make local copy of repo in local working path
         self._repo = None
         self._remove_local_copy = remove_local_copy
@@ -54,11 +54,10 @@ class GitConnector(object):
         repo = None
         try:
             repo = git.Repo(path=local_path, search_parent_directories=True)
-        except git.exc.InvalidGitRepositoryError as e:
+        except git.exc.InvalidGitRepositoryError:
             path = os.getcwd() if self._local_path is None else self._local_path
-            warn('Could not find git repository at localtion {} or any of the parent directories'.format(path))
-            raise
-        except Exception as e:
+            raise git.exc.InvalidGitRepositoryError('Could not find git repository at localtion {} or any of the parent directories'.format(path))
+        except:
             raise
 
         return repo
@@ -140,8 +139,7 @@ class GitConnector(object):
             try:
                 remote = local_repo.remote('origin')
             except ValueError:
-                warn('Remote \'origin\' does not exists in repo at {}'.format(self._orig_url))
-                raise
+                raise ValueError('Remote \'origin\' does not exists in repo at {}'.format(self._orig_url))
 
             remote_url = remote.url
 
@@ -171,11 +169,11 @@ class GitConnector(object):
             warn('Not connected to a git repository')
             return
 
-        res = dict()
-        res['use_local_copy'] = str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else '')
-        res['working_dir'] = self._repo.working_dir
-        res['origin_url'] = self._get_remote_meta('origin')['remote_url']
-        res['active_branch'] = self._repo.active_branch.name
+        res = dict(use_local_copy= str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),
+                   working_dir=self._repo.working_dir,
+                   origin_url=self._get_remote_meta('origin')['remote_url'],
+                   active_branch=self._repo.active_branch.name,
+                  )
         res.update(self._get_commit_meta(self._repo.commit(res['active_branch'])))
 
         return res
@@ -195,11 +193,15 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         if 'local_path' not in self.params and 'script_to_run' in paths:
             self.params['local_path'] = os.path.dirname(paths['script_to_run'])
 
-        self.params['path'] = self.params.pop('local_path')
         self.git_conn = None
 
     def pre_submission_routine(self):
         self.git_conn = GitConnector(**self.params)
+        if 'url' in self.params and self.params.get('commit', None) is None:
+            commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
+            commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
+            print('Using commit {} in each iteration'.format(commit_hexsha_short))
+            self.params['commit'] = commit_hexsha_short
         return self.git_conn
 
     def post_submission_routine(self):
