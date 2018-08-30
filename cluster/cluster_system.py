@@ -15,6 +15,7 @@ class ClusterSubmission(ABC):
 
   def register_submission_hook(self, hook):
     assert isinstance(hook, ClusterSubmissionHook)
+    if hook.state > 0: return
     print('Register submission hook {}'.format(hook.identifier))
     self.submission_hooks[hook.identifier] = hook
     hook.manager = self
@@ -118,8 +119,16 @@ def is_command_available(cmd):
 class ClusterSubmissionHook(ABC):
   def __init__(self, identifier):
     self.identifier = identifier
+    self.state = None # 0: everything is fine
+                      # 1: errors encountered
     self.status = None
     self.manager = None
+
+    self.determine_state()
+
+  @abstractmethod
+  def determine_state(self):
+    pass
 
   @abstractmethod
   def pre_submission_routine(self):

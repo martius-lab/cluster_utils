@@ -185,7 +185,6 @@ class GitConnector(object):
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def __init__(self, params=None, paths=None):
-        super().__init__(identifier='GitConnector')
         self.params = params
 
         if not self.params:
@@ -194,6 +193,29 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             self.params['local_path'] = os.path.dirname(paths['script_to_run'])
 
         self.git_conn = None
+
+        super().__init__(identifier='GitConnector')
+
+        if self.state > 0:
+            print('Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook'\
+                .format(self.params['local_path'], self.identifier))
+
+    def determine_state(self):
+        self.state = 1
+
+        if 'url' in self.params:
+            self.state = 0
+        else:
+            # Check if local Path is git repo
+
+            if 'git' not in sys.modules:
+                return
+
+            try:
+                repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
+                state = 0
+            except:
+                pass
 
     def pre_submission_routine(self):
         self.git_conn = GitConnector(**self.params)
