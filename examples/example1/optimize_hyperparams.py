@@ -1,15 +1,18 @@
 import os
+from pathlib2 import Path
 
 from cluster import hyperparameter_optimization, init_plotting
 from cluster.distributions import *
 from cluster.utils import mkdtemp
+
+home = str(Path.home())
 
 init_plotting()
 
 opt_procedure_name = 'presentation'
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
-results_path = mkdtemp(suffix=opt_procedure_name + '-' + 'results')
+results_path = os.path.join(home, 'experiments/results')
 jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
