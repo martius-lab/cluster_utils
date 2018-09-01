@@ -185,10 +185,8 @@ class GitConnector(object):
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def __init__(self, params=None, paths=None):
-        self.params = params
+        self.params = params or {}
 
-        if not self.params:
-            self.params = dict()
         if 'local_path' not in self.params and 'script_to_run' in paths:
             self.params['local_path'] = os.path.dirname(paths['script_to_run'])
 
@@ -213,7 +211,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
 
             try:
                 repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
-                state = 0
+                self.state = 0
             except:
                 pass
 
