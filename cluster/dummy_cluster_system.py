@@ -6,6 +6,7 @@ from multiprocessing import cpu_count
 import concurrent.futures
 from subprocess import run, PIPE
 from .constants import *
+from warnings import warn
 
 class Dummy_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
@@ -39,9 +40,15 @@ class Dummy_ClusterSubmission(ClusterSubmission):
 
   def _process_requirements(self, requirements):
     self.cpus_per_job = requirements['request_cpus']
-    self.max_cpus = requirements.get('max_cpus', 1)
+    self.max_cpus = requirements.get('max_cpus', cpu_count())
+    if self.max_cpus <= 0:
+      raise ValueError('CPU limit must be positive. Not {}.'.format(self.max_cpus))
     self.available_cpus =  min(self.max_cpus, cpu_count())
     self.concurrent_jobs = self.available_cpus // self.cpus_per_job
+    if self.concurrent_jobs == 0:
+      warn('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
+      self.concurrent_jobs = self.available_cpus
+    assert self.concurrent_jobs > 0
 
   def submit(self):
     if self.submitted:
