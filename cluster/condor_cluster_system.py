@@ -6,6 +6,7 @@ from random import shuffle
 from subprocess import run, PIPE
 from warnings import warn
 from .constants import *
+from contextlib import suppress
 
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
@@ -130,19 +131,22 @@ class Condor_ClusterSubmission(ClusterSubmission):
   def check_error_msgs(self):
     found_err = False
     log_files = [filename for filename in os.listdir(self.submission_dir) if filename[-3:] == 'log']
-    for log_file in log_files:
-      with open(os.path.join(self.submission_dir, log_file)) as f:
-        content = f.read()
-      _, __, after = content.rpartition('return value ')
-      if after and after[0] == '1':
-        err_filename = log_file[:-3] + 'err'
-        with open(os.path.join(self.submission_dir, err_filename)) as f_err:
-          all_err = f_err.read()
-        _, tb, error_log = all_err.rpartition('Traceback')
-        exception = '{}{}'.format(tb, error_log)
-        if exception and exception not in self.exceptions_seen:
-          warn('Exception encountered -- see file {}!'.format(err_filename))
-          warn(exception)
-          self.exceptions_seen.add(exception)
-          found_err = True
-    return found_err
+    with suppress(FileNotFoundError):  # Cluster file system is unreliable. Unavailability should NOT kill the whole run
+      for log_file in log_files:
+        content = ''  # Default value if file open (silently!) fails
+        with open(os.path.join(self.submission_dir, log_file)) as f:
+          content = f.read()
+        _, __, after = content.rpartition('return value ')
+        if after and after[0] == '1':
+          err_filename = log_file[:-3] + 'err'
+          all_err = ''  # Default value if file open (silently!) fails
+          with open(os.path.join(self.submission_dir, err_filename)) as f_err:
+            all_err = f_err.read()
+          _, tb, error_log = all_err.rpartition('Traceback')
+          exception = '{}{}'.format(tb, error_log)
+          if exception and exception not in self.exceptions_seen:
+            warn('Exception encountered -- see file {}!'.format(err_filename))
+            warn(exception)
+            self.exceptions_seen.add(exception)
+            found_err = True
+      return found_err

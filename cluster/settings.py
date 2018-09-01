@@ -5,6 +5,7 @@ import os
 import sys
 from copy import deepcopy
 from warnings import warn
+import time
 
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
@@ -43,7 +44,7 @@ def recursive_objectify(nested_dict):
 class SafeDict(dict):
   """ A dict with prohibiting init from a list of pairs containing duplicates"""
   def __init__(self, *args, **kwargs):
-    if args and not isinstance(args[0], dict):
+    if args and args[0] and not isinstance(args[0], dict):
       keys, _ = zip(*args[0])
       duplicates =[item for item, count in collections.Counter(keys).items() if count > 1]
       if duplicates:
@@ -85,6 +86,11 @@ def save_metrics_params(metrics, params, save_dir=None):
   flattened_params = dict(flatten_nested_string_dict(params))
   save_dict_as_one_line_csv(flattened_params, param_file)
 
+  time_elapsed = time.time() - update_params_from_cmdline.start_time
+  if 'time_elapsed' not in metrics.keys():
+    metrics['time_elapsed'] = time_elapsed
+  else:
+    warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
 
@@ -148,4 +154,8 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   final_params = recursive_objectify(default_params)
   if verbose:
     print(final_params)
+
+  update_params_from_cmdline.start_time = time.time()
   return final_params
+
+update_params_from_cmdline.start_time = None

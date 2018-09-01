@@ -97,7 +97,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
   calling_script = get_caller_file(depth=2)
 
-  best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
+  best_jobs_to_take = min(1, int(number_of_samples * best_fraction_to_use_for_update))
 
   possible_pickle = os.path.join(base_paths_and_files['result_dir'], STATUS_PICKLE_FILE)
   meta_opt = Metaoptimizer.try_load_from_pickle(possible_pickle, distribution_list, metric_to_optimize,
