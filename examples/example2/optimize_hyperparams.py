@@ -19,8 +19,8 @@ submission_requirements = dict(request_cpus=4,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='RFC Score',
-                            number_of_samples=100,
-                            number_of_restarts=2,
+                            number_of_samples=4,
+                            number_of_restarts=1,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
                             total_rounds=10,

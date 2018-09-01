@@ -11,6 +11,7 @@ from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
 from .git_utils import ClusterSubmissionGitHook
 from .dummy_cluster_system import Dummy_ClusterSubmission
+from warnings import warn
 
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
@@ -97,7 +98,14 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
   calling_script = get_caller_file(depth=2)
 
-  best_jobs_to_take = min(1, int(number_of_samples * best_fraction_to_use_for_update))
+  best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
+  if best_jobs_to_take < 2:
+    warn('Less than 2 jobs would be taken for distribution update.'
+         'Resorting to taking exactly 2 best jobs.'
+         'Perhaps choose higher \'best_fraction_to_use_for_update\'')
+    best_jobs_to_take = 2
+    best_fraction_to_use_for_update = best_jobs_to_take / number_of_samples
+
 
   possible_pickle = os.path.join(base_paths_and_files['result_dir'], STATUS_PICKLE_FILE)
   meta_opt = Metaoptimizer.try_load_from_pickle(possible_pickle, distribution_list, metric_to_optimize,
