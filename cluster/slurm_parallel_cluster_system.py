@@ -12,11 +12,10 @@ SlurmRecord = namedtuple('SlurmRecord',
                           ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
 
 class Slurm_ClusterSubmissionParallel(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name):
-    super().__init__()
+  def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
+    super().__init__(submission_dir, remove_jobs_dir)
     self.njobs = len(job_commands)
     self.cmds = job_commands
-    self.submission_dir = submission_dir
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})
@@ -131,6 +130,7 @@ class Slurm_ClusterSubmissionParallel(ClusterSubmission):
       run(['scancel {}'.format(id)], shell=True, stdout=PIPE, stderr=PIPE)
     print('Remaining jobs killed')
     self.finished = True
+    super().close()
 
   def get_status(self):
     running_tasks = 0

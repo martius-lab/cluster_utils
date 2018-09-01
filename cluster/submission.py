@@ -7,7 +7,6 @@ import pandas as pd
 from .constants import *
 from .errors import OneTimeExceptionHandler
 
-
 class SubmissionStatus(object):
   def __init__(self, total_jobs, fraction_to_finish, min_fraction_to_finish):
 
@@ -105,8 +104,9 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
       submission_status.do_checks(error_handler)
 
   print('Submission finished ({}/{})'.format(submission_status.completed, submission_status.total))
+  submission_hook_stats = submission.collect_stats_from_hooks()
   assert df is not None
-  return df, params, metrics
+  return df, params, metrics, submission_hook_stats
 
 
 def load_dirs_containing_cluster_output(base_path):

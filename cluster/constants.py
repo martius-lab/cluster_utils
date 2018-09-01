@@ -122,3 +122,9 @@ SLURM_PARALLEL_CLUSTER_RUN_SCRIPT = '''#!/bin/bash -l
 %(cuda_line)s
 %(cmd)s
 '''
+
+LOCAL_RUN_SCRIPT = '''#!/bin/bash
+# %(name)s%(id)d
+
+%(cmd)s
+'''

@@ -1,18 +1,31 @@
 import os
 import shutil
+from pathlib2 import Path
 
 from cluster import cluster_run, execute_submission, init_plotting
 from cluster.distributions import *
 from cluster.report import produce_basic_report
+from cluster.utils import mkdtemp
+
+home = str(Path.home())
 
 init_plotting()
 
-submission_name = 'test'
-main_path = '/is/sg/mrolinek/Projects/Cluster_utils/examples/example1'
+submission_name = 'test123'
+project_path = mkdtemp(suffix=submission_name + '-' + 'project')
+results_path = os.path.join(home, 'experiments/results')
+jobs_path = mkdtemp(suffix=submission_name + '-' + 'jobs')
 
-paths_and_files = dict(script_to_run=os.path.join(main_path, 'main.py'),
-                       result_dir=os.path.join(main_path, 'results', 'cluster', submission_name),
-                       jobs_dir=os.path.join(main_path, 'jobs', submission_name))
+git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
+                  local_path=project_path,
+                  branch='git_integration',
+                  commit=None,
+                  remove_local_copy=True,
+                  )
+
+paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
+                       result_dir=os.path.join(results_path, submission_name),
+                       jobs_dir=jobs_path)
 
 submission_requirements = dict(request_cpus=1,
                                request_gpus=0,
@@ -39,18 +52,20 @@ all_args = dict(submission_name=submission_name,
                 other_params=other_params,
                 samples=None,
                 restarts_per_setting=1,
-                smart_naming=True)
+                smart_naming=True,
+                git_params=git_params
+               )
 
 if __name__ == '__main__':
   submission = cluster_run(**all_args)
   if submit:
-    df, all_params, metrics = execute_submission(submission, paths_and_files['result_dir'])
+    df, all_params, metrics, submission_hook_stats = execute_submission(submission, paths_and_files['result_dir'])
     df.to_csv(os.path.join(paths_and_files['result_dir'], 'results_raw.csv'))
 
     relevant_params = list(hyperparam_dict.keys())
     output_pdf = os.path.join(paths_and_files['result_dir'], '{}_report.pdf'.format(submission_name))
-    produce_basic_report(df, relevant_params, metrics, procedure_name=submission_name,
-                         output_file=output_pdf)
+    produce_basic_report(df, relevant_params, metrics, submission_hook_stats=submission_hook_stats,
+                         procedure_name=submission_name, output_file=output_pdf)
 
   # copy this script to the result dir
   my_path = os.path.realpath(__file__)

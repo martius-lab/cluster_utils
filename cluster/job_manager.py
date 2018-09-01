@@ -9,7 +9,8 @@ from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file
-
+from .git_utils import ClusterSubmissionGitHook
+from .dummy_cluster_system import Dummy_ClusterSubmission
 
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
@@ -32,7 +33,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
 
 def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
-                smart_naming=True):
+                smart_naming=True, remove_jobs_dir=True, git_params=None, run_local=None):
   # Directories and filenames
   ensure_empty_dir(paths['result_dir'])
   ensure_empty_dir(paths['jobs_dir'])
@@ -52,7 +53,8 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
         update_recursive(current_setting, local_other_params)
         setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = 'export PYTHONPATH={}:$PYTHONPATH'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = 'export PYTHONPATH={}'.format(os.path.dirname(paths['script_to_run']))
+        setting_pythonpath = ':'.join([setting_pythonpath] + paths.get('custom_pythonpaths', []) + ['$PYTHONPATH'])
         base_exec_cmd = 'python3 {} {}'
         exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
         yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
@@ -60,13 +62,16 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
   generate_commands.id_number = 0
 
-  cluster_type = get_cluster_type(requirements=submission_requirements)
+  cluster_type = get_cluster_type(requirements=submission_requirements, run_local=run_local)
   if cluster_type is None:
-      raise OSError('Neither CONDOR nor SLURM was found')
+      raise OSError('Neither CONDOR nor SLURM was found. Not running locally')
   submission = cluster_type(job_commands=generate_commands(),
                                         submission_dir=paths['jobs_dir'],
                                         requirements=submission_requirements,
-                                        name=submission_name)
+                                        name=submission_name,
+                                        remove_jobs_dir=remove_jobs_dir)
+
+  submission.register_submission_hook(ClusterSubmissionGitHook(git_params, paths))
 
   print('Jobs created:', generate_commands.id_number)
   return submission
@@ -74,22 +79,21 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, number_of_restarts, total_rounds, fraction_that_need_to_finish,
-                                best_fraction_to_use_for_update, metric_to_optimize, minimize):
+                                best_fraction_to_use_for_update, metric_to_optimize, minimize, remove_jobs_dir=True,
+                                git_params=None, run_local=None):
   def produce_cluster_run_all_args(distributions, iteration):
     submission_name = 'iteration_{}'.format(iteration + 1)
     return dict(submission_name=submission_name,
                 paths={'script_to_run': base_paths_and_files['script_to_run'],
                        'result_dir': os.path.join(base_paths_and_files['result_dir'], submission_name),
-                       'jobs_dir': os.path.join(base_paths_and_files['jobs_dir'], submission_name)},
+                       'jobs_dir': base_paths_and_files['jobs_dir'],
+                       'custom_pythonpaths': base_paths_and_files.get('custom_pythonpaths', [])},
                 submission_requirements=submission_requirements,
                 distribution_list=distributions,
                 other_params=other_params,
                 samples=number_of_samples,
                 restarts_per_setting=number_of_restarts,
                 smart_naming=False)
-
-  if not os.path.exists(base_paths_and_files['script_to_run']):
-    raise FileNotFoundError('File {} does not exist'.format(base_paths_and_files['script_to_run']))
 
   calling_script = get_caller_file(depth=2)
 
@@ -101,15 +105,23 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
   if meta_opt is None:
     meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize)
 
+  if git_params and 'url' in git_params:
+      git_params['remove_local_copy'] = True # always remove git repo copy in case of hyperparameter optimization
+
   for i in range(total_rounds):
     print('Iteration {} started.'.format(meta_opt.iteration + 1))
+
     all_args = produce_cluster_run_all_args(distribution_list, meta_opt.iteration)
-    submission = cluster_run(**all_args)
+    submission = cluster_run(remove_jobs_dir=remove_jobs_dir, git_params=git_params, run_local=run_local,
+                             **all_args)
+
+    run_local = isinstance(submission, Dummy_ClusterSubmission)
+
     current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
 
     print(meta_opt.get_best())
 
-    df, params, metrics = execute_submission(submission, current_result_path,
+    df, params, metrics, submission_hook_stats = execute_submission(submission, current_result_path,
                                              fraction_need_to_finish=fraction_that_need_to_finish,
                                              min_fraction_to_finish=best_fraction_to_use_for_update,
                                              ignore_errors=True)
@@ -121,7 +133,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
     meta_opt.process_new_df(df)
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
-    meta_opt.save_pdf_report(pdf_output, calling_script)
+    meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats)
     rm_dir_full(current_result_path)
     print('Intermediate results deleted...')
 
