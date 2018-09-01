@@ -100,9 +100,9 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
   best_jobs_to_take = int(number_of_samples * best_fraction_to_use_for_update)
   if best_jobs_to_take < 2:
-    warn('Less than 2 jobs would be taken for distribution update.'
-         'Resorting to taking exactly 2 best jobs.'
-         'Perhaps choose higher \'best_fraction_to_use_for_update\'')
+    warn('Less than 2 jobs would be taken for distribution update. '
+         'Resorting to taking exactly 2 best jobs. '
+         'Perhaps choose higher \'best_fraction_to_use_for_update\' ')
     best_jobs_to_take = 2
     best_fraction_to_use_for_update = best_jobs_to_take / number_of_samples
 
