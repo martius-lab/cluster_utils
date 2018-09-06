@@ -141,7 +141,10 @@ def distribution_list_sampler(distribution_list, num_samples):
     nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
     yield nested_to_dict(nested_items)
 
+from pathlib2 import Path
+home = str(Path.home())
+
 def mkdtemp(prefix='cluster_utils', suffix=''):
   new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
-  return tempfile.mkdtemp(prefix=new_prefix)
+  return tempfile.mkdtemp(prefix=new_prefix, dir=os.path.join(home, '.cache'))
 
