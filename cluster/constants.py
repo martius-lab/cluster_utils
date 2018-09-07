@@ -5,7 +5,7 @@ JSON_SETTINGS_FILE = 'settings.json'
 STATUS_PICKLE_FILE = 'status.pickle'
 FULL_DF_FILE = 'all_data.csv'
 REDUCED_DF_FILE = 'reduced_data.csv'
-STD_ENDING = '_std'
+STD_ENDING = '__std'
 
 JSON_FILE_KEY = 'default_json'
 OBJECT_SEPARATOR = '.'
