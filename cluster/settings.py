@@ -73,7 +73,7 @@ def update_recursive(d, u, defensive=False):
 def save_settings_to_json(setting_dict, model_dir):
   filename = os.path.join(model_dir, JSON_SETTINGS_FILE)
   with open(filename, 'w') as file:
-    file.write(json.dumps(setting_dict))
+    file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
 
 def save_metrics_params(metrics, params, save_dir=None):
