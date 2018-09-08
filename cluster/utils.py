@@ -148,3 +148,9 @@ def mkdtemp(prefix='cluster_utils', suffix=''):
   new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
   return tempfile.mkdtemp(prefix=new_prefix, dir=os.path.join(home, '.cache'))
 
+
+def temp_directory(prefix='cluster_utils', suffix=''):
+  new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
+  return tempfile.TemporaryDirectory(prefix=new_prefix, dir=os.path.join(home, '.cache'))
+
+
