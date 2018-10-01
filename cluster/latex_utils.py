@@ -54,22 +54,28 @@ class LatexFile(object):
   def add_generic_section(self, name, content):
     self.sections.append(section(name, content))
 
-
-  def add_section_from_git(self, name='Git Meta Information'):
-    """
-    Adds section with git meta information to the output
-
-    :return: None
-    """
-
-    gc = GitConnector()
-
-    if gc._repo is None:
-      return
-
-    content = gc.formatted_meta_information
-
+  def add_section_from_json(self, json_file, name):
+    with open(json_file) as f:
+      raw = f.read()
+    content = '\\begin{{lstlisting}}[language=json]\n {}\\end{{lstlisting}}'.format(raw)
     self.sections.append(section(name, content))
+
+
+  # def add_section_from_git(self, name='Git Meta Information'):
+  #   """
+  #   Adds section with git meta information to the output
+  #
+  #   :return: None
+  #   """
+  #
+  #   gc = GitConnector()
+  #
+  #   if gc._repo is None:
+  #     return
+  #
+  #   content = gc.formatted_meta_information
+  #
+  #   self.sections.append(section(name, content))
 
   def produce_pdf(self, output_file):
     full_content = '\n'.join(self.sections)
@@ -102,6 +108,39 @@ LATEX_BEGIN = '''
 \\usepackage[margin=1.0in]{geometry}
 
 \\usepackage{color}
+\\usepackage{xcolor}
+
+\\definecolor{eclipseStrings}{RGB}{42,0.0,255}
+\\definecolor{eclipseKeywords}{RGB}{127,0,85}
+\\colorlet{numb}{magenta!60!black}
+
+\\lstdefinelanguage{json}{
+    basicstyle=\\normalfont\\ttfamily,
+    commentstyle=\\color{eclipseStrings}, % style of comment
+    stringstyle=\\color{eclipseKeywords}, % style of strings
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\\color{white}, %only if you like
+    string=[s]{"}{"},
+    comment=[l]{:\\ "},
+    morecomment=[l]{:"},
+    literate=
+        *{0}{{{\\color{numb}0}}}{1}
+         {1}{{{\\color{numb}1}}}{1}
+         {2}{{{\\color{numb}2}}}{1}
+         {3}{{{\\color{numb}3}}}{1}
+         {4}{{{\\color{numb}4}}}{1}
+         {5}{{{\\color{numb}5}}}{1}
+         {6}{{{\\color{numb}6}}}{1}
+         {7}{{{\\color{numb}7}}}{1}
+         {8}{{{\\color{numb}8}}}{1}
+         {9}{{{\\color{numb}9}}}{1}
+}
 
 \\definecolor{codegreen}{rgb}{0,0.6,0}
 \\definecolor{codegray}{rgb}{0.5,0.5,0.5}

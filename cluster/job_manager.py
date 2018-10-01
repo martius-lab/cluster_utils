@@ -34,12 +34,12 @@ def dict_to_dirname(setting, id, smart_naming=True):
 
 def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
                 samples=None, distribution_list=None, restarts_per_setting=1,
-                smart_naming=True, remove_jobs_dir=True, git_params=None, run_local=None):
+                smart_naming=True, remove_jobs_dir=True, git_params=None, run_local=None, extra_settings=None):
   # Directories and filenames
   ensure_empty_dir(paths['result_dir'])
   ensure_empty_dir(paths['jobs_dir'])
 
-  setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list)
+  setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings)
   processed_other_params = process_other_params(other_params, hyperparam_dict, distribution_list)
 
   def generate_commands():
@@ -79,10 +79,10 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
 
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
-                                number_of_samples, number_of_restarts, total_rounds, fraction_that_need_to_finish,
+                                number_of_samples, with_restarts, total_rounds, fraction_that_need_to_finish,
                                 best_fraction_to_use_for_update, metric_to_optimize, minimize, remove_jobs_dir=True,
                                 git_params=None, run_local=None):
-  def produce_cluster_run_all_args(distributions, iteration):
+  def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
     return dict(submission_name=submission_name,
                 paths={'script_to_run': base_paths_and_files['script_to_run'],
@@ -92,9 +92,13 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                 submission_requirements=submission_requirements,
                 distribution_list=distributions,
                 other_params=other_params,
-                samples=number_of_samples,
-                restarts_per_setting=number_of_restarts,
-                smart_naming=False)
+                restarts_per_setting=1,
+                smart_naming=False,
+                remove_jobs_dir=remove_jobs_dir,
+                git_params=git_params,
+                run_local=run_local,
+                samples=num_samples,
+                extra_settings=extra_settings)
 
   calling_script = get_caller_file(depth=2)
 
@@ -109,19 +113,20 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
   possible_pickle = os.path.join(base_paths_and_files['result_dir'], STATUS_PICKLE_FILE)
   meta_opt = Metaoptimizer.try_load_from_pickle(possible_pickle, distribution_list, metric_to_optimize,
-                                                best_jobs_to_take, minimize)
+                                                best_jobs_to_take, minimize, with_restarts)
   if meta_opt is None:
-    meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize)
+    meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts)
 
   if git_params and 'url' in git_params:
-      git_params['remove_local_copy'] = True # always remove git repo copy in case of hyperparameter optimization
+      git_params['remove_local_copy'] = True  # always remove git repo copy in case of hyperparameter optimization
 
   for i in range(total_rounds):
     print('Iteration {} started.'.format(meta_opt.iteration + 1))
 
-    all_args = produce_cluster_run_all_args(distribution_list, meta_opt.iteration)
-    submission = cluster_run(remove_jobs_dir=remove_jobs_dir, git_params=git_params, run_local=run_local,
-                             **all_args)
+    extra_settings = meta_opt.settings_to_restart
+    num_samples = number_of_samples if extra_settings is None else number_of_samples - best_jobs_to_take
+    all_args = produce_cluster_run_all_args(distribution_list, meta_opt.iteration, num_samples, extra_settings)
+    submission = cluster_run(**all_args, )
 
     run_local = isinstance(submission, Dummy_ClusterSubmission)
 

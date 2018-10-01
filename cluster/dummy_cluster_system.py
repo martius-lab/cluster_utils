@@ -7,6 +7,7 @@ import concurrent.futures
 from subprocess import run, PIPE
 from .constants import *
 from warnings import warn
+from time import sleep
 
 class Dummy_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
@@ -69,6 +70,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     concurrent.futures.wait(self.futures)
     print('Remaining jobs killed')
     self.finished = True
+
     super().close()
 
   def get_status(self):

@@ -59,18 +59,25 @@ def save_dict_as_one_line_csv(dct, filename):
     writer.writerow(dct)
 
 
-def get_sample_generator(samples, hyperparam_dict, distribution_list):
+def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
   if bool(hyperparam_dict) == bool(distribution_list):
     raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
   if distribution_list and not samples:
     raise TypeError('Number of samples not specified')
   if distribution_list:
-    return distribution_list_sampler(distribution_list, samples)
-  if samples:
+    ans = distribution_list_sampler(distribution_list, samples)
+  elif samples:
     assert hyperparam_dict
-    return hyperparam_dict_samples(hyperparam_dict, samples)
+    ans = hyperparam_dict_samples(hyperparam_dict, samples)
   else:
-    return hyperparam_dict_product(hyperparam_dict)
+    ans = hyperparam_dict_product(hyperparam_dict)
+  if extra_settings is not None:
+    return itertools.chain(extra_settings, ans)
+  else:
+    return ans
+
+
+
 
 
 def process_other_params(other_params, hyperparam_dict, distribution_list):

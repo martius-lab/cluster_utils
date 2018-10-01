@@ -94,14 +94,19 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
     super().__init__(**kwargs)
     self.mean = 0.5 * (self.lower + self.upper)
     self.std = (self.upper - self.lower) / 4.0
+    self.last_mean = None
 
   def fit(self, data_points):
+    self.last_mean = self.mean
     self.mean, self.std = scipy.stats.norm.fit(np.array(data_points))
     if not (self.lower <= self.mean <= self.upper):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
-    self.samples = np.random.normal(size=howmany) * self.std + self.mean
+    mean_to_use = self.mean if self.last_mean is None else 2*self.mean - self.last_mean
+    if not (self.lower <= mean_to_use <= self.upper):
+      mean_to_use = self.mean
+    self.samples = np.random.normal(size=howmany) * self.std + mean_to_use
     super().prepare_samples(howmany)
 
   def plot(self):
@@ -119,14 +124,19 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
     self.log_upper = np.log(self.upper)
     self.log_mean = 0.5 * (self.log_lower + self.log_upper)
     self.log_std = (self.log_upper - self.log_lower) / 4.0
+    self.last_log_mean = None
 
   def fit(self, data_points):
+    self.last_log_mean = self.log_mean
     self.log_mean, self.log_std = scipy.stats.norm.fit(np.log(np.array(data_points)))
     if not (self.log_lower <= self.log_mean <= self.log_upper):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
-    self.samples = np.exp(np.random.normal(size=howmany) * self.log_std + self.log_mean)
+    log_mean_to_use = self.log_mean if self.last_log_mean is None else 2 * self.log_mean - self.last_log_mean
+    if not (self.lower <= log_mean_to_use <= self.upper):
+      log_mean_to_use = self.log_mean
+    self.samples = np.exp(np.random.normal(size=howmany) * self.log_std + log_mean_to_use)
     super().prepare_samples(howmany)
 
 

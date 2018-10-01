@@ -1,16 +1,13 @@
 import sys
 import os
 import shutil
-import datetime
-import tempfile
+from time import sleep
 from warnings import warn
 
 from .cluster_system import ClusterSubmissionHook
 
-try:
-    import git
-except:
-    warn('Could not import git. Please install GitPython if you want to include git meta information in your report')
+import git
+
 
 class GitConnector(object):
     '''
@@ -159,7 +156,9 @@ class GitConnector(object):
     def remove_local_copy(self):
         if self._orig_url and self._remove_local_copy:
             print('Remove local git clone in {} ... '.format(self._local_path), end='')
-            shutil.rmtree(self._local_path)
+            self._repo.close()
+            sleep(1.0)
+            git.rmtree(self._local_path)
             print('Done')
 
     @property
@@ -180,7 +179,6 @@ class GitConnector(object):
 
     @property
     def formatted_meta_information(self):
-
         return self._get_latex_template().format(**self.meta_information)
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):

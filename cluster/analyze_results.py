@@ -7,15 +7,18 @@ from tempfile import TemporaryDirectory
 from .data_analysis import *
 from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete
 from .latex_utils import LatexFile
+from .utils import nested_to_dict
+from .constants import *
 from .git_utils import GitConnector
 
 
 class Metaoptimizer(object):
-  def __init__(self, distribution_list, metric_to_optimize, best_jobs_to_take, minimize):
+  def __init__(self, distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts):
     self.distribution_list = distribution_list
     self.metric_to_optimize = metric_to_optimize
     self.best_jobs_to_take = best_jobs_to_take
     self.minimize = minimize
+    self.with_restarts = with_restarts
 
     self.full_df = pd.DataFrame()
     self.minimal_df = pd.DataFrame()
@@ -25,7 +28,7 @@ class Metaoptimizer(object):
     self.iteration = 0
 
   @classmethod
-  def try_load_from_pickle(cls, file, distribution_list, metric_to_optimize, best_jobs_to_take, minimize):
+  def try_load_from_pickle(cls, file, distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts):
     if not os.path.exists(file):
       return None
 
@@ -39,6 +42,7 @@ class Metaoptimizer(object):
 
     metaopt.best_jobs_to_take = best_jobs_to_take
     metaopt.distribution_list = distribution_list
+    setattr(metaopt, 'with_restarts', with_restarts)
     metaopt.params = [distr.param_name for distr in metaopt.distribution_list]
     return metaopt
 
@@ -49,8 +53,7 @@ class Metaoptimizer(object):
     self.full_df = pd.concat([self.full_df, df], ignore_index=True)
     self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
-    minimal_df = average_out(df, [self.metric_to_optimize], self.params + ['iteration'])
-    self.minimal_df = pd.concat([self.minimal_df, minimal_df], ignore_index=True)
+    self.minimal_df = average_out(self.full_df, [self.metric_to_optimize], self.params)
     self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
     current_best_params = self.get_best_params()
@@ -61,9 +64,35 @@ class Metaoptimizer(object):
     return best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
                        minimum=self.minimize, how_many=self.best_jobs_to_take)
 
+  @property
+  def settings_to_restart(self):
+    if not self.with_restarts:
+      return None
+    if not len(self.minimal_df):
+      return None
+
+    best_ones = self.get_best_params()
+
+    def restart_setting_generator():
+      length = min(len(val) for val in best_ones.values())
+      for i in range(length):
+        nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
+        yield nested_to_dict(nested_items)
+
+
+
+    return restart_setting_generator()
+
+
   def get_best(self, how_many=10):
+
     if self.iteration > 0:
-      return best_jobs(self.minimal_df, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)
+      if self.with_restarts:
+        df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.iteration // 4]
+      else:
+        df_to_use = self.minimal_df
+          
+      return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)
     else:
       return ''
 
@@ -94,13 +123,13 @@ class Metaoptimizer(object):
         filename = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
         if isinstance(distr, NumericalDistribution):
           log_scale = isinstance(distr, TruncatedLogNormal)
-          res = distribution(self.minimal_df, 'iteration', distr.param_name,
+          res = distribution(self.full_df, 'iteration', distr.param_name,
                              filename=filename, metric_logscale=log_scale,
                              transition_colors=True, x_bounds=(distr.lower, distr.upper))
           if res:
             files.append(filename)
         elif isinstance(distr, Discrete):
-          count_plot_horizontal(self.minimal_df, 'iteration', distr.param_name, filename=filename)
+          count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
           files.append(filename)
         else:
           assert False
