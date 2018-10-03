@@ -14,6 +14,8 @@ CondorRecord = namedtuple('CondorRecord',
 class Condor_ClusterSubmission(ClusterSubmission):
   def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
     super().__init__(submission_dir, remove_jobs_dir)
+
+    os.environ["MPLBACKEND"] = 'agg'
     self.cmds = job_commands
     self._process_requirements(requirements)
     self.name = name
