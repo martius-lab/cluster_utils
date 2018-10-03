@@ -30,7 +30,7 @@ other_params = {'dataset': 'MNIST'}
 
 distribution_list = [IntLogNormal(param='random_forest_args.n_estimators', bounds=(80, 500)),
                      Discrete(param='random_forest_args.criterion', options=['gini', 'entropy']),
-                     TruncatedNormal(param='random_forest_args.max_features', bounds=(0.0, 1.0)),
+                     TruncatedNormal(param='random_forest_args.max_features', bounds=(0.01, 1.0)),
                      IntNormal(param='random_forest_args.max_depth', bounds=(10, 50)),
                      Discrete(param='bootstrap', options=[True, False]),
                      Discrete(param='oob_score', options=[True, False])
