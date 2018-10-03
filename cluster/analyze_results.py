@@ -79,8 +79,6 @@ class Metaoptimizer(object):
         nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
         yield nested_to_dict(nested_items)
 
-
-
     return restart_setting_generator()
 
 
@@ -88,10 +86,10 @@ class Metaoptimizer(object):
 
     if self.iteration > 0:
       if self.with_restarts:
-        df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.iteration // 4]
+        df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= 1 + (self.iteration // 4)]
       else:
         df_to_use = self.minimal_df
-          
+
       return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)
     else:
       return ''

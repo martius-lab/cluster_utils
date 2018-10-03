@@ -41,13 +41,13 @@ all_args = dict(submission_name=submission_name,
 if __name__ == '__main__':
   submission = cluster_run(**all_args)
   if submit:
-    df, all_params, metrics = execute_submission(submission, paths_and_files['result_dir'])
+    df, all_params, metrics, submission_hook_stats = execute_submission(submission, paths_and_files['result_dir'])
     df.to_csv(os.path.join(paths_and_files['result_dir'], 'results_raw.csv'))
 
     relevant_params = list(hyperparam_dict.keys())
     output_pdf = os.path.join(paths_and_files['result_dir'], '{}_report.pdf'.format(submission_name))
     produce_basic_report(df, relevant_params, metrics, procedure_name=submission_name,
-                         output_file=output_pdf)
+                         submission_hook_stats=submission_hook_stats, output_file=output_pdf)
 
   # copy this script to the result dir
   my_path = os.path.realpath(__file__)

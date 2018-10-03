@@ -9,7 +9,7 @@ home = str(Path.home())
 
 init_plotting()
 
-opt_procedure_name = 'presentation'
+opt_procedure_name = 'presentation2'
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -17,8 +17,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='git_integration',
-                  commit=None,
+                  branch='master'
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -33,7 +32,7 @@ submission_requirements = dict(request_cpus=1,
 
 optimization_setting = dict(metric_to_optimize='result',
                             number_of_samples=200,
-                            with_restarts=True,
+                            with_restarts=False,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
                             total_rounds=12,

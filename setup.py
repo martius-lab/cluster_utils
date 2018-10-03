@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(name='cluster',
-      version='1.0',
+      version='1.1',
       description='Cluster utilities',
-      url='https://github.com/martius-lab/l4-optimizer',
+      url='https://github.com/martius-lab',
       author='Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning',
       author_email='michalrolinek@gmail.com',
       license='MIT',

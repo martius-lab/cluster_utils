@@ -18,7 +18,7 @@ jobs_path = mkdtemp(suffix=submission_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='git_integration',
+                  branch='master',
                   commit=None,
                   remove_local_copy=True,
                   )

@@ -5,7 +5,7 @@ from cluster import save_metrics_params, update_params_from_cmdline
 
 def fn_to_optimize(*, u, v, w, x, y, z, **kwargs):
   result = (x - 3.14) ** 2 + (y - 2.78) ** 2 + (u * v * w + 1) ** 2 + (u + v + w + z - 5) ** 2
-  result += 0.1 * np.random.normal()
+  result += 0.5 * np.random.normal()
   return result
 
 

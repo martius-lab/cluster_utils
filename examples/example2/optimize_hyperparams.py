@@ -12,18 +12,18 @@ base_paths_and_files = dict(script_to_run=os.path.join(main_path, 'main.py'),
                             result_dir=os.path.join(main_path, 'results', 'cluster', opt_procedure_name),
                             jobs_dir=os.path.join(main_path, 'jobs', opt_procedure_name))
 
-submission_requirements = dict(request_cpus=4,
+submission_requirements = dict(request_cpus=1,
                                request_gpus=0,
                                cuda_requirement=None,  # 'x.0' or None (GPU only)
                                memory_in_mb=4000,
-                               bid=10)
+                               bid=21)
 
 optimization_setting = dict(metric_to_optimize='RFC Score',
-                            number_of_samples=4,
-                            number_of_restarts=1,
+                            number_of_samples=100,
+                            with_restarts=True,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
-                            total_rounds=10,
+                            total_rounds=5,
                             minimize=False)
 
 other_params = {'dataset': 'MNIST'}
