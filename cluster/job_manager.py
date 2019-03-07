@@ -94,7 +94,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
   def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
     new_paths = {key: value for key, value in base_paths_and_files.items()}
-    new_paths['result_dir'] = os.path.join(new_paths['result_dir'], submission_name),
+    new_paths['result_dir'] = os.path.join(new_paths['result_dir'], submission_name)
 
     return dict(submission_name=submission_name,
                 paths=new_paths,
