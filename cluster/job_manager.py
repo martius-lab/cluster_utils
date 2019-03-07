@@ -93,11 +93,11 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                                 git_params=None, run_local=None):
   def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
+    new_paths = {key: value for key, value in base_paths_and_files.items()}
+    new_paths['result_dir'] = os.path.join(new_paths['result_dir'], submission_name),
+
     return dict(submission_name=submission_name,
-                paths={'script_to_run': base_paths_and_files['script_to_run'],
-                       'result_dir': os.path.join(base_paths_and_files['result_dir'], submission_name),
-                       'jobs_dir': base_paths_and_files['jobs_dir'],
-                       'custom_pythonpaths': base_paths_and_files.get('custom_pythonpaths', [])},
+                paths=new_paths,
                 submission_requirements=submission_requirements,
                 distribution_list=distributions,
                 other_params=other_params,
