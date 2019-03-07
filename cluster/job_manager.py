@@ -59,7 +59,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
         else:
             virtual_env_activate = ''
 
-        if 'custom_pythonpath' in paths:
+        if 'custom_pythonpaths' in paths:
             raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
 
         if 'custom_python_executable_path' in paths:
