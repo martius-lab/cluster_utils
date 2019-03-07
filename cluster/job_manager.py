@@ -54,11 +54,20 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
         update_recursive(current_setting, local_other_params)
         setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = 'export PYTHONPATH={}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = ':'.join([setting_pythonpath] + paths.get('custom_pythonpaths', []) + ['$PYTHONPATH'])
+        if 'virtual_env_path' in paths:
+            virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
+        else:
+            virtual_env_activate = ''
+
+        if 'custom_pythonpath' in paths:
+            raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
+
+        if 'custom_python_executable_path' in paths:
+            warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+
         base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {}'
         exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
-        yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
+        yield '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
