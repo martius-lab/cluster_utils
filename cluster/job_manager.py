@@ -87,10 +87,33 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
   return submission
 
 
+def update_best_job_datadirs(result_dir, model_dirs):
+    datadir = os.path.join(result_dir, 'best_jobs')
+    os.makedirs(datadir, exist_ok=True)
+
+    short_names = [model_dir.split('_')[-1].replace('/', '_') for model_dir in model_dirs]
+
+    # Copy over new best directories
+    for model_dir in model_dirs:
+        if os.path.exists(model_dir):
+            new_dir_name = model_dir.split('_')[-1].replace('/', '_')
+            new_dir_full = os.path.join(datadir, new_dir_name)
+            shutil.copytree(model_dir, new_dir_full)
+            rm_dir_full(model_dir)
+
+    # Delete old best directories if outdated
+    for dir_or_file in os.listdir(datadir):
+        full_path = os.path.join(datadir, dir_or_file)
+        if os.path.isfile(full_path):
+            continue
+        if dir_or_file not in short_names:
+            rm_dir_full(full_path)
+
+
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, with_restarts, total_rounds, fraction_that_need_to_finish,
                                 best_fraction_to_use_for_update, metric_to_optimize, minimize, remove_jobs_dir=True,
-                                git_params=None, run_local=None):
+                                git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0):
   def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
     new_paths = {key: value for key, value in base_paths_and_files.items()}
@@ -156,6 +179,11 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
     meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats)
+
+    if num_best_jobs_whose_data_is_kept > 0:
+        best_model_dirs = meta_opt.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
+        update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+
     rm_dir_full(current_result_path)
     print('Intermediate results deleted...')
 

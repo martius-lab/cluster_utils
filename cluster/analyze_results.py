@@ -81,6 +81,10 @@ class Metaoptimizer(object):
 
     return restart_setting_generator()
 
+  def best_jobs_model_dirs(self, how_many):
+    df_to_use = self.full_df[['model_dir', self.metric_to_optimize]]
+    return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['model_dir']
+
 
   def get_best(self, how_many=10):
 
