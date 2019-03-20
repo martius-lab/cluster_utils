@@ -54,11 +54,20 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
         update_recursive(current_setting, local_other_params)
         setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = 'export PYTHONPATH={}'.format(os.path.dirname(paths['script_to_run']))
-        setting_pythonpath = ':'.join([setting_pythonpath] + paths.get('custom_pythonpaths', []) + ['$PYTHONPATH'])
+        if 'virtual_env_path' in paths:
+            virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
+        else:
+            virtual_env_activate = ''
+
+        if 'custom_pythonpaths' in paths:
+            raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
+
+        if 'custom_python_executable_path' in paths:
+            warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+
         base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {}'
         exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
-        yield '\n'.join([setting_cwd, setting_pythonpath, exec_cmd])
+        yield '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
         generate_commands.id_number += 1
 
   generate_commands.id_number = 0
@@ -84,11 +93,11 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
                                 git_params=None, run_local=None):
   def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
+    new_paths = {key: value for key, value in base_paths_and_files.items()}
+    new_paths['result_dir'] = os.path.join(new_paths['result_dir'], submission_name)
+
     return dict(submission_name=submission_name,
-                paths={'script_to_run': base_paths_and_files['script_to_run'],
-                       'result_dir': os.path.join(base_paths_and_files['result_dir'], submission_name),
-                       'jobs_dir': base_paths_and_files['jobs_dir'],
-                       'custom_pythonpaths': base_paths_and_files.get('custom_pythonpaths', [])},
+                paths=new_paths,
                 submission_requirements=submission_requirements,
                 distribution_list=distributions,
                 other_params=other_params,
