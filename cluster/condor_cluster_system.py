@@ -73,6 +73,11 @@ class Condor_ClusterSubmission(ClusterSubmission):
       self.partition = 'general'
       self.constraint = ''
 
+    if self.gpus > 0 and 'gpu_memory_mb' in requirements:
+      self.gpu_memory_line = 'Requirements=TARGET.CUDAGlobalMemoryMb>{}'.format(requirements['gpu_memory_mb'])
+    else:
+      self.gpu_memory_line = ''
+
   def submit(self):
     if self.submitted:
       raise RuntimeError('Attempt for second submission!')

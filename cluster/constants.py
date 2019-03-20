@@ -47,6 +47,7 @@ request_memory=%(mem)s
 request_cpus=%(cpus)s
 request_gpus=%(gpus)s
 %(cuda_line)s
+%(gpu_memory_line)s
 on_exit_hold = (ExitCode =?= 3)
 on_exit_hold_reason = "Checkpointed, will resume"
 on_exit_hold_subcode = 2
