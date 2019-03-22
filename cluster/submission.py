@@ -89,10 +89,18 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
 
   print('Submitting jobs ...')
   df, params, metrics = None, None, None
+
+  sleep_time = 10
   with submission:
+
+    if submission.save_job_info(collect_data_directory):
+      print('Cluster job information saved to {}'.format(os.path.join(collect_data_directory, JOB_INFO_FILE)))
     while not submission_status.finished:
       print(submission_status)
-      sleep(60)
+
+      sleep(sleep_time)  # First sleep much shorter
+      sleep_time = 60
+
       df, params, metrics = load_cluster_results(collect_data_directory)
       completed_succesfully = len(df)
 
