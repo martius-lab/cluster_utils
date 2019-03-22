@@ -173,7 +173,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
         return None
 
 
-    cmd_dicts = [extract_dict_from_cmd(dct) for dct in self.submission_cmds]
+    cmd_dicts = [extract_dict_from_cmd(dct) for dct in self.cmds]
 
     if cmd_dicts is None:
       return False
