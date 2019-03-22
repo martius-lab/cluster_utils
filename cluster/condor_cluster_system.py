@@ -182,6 +182,9 @@ class Condor_ClusterSubmission(ClusterSubmission):
       if dct is not None:
         dct['cluster_job_id'] = id_num
 
+      for key in dct:   # Turn all to one element lists
+        dct[key] = [dct[key]]
+
     dfs = [pd.DataFrame.from_dict(dct) for dct in cmd_dicts if dct is not None]
     big_df = pd.concat(dfs)
     big_df = big_df.sort_values(['cluster_job_id'], ascending=True)
