@@ -1,4 +1,5 @@
 import os
+import ast
 from .cluster_system import ClusterSubmission
 from collections import namedtuple, Counter
 from copy import copy
@@ -7,6 +8,7 @@ from subprocess import run, PIPE
 from warnings import warn
 from .constants import *
 from contextlib import suppress
+import pandas as pd
 
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
@@ -157,3 +159,31 @@ class Condor_ClusterSubmission(ClusterSubmission):
             self.exceptions_seen.add(exception)
             found_err = True
       return found_err
+
+  def save_job_info(self, result_dir):
+
+    def extract_dict_from_cmd(cmd_string):
+      # Detecting dict by quotes in cmd_string (gross, I know, but is allowed to fail)
+      after_quote = cmd_string.split('\"')
+      try:
+        return ast.literal_eval(after_quote[-2])
+      except SyntaxError:
+        return None
+
+
+    cmd_dicts = [extract_dict_from_cmd(dct) for dct in self.submission_cmds]
+
+    if cmd_dicts is None:
+      return False
+
+    for dct, id_num in zip(cmd_dicts, self.id_nums):
+      if dct is not None:
+        dct['cluster_job_id'] = id_num
+
+    dfs = [pd.from_dict(dct) for dct in cmd_dicts if dct is not None]
+    big_df = pd.concat(dfs)
+    big_df = big_df.sort_values(['cluster_job_id'], ascending=True)
+    big_df.to_csv(os.path.join(result_dir, JOB_INFO_FILE))
+    return True
+
+
