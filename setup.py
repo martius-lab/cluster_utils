@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(name='cluster',
-      version='1.1',
+      version='1.2',
       description='Cluster utilities',
       url='https://github.com/martius-lab',
       author='Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning',
       author_email='michalrolinek@gmail.com',
       license='MIT',
       packages=['cluster'],
-      install_requires=[],
+      install_requires=['gitpython', 'pathlib2'],
       zip_safe=False)
