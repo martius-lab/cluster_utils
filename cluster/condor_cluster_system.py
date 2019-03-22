@@ -163,10 +163,12 @@ class Condor_ClusterSubmission(ClusterSubmission):
   def save_job_info(self, result_dir):
 
     def extract_dict_from_cmd(cmd_string):
-      # Detecting dict by quotes in cmd_string (gross, I know, but is allowed to fail)
-      after_quote = cmd_string.split('\"')
+      # Detecting dict by '{' '}' in cmd_string (gross, I know, but is allowed to fail)
+      if '{' not in cmd_string:
+        return None
+      index = cmd_string.find('{')
       try:
-        return ast.literal_eval(after_quote[-2])
+        return ast.literal_eval(cmd_string[index: -1])   # string ends with " so it is ignored 
       except SyntaxError:
         return None
 
