@@ -40,6 +40,9 @@ class ClusterSubmission(ABC):
     stats = {hook.identifier: hook.status for hook in self.submission_hooks.values()}
     return stats
 
+  def save_job_info(self, result_dir):
+    return False
+
   @abstractmethod
   def submit(self):
     pass
