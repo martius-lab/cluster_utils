@@ -18,7 +18,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
     super().__init__(submission_dir, remove_jobs_dir)
 
     os.environ["MPLBACKEND"] = 'agg'
-    self.cmds = job_commands
+    self.cmds = list(job_commands)
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})
