@@ -122,3 +122,97 @@ def count_plot_horizontal(df, time, count_over, filename=None):
   else:
     plt.show()
   plt.clf()
+
+
+def detect_scale(arr):
+  array = arr[~np.isnan(arr)]
+  data_points = len(array)
+  bins = 2 + int(np.sqrt(data_points))
+
+  log_space_data = np.log(np.abs(array) + 1e-8)
+
+  norm_densities, _ = np.histogram(array, bins=bins)
+  log_densities, _ = np.histogram(log_space_data, bins=bins)
+
+  if np.std(norm_densities) < np.std(log_densities):
+    return 'linear'
+  elif min(array) > 0:
+    return 'log'
+  else:
+    return 'symlog'
+
+
+def plot_opt_progress(df, metric, filename=None):
+  fig = plt.figure()
+  fig.set_size_inches(9, 6)
+
+  ax = sns.boxplot(x="iteration", y=metric, data=df)
+  ax.set_yscale(detect_scale(df[metric]))
+  plt.title('Optimization progress')
+
+  if filename:
+    fig.savefig(filename, format='pdf', dpi=1200)
+  else:
+    plt.show()
+  plt.clf()
+  return True
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+
+def importance_for_df(df, params, metric):
+  clf = RandomForestRegressor(n_estimators=100)
+
+  x = df[params]  # Features
+  y = df[metric]  # Labels
+
+  clf.fit(x, y)
+  return clf.feature_importances_
+
+
+def turn_catogorical_to_numerical(df, params):
+  res = df.copy()
+  non_numerical = [col for col in params if not np.issubdtype(big_df[col].dtype, np.number)]
+
+  for non_num in non_numerical:
+    res[non_num], _ = pd.factorize(res[non_num])
+
+  return res
+
+
+def importance_by_iteration(df, params, metric, minimum):
+  sorted_df = df.sort_values([metric], ascending=minimum)
+  sorted_df = turn_catogorical_to_numerical(sorted_df, params)
+
+  max_iteration = sorted_df['iteration'].max()
+  dfs = [sorted_df[sorted_df['iteration'] == 1 + i] for i in range(max_iteration)]
+
+  # Remove outliers (bottom 25% from iteration)
+  dfs = [df_[:-len(df_) // 4] for df_ in dfs]
+
+  names = [f'iteration {1 + i}' for i in range(max_iteration)]
+  importances = [importance_for_df(df_, params, metric) for df_ in dfs]
+
+  data_dict = dict(zip(names, importances))
+  feature_imp = pd.DataFrame.from_dict(data_dict)
+  feature_imp.index = params
+  return feature_imp
+
+
+def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
+  importances = importance_by_iteration(df, params, metric, minimum)
+  importances.T.plot(kind='bar', stacked=True, legend=False)
+  lgd = plt.legend(loc='lower center', bbox_to_anchor=(0.5, -1.0))
+
+  ax = plt.gca()
+  fig = plt.gcf()
+  # fig.set_size_inches(6, 12)
+
+  ax.set_title('Influence of hyperparameters on performance')
+  if filename:
+    fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')
+  else:
+    plt.show()
+  plt.clf()
+  return True

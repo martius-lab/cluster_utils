@@ -136,6 +136,15 @@ class Metaoptimizer(object):
         else:
           assert False
 
+      overall_progress_file = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
+      plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
+
+      sensitivity_file = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
+      importance_by_iteration_plot(self.full_df, self.metric_to_optimize, self.params, self.minimize,
+                                   overall_progress_file)
+
+      latex.add_section_from_figures('Overall progress', [overall_progress_file])
+      latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
       latex.add_section_from_figures('Distribution development', files)
       latex.produce_pdf(output_file)
 
