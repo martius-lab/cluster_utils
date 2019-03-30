@@ -173,7 +173,7 @@ def importance_for_df(df, params, metric):
 
 def turn_catogorical_to_numerical(df, params):
   res = df.copy()
-  non_numerical = [col for col in params if not np.issubdtype(big_df[col].dtype, np.number)]
+  non_numerical = [col for col in params if not np.issubdtype(df[col].dtype, np.number)]
 
   for non_num in non_numerical:
     res[non_num], _ = pd.factorize(res[non_num])
