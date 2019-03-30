@@ -9,7 +9,7 @@ home = str(Path.home())
 
 init_plotting()
 
-opt_procedure_name = 'dummy'
+opt_procedure_name = 'dummy2'
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -17,7 +17,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='master'
+                  branch='new_plots'
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -31,7 +31,7 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=20,
+                            number_of_samples=40,
                             with_restarts=True,
                             fraction_that_need_to_finish=0.9,
                             best_fraction_to_use_for_update=0.2,
@@ -46,6 +46,7 @@ distribution_list = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='x', bounds=(-3.0, 4.0)),
                      TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
+                     Discrete(param='flag', options=[False, True])
                      ]
 
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
