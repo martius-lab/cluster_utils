@@ -144,8 +144,6 @@ def detect_scale(arr):
 
 def plot_opt_progress(df, metric, filename=None):
   fig = plt.figure()
-  fig.set_size_inches(9, 6)
-
   ax = sns.boxplot(x="iteration", y=metric, data=df)
   ax.set_yscale(detect_scale(df[metric]))
   plt.title('Optimization progress')
