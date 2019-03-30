@@ -6,3 +6,7 @@ cluster/Untitled\.ipynb
 cluster/\.ipynb_checkpoints/
 
 cluster/__pycache__/
+
+\.ipynb_checkpoints/
+
+cluster_play\.ipynb

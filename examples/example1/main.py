@@ -6,8 +6,8 @@ from cluster import save_metrics_params, update_params_from_cmdline
 def fn_to_optimize(*, u, v, w, x, y, z, flag, **kwargs):
   result = (x - 3.14) ** 2 + (y - 2.78) ** 2 + (u * v * w + 1) ** 2 + (u + v + w + z - 5) ** 2
   result += 0.5 * np.random.normal()
-  if (x-3.14) ** 2 < 0.5 and flag:
-    result += 3.0
+  #if (x-3.14) ** 2 < 0.5 and flag:
+  #  result += 3.0
   return result
 
 
