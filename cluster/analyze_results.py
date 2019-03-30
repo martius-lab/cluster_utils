@@ -141,7 +141,7 @@ class Metaoptimizer(object):
 
       sensitivity_file = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
       importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
-                                   overall_progress_file)
+                                   sensitivity_file)
 
       latex.add_section_from_figures('Overall progress', [overall_progress_file])
       latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])

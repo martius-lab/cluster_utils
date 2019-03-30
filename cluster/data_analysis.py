@@ -207,7 +207,6 @@ def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
 
   ax = plt.gca()
   fig = plt.gcf()
-  # fig.set_size_inches(6, 12)
 
   ax.set_title('Influence of hyperparameters on performance')
   if filename:
