@@ -72,12 +72,18 @@ class Metaoptimizer(object):
       return None
 
     best_ones = self.get_best_params()
+    repeats = 1 + self.iteration // 3
 
     def restart_setting_generator():
       length = min(len(val) for val in best_ones.values())
+      job_budget = self.best_jobs_to_take
       for i in range(length):
         nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
-        yield nested_to_dict(nested_items)
+        for j in range(repeats):
+            job_budget = job_budget - 1
+            yield nested_to_dict(nested_items)
+            if job_budget == 0:
+                return
 
     return restart_setting_generator()
 
