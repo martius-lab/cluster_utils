@@ -57,6 +57,8 @@ class Metaoptimizer(object):
     self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
     current_best_params = self.get_best_params()
+    from json import dumps
+    print(dumps(current_best_params, indent=2))
     for distr in self.distribution_list:
       distr.fit(current_best_params[distr.param_name])
 
@@ -72,7 +74,7 @@ class Metaoptimizer(object):
       return None
 
     best_ones = self.get_best_params()
-    repeats = 1 + self.iteration // 3
+    repeats = 1 + self.iteration // 4
 
     def restart_setting_generator():
       length = min(len(val) for val in best_ones.values())
