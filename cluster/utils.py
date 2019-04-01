@@ -11,6 +11,12 @@ import tempfile
 from .constants import *
 
 
+def shorten_string(string, max_len):
+  if len(string) > max_len - 3:
+    return '...' + string[-max_len + 3:]
+  return string
+
+
 def get_caller_file(depth=2):
   _, filename, _, _, _, _ = inspect.stack()[depth]
   return filename

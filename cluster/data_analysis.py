@@ -240,6 +240,7 @@ def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
   ax = plt.gca()
   fig = plt.gcf()
   ax.set_yscale(detect_scale(importances.mean().values))
+  ax.set_ylabel(f'Potential change in {metric}')
   ax.set_title('Influence of hyperparameters on performance')
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')
