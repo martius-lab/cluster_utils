@@ -111,27 +111,30 @@ class Metaoptimizer(object):
       return ''
 
   def provide_recommendations(self, how_many):
-    best_jobs_df = self.get_best(how_many).reset_index()
-    best_jobs_df[self.metric_to_optimize] = list(smart_round(best_jobs_df[self.metric_to_optimize]))
+    jobs_df = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count]
 
     metric_std = self.metric_to_optimize + STD_ENDING
+    final_metric = f'expected {self.metric_to_optimize}'
     if self.with_restarts and self.minimal_restarts_to_count > 1:
-      best_jobs_df[metric_std] = list(smart_round(best_jobs_df[metric_std]))
       sign = -1.0 if self.minimize else 1.0
-      mean, std = best_jobs_df[self.metric_to_optimize], best_jobs_df[metric_std]
+      mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
 
       # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-      expected_metric = mean - (sign * std / np.sqrt(best_jobs_df[RESTART_PARAM_NAME]))
-      best_jobs_df[f'expected {self.metric_to_optimize}'] = expected_metric
+      expected_metric = mean - (sign * std / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+      jobs_df[final_metric] = expected_metric
     else:
-      best_jobs_df[f'expected {self.metric_to_optimize}'] = best_jobs_df[self.metric_to_optimize]
+      jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
 
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize, how_many=how_many).reset_index()
     del best_jobs_df[metric_std]
     del best_jobs_df[self.metric_to_optimize]
     del best_jobs_df[RESTART_PARAM_NAME]
     del best_jobs_df['index']
 
     best_jobs_df.index += 1
+    best_jobs_df[final_metric] = list(smart_round(best_jobs_df[final_metric]))
+
+
     best_jobs_df = best_jobs_df.transpose()
     best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
     return best_jobs_df
