@@ -43,7 +43,10 @@ class LatexFile(object):
     return self.sections.append(subsection(section_name, content))
 
   def add_section_from_dataframe(self, name, dataframe):
-    self.sections.append(section(name, dataframe.to_latex()))
+    begin = '\\begin{center}'
+    end = '\\end{center}'
+    section_content = '\n'.join([begin, dataframe.to_latex(), end])
+    self.sections.append(section(name, section_content))
 
   def add_section_from_python_script(self, name, python_file):
     with open(python_file) as f:

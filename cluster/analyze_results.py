@@ -144,9 +144,6 @@ class Metaoptimizer(object):
     if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
       latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
 
-
-    latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
-
     tmp_nums = count()
     files = []
     with TemporaryDirectory() as tmpdir:
@@ -172,7 +169,8 @@ class Metaoptimizer(object):
       importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
                                    sensitivity_file)
 
-      latex.add_section_from_figures('Overall progress', [overall_progress_file])
+      latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
+      latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
       latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
       latex.add_section_from_figures('Distribution development', files)
       latex.add_section_from_python_script('Specification', calling_script)
