@@ -57,7 +57,6 @@ class Metaoptimizer(object):
     self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
     current_best_params = self.get_best_params()
-    from json import dumps
     for distr in self.distribution_list:
       distr.fit(current_best_params[distr.param_name])
 
@@ -83,7 +82,6 @@ class Metaoptimizer(object):
         for j in range(repeats):
             job_budget = job_budget - 1
             to_restart = nested_to_dict(nested_items)
-            print(to_restart)
             yield to_restart
             if job_budget == 0:
                 return
