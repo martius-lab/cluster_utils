@@ -125,7 +125,7 @@ class Metaoptimizer(object):
     else:
       jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
 
-    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize, how_many=how_many).reset_index()
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[:how_many].reset_index()
     del best_jobs_df[metric_std]
     del best_jobs_df[self.metric_to_optimize]
     del best_jobs_df[RESTART_PARAM_NAME]
