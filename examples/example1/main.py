@@ -26,6 +26,6 @@ params = update_params_from_cmdline(default_params=default_params)
 
 result = fn_to_optimize(**params)
 
-metrics = {'result': result}
+metrics = {'result': result, 'noiseless_result': fn_to_optimize(**params, noisy=False)}
 save_metrics_params(metrics, params)
 print(result)
