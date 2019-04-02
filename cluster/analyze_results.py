@@ -118,7 +118,7 @@ class Metaoptimizer(object):
       sign = -1.0 if self.minimize else 1.0
       mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
       median_std = jobs_df[metric_std].median()
-      print('Median noise noise over restarts')
+      print('Median noise noise over restarts', median_std)
 
       # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
       expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
