@@ -39,7 +39,7 @@ class Metaoptimizer(object):
     for distr in distribution_list:
       if distr.param_name in metaopt.params:
         print(f'refitting {distr.param_name}...')
-        print(f'before {distr.__dict__}')
+        print(f'before {metaopt.distr.__dict__}')
         distr.fit(current_best_params[distr.param_name])
         print(f'after {distr.__dict__}')
 
