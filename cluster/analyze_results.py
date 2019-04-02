@@ -1,6 +1,7 @@
 import datetime
 import os
 import pickle
+import numpy as np
 from itertools import count
 from tempfile import TemporaryDirectory
 
@@ -38,10 +39,7 @@ class Metaoptimizer(object):
     current_best_params = metaopt.get_best_params()
     for distr, meta_distr in zip(distribution_list, metaopt.distribution_list):
       if distr.param_name in metaopt.params:
-        print(f'refitting {distr.param_name}...')
-        print(f'before {meta_distr.__dict__}')
         distr.fit(current_best_params[distr.param_name])
-        print(f'after {distr.__dict__}')
 
     metaopt.best_jobs_to_take = best_jobs_to_take
     metaopt.distribution_list = distribution_list
@@ -120,9 +118,10 @@ class Metaoptimizer(object):
       sign = -1.0 if self.minimize else 1.0
       mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
       median_std = jobs_df[metric_std].median()
+      print('Median noise noise over restarts')
 
       # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-      expected_metric = mean - (sign * (std+median_std) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+      expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
       jobs_df[final_metric] = expected_metric
     else:
       jobs_df[final_metric] = jobs_df[self.metric_to_optimize]

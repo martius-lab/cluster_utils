@@ -31,11 +31,11 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=50,
+                            number_of_samples=100,
                             with_restarts=True,
                             fraction_that_need_to_finish=0.9,
-                            best_fraction_to_use_for_update=0.3,
-                            total_rounds=25,
+                            best_fraction_to_use_for_update=0.2,
+                            total_rounds=15,
                             minimize=True)
 
 other_params = {}
