@@ -119,10 +119,10 @@ class Metaoptimizer(object):
     if self.with_restarts and self.minimal_restarts_to_count > 1:
       sign = -1.0 if self.minimize else 1.0
       mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
-      mean_std = jobs_df[metric_std].mean()
+      median_std = jobs_df[metric_std].median()
 
       # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-      expected_metric = mean - (sign * (std+mean_std) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+      expected_metric = mean - (sign * (std+median_std) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
       jobs_df[final_metric] = expected_metric
     else:
       jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
