@@ -235,11 +235,12 @@ def compute_performance_gains(df, params, metric, minimum):
 def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
   importances = compute_performance_gains(df, params, metric, minimum)
   importances.T.plot(kind='bar', stacked=True, legend=False)
-  lgd = plt.legend(loc='lower center', bbox_to_anchor=(0.5, -1.0))
+  lgd = plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.55), ncol=2)
 
   ax = plt.gca()
   fig = plt.gcf()
   ax.set_yscale(detect_scale(importances.mean().values))
+  ax.set_ylabel(f'Potential change in {metric}')
   ax.set_title('Influence of hyperparameters on performance')
   if filename:
     fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')

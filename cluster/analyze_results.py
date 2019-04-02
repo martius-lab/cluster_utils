@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from .data_analysis import *
 from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete
 from .latex_utils import LatexFile
-from .utils import nested_to_dict
+from .utils import nested_to_dict, shorten_string
 from .constants import *
 from .git_utils import GitConnector
 
@@ -57,8 +57,6 @@ class Metaoptimizer(object):
     self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
     current_best_params = self.get_best_params()
-    from json import dumps
-    print(dumps(current_best_params, indent=2))
     for distr in self.distribution_list:
       distr.fit(current_best_params[distr.param_name])
 
@@ -83,7 +81,8 @@ class Metaoptimizer(object):
         nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
         for j in range(repeats):
             job_budget = job_budget - 1
-            yield nested_to_dict(nested_items)
+            to_restart = nested_to_dict(nested_items)
+            yield to_restart
             if job_budget == 0:
                 return
 
@@ -94,17 +93,50 @@ class Metaoptimizer(object):
     return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['model_dir']
 
 
+  @property
+  def minimal_restarts_to_count(self):
+    if self.with_restarts:
+      return 1 + (self.iteration // 4)
+    else:
+      return 1
+
   def get_best(self, how_many=10):
 
     if self.iteration > 0:
-      if self.with_restarts:
-        df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= 1 + (self.iteration // 4)]
-      else:
-        df_to_use = self.minimal_df
-
+      df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count]
       return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)
     else:
       return ''
+
+  def provide_recommendations(self, how_many):
+    jobs_df = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count].copy()
+
+    metric_std = self.metric_to_optimize + STD_ENDING
+    final_metric = f'expected {self.metric_to_optimize}'
+    if self.with_restarts and self.minimal_restarts_to_count > 1:
+      sign = -1.0 if self.minimize else 1.0
+      mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
+      mean_std = jobs_df[metric_std].mean()
+
+      # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
+      expected_metric = mean - (sign * (std+mean_std) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+      jobs_df[final_metric] = expected_metric
+    else:
+      jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
+
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[:how_many].reset_index()
+    del best_jobs_df[metric_std]
+    del best_jobs_df[self.metric_to_optimize]
+    del best_jobs_df[RESTART_PARAM_NAME]
+    del best_jobs_df['index']
+
+    best_jobs_df.index += 1
+    best_jobs_df[final_metric] = list(smart_round(best_jobs_df[final_metric]))
+
+
+    best_jobs_df = best_jobs_df.transpose()
+    best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
+    return best_jobs_df
 
   def save_pdf_report(self, output_file, calling_script, submission_hook_stats):
     today = datetime.datetime.now().strftime("%B %d, %Y")
@@ -113,18 +145,6 @@ class Metaoptimizer(object):
 
     if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
       latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
-
-    latex.add_section_from_python_script('Specification', calling_script)
-
-    best_jobs_df = self.get_best(10).reset_index()
-    best_jobs_df[self.metric_to_optimize] = list(smart_round(best_jobs_df[self.metric_to_optimize]))
-
-    metric_std = self.metric_to_optimize + STD_ENDING
-    best_jobs_df[metric_std] = list(smart_round(best_jobs_df[metric_std]))
-    del best_jobs_df['index']
-    best_jobs_df.index += 1
-    best_jobs_df = best_jobs_df.transpose()
-    latex.add_section_from_dataframe('Overall best jobs', best_jobs_df)
 
     tmp_nums = count()
     files = []
@@ -151,9 +171,11 @@ class Metaoptimizer(object):
       importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
                                    sensitivity_file)
 
-      latex.add_section_from_figures('Overall progress', [overall_progress_file])
+      latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
+      latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
       latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
       latex.add_section_from_figures('Distribution development', files)
+      latex.add_section_from_python_script('Specification', calling_script)
       latex.produce_pdf(output_file)
 
   def save_data_and_self(self, directory):
