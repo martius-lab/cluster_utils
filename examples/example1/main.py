@@ -8,7 +8,6 @@ def fn_to_optimize(*, u, v, w, x, y, z, flag, **kwargs):
   result += 0.5 * np.random.normal()
   #if (x-3.14) ** 2 < 0.5 and flag:
   #  result += 3.0
-  return 1
   return result
 
 

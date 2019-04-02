@@ -149,7 +149,7 @@ class GitConnector(object):
 
         if commit is not None:
             # Hard reset HEAD to specific commit
-            cloned_repo.head.reset(commit=commit)
+            cloned_repo.head.reset(commit=commit, working_tree=True)
 
         print('Done')
 
