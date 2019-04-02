@@ -97,13 +97,13 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
     self.last_mean = None
 
   def fit(self, data_points):
-    self.last_mean = self.mean
     self.mean, self.std = scipy.stats.norm.fit(np.array(data_points))
     if not (self.lower <= self.mean <= self.upper):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
     mean_to_use = self.mean if self.last_mean is None else 2*self.mean - self.last_mean
+    self.last_mean = self.mean
     if not (self.lower <= mean_to_use <= self.upper):
       mean_to_use = self.mean
     self.samples = np.random.normal(size=howmany) * self.std + mean_to_use
