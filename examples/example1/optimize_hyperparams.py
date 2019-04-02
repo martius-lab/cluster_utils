@@ -17,7 +17,8 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='new_plots'
+                  branch='new_plots',
+                  commit='073270f5299057205b17cd9eaa7b930ce7e54f51'
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
