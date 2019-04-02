@@ -38,6 +38,7 @@ class Metaoptimizer(object):
     current_best_params = metaopt.get_best_params()
     for distr in distribution_list:
       if distr.param_name in metaopt.params:
+        print(f'refitting {distr.param_name}...')
         distr.fit(current_best_params[distr.param_name])
 
     metaopt.best_jobs_to_take = best_jobs_to_take
