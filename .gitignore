@@ -10,3 +10,9 @@ cluster/__pycache__/
 \.ipynb_checkpoints/
 
 cluster_play\.ipynb
+
+examples/example1/metrics\.csv
+
+examples/example1/param_choice\.csv
+
+examples/example1/settings\.json
