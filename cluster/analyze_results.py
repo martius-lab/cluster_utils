@@ -36,10 +36,10 @@ class Metaoptimizer(object):
     if (metric_to_optimize, minimize) != (metaopt.metric_to_optimize, metaopt.minimize):
       raise ValueError('Attempted to continue but optimizes a different metric!')
     current_best_params = metaopt.get_best_params()
-    for distr in distribution_list:
+    for distr, meta_distr in zip(distribution_list, metaopt.distribution_list):
       if distr.param_name in metaopt.params:
         print(f'refitting {distr.param_name}...')
-        print(f'before {metaopt.distr.__dict__}')
+        print(f'before {meta_distr.__dict__}')
         distr.fit(current_best_params[distr.param_name])
         print(f'after {distr.__dict__}')
 
