@@ -1,5 +1,5 @@
 import os
-import shutil
+from .utils import rm_dir_full
 from abc import ABC, abstractmethod
 from subprocess import run, DEVNULL
 from warnings import warn
@@ -60,7 +60,7 @@ class ClusterSubmission(ABC):
     self.exec_post_submission_routines()
     if self.remove_jobs_dir:
       print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
-      shutil.rmtree(self.submission_dir, ignore_errors=True)
+      rm_dir_full(self.submission_dir)
       print('Done')
 
   def __exit__(self, *args):

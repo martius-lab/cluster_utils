@@ -1,6 +1,6 @@
 import sys
 import os
-import shutil
+from .utils import rm_dir_full
 from time import sleep
 from warnings import warn
 
@@ -159,6 +159,7 @@ class GitConnector(object):
             self._repo.close()
             sleep(1.0)
             git.rmtree(self._local_path)
+            rm_dir_full(self._local_path)
             print('Done')
 
     @property

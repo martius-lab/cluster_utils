@@ -7,6 +7,8 @@ import re
 import shutil
 from collections import defaultdict
 import tempfile
+from time import sleep
+from warnings import warn
 
 from .constants import *
 
@@ -38,8 +40,20 @@ def check_valid_name(string):
 
 
 def rm_dir_full(dir_name):
+  sleep(0.5)
   if os.path.exists(dir_name):
     shutil.rmtree(dir_name, ignore_errors=True)
+
+  # filesystem is sometimes slow to response
+  if os.path.exists(dir_name):
+    sleep(1.0)
+    shutil.rmtree(dir_name, ignore_errors=True)
+
+  if os.path.exists(dir_name):
+    warn(f'Removing of dir {dir_name} failed')
+
+
+
 
 
 def create_dir(dir_name):
