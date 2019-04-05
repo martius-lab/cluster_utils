@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 from .constants import *
+from .utils import shorten_string
 
 
 def performance_summary(df, metrics):
@@ -228,7 +229,7 @@ def compute_performance_gains(df, params, metric, minimum):
 
   data_dict = dict(zip(names, list(importances)))
   feature_imp = pd.DataFrame.from_dict(data_dict)
-  feature_imp.index = params
+  feature_imp.index = [shorten_string(param, 40) for param in params]
   return feature_imp
 
 

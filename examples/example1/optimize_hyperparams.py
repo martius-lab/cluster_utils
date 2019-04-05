@@ -31,9 +31,10 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=100,
+                            number_of_samples=150,
                             with_restarts=True,
                             fraction_that_need_to_finish=0.9,
+                            best_fraction_to_use_for_update=0.15,
                             total_rounds=15,
                             minimize=True)
 
