@@ -3,6 +3,7 @@ from pathlib2 import Path
 
 from cluster import hyperparameter_optimization, init_plotting
 from cluster.distributions import *
+from cluster.latex_utils import *
 from cluster.utils import mkdtemp
 
 home = str(Path.home())
@@ -49,10 +50,17 @@ distribution_list = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
                      Discrete(param='flag', options=[False, True])
                      ]
 
+def find_json(df, path_to_results, filename_generator):
+    return '/is/sg/mrolinek/Projects/mbrl/optimization_scripts/gym/halfcheetah/mpc_opt_script.json'
+
+
+
+json_hook = SectionFromJsonHook(section_title='Random script', section_generator=find_json)
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
                             submission_requirements=submission_requirements,
                             distribution_list=distribution_list,
                             other_params=other_params,
                             git_params=git_params,
                             num_best_jobs_whose_data_is_kept=5,
+                            report_hooks=[json_hook],
                             **optimization_setting)

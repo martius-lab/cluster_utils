@@ -3,6 +3,7 @@ import numpy as np
 from cluster import save_metrics_params, update_params_from_cmdline
 
 
+
 def fn_to_optimize(*, u, v, w, x, y, z, flag, noisy=True, **kwargs):
   result = (x - 3.14) ** 2 + (y - 2.78) ** 2 + (u * v * w + 1) ** 2 + (u + v + w + z - 5) ** 2
   if noisy:

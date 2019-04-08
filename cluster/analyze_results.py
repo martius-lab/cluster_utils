@@ -1,20 +1,18 @@
 import datetime
 import os
 import pickle
-import numpy as np
 from itertools import count
 from tempfile import TemporaryDirectory
 
+from .constants import *
 from .data_analysis import *
 from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete
 from .latex_utils import LatexFile
 from .utils import nested_to_dict, shorten_string
-from .constants import *
-from .git_utils import GitConnector
 
 
 class Metaoptimizer(object):
-  def __init__(self, distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts):
+  def __init__(self, distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts, report_hooks):
     self.distribution_list = distribution_list
     self.metric_to_optimize = metric_to_optimize
     self.best_jobs_to_take = best_jobs_to_take
@@ -24,12 +22,14 @@ class Metaoptimizer(object):
     self.full_df = pd.DataFrame()
     self.minimal_df = pd.DataFrame()
     self.params = [distr.param_name for distr in self.distribution_list]
+    self.report_hooks = report_hooks or []
 
     self.best_param_values = {}
     self.iteration = 0
 
   @classmethod
-  def try_load_from_pickle(cls, file, distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts):
+  def try_load_from_pickle(cls, file, distribution_list, metric_to_optimize, best_jobs_to_take, minimize,
+                           with_restarts, report_hooks):
     if not os.path.exists(file):
       return None
 
@@ -45,6 +45,7 @@ class Metaoptimizer(object):
     metaopt.distribution_list = distribution_list
     setattr(metaopt, 'with_restarts', with_restarts)
     metaopt.params = [distr.param_name for distr in metaopt.distribution_list]
+    metaopt.report_hooks = report_hooks or []
     return metaopt
 
   def process_new_df(self, df):
@@ -140,7 +141,23 @@ class Metaoptimizer(object):
     best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
     return best_jobs_df
 
-  def save_pdf_report(self, output_file, calling_script, submission_hook_stats):
+  def distribution_plots(self, filename_generator):
+    for distr in self.distribution_list:
+      filename = next(filename_generator)
+      if isinstance(distr, NumericalDistribution):
+        log_scale = isinstance(distr, TruncatedLogNormal)
+        res = distribution(self.full_df, 'iteration', distr.param_name,
+                           filename=filename, metric_logscale=log_scale,
+                           transition_colors=True, x_bounds=(distr.lower, distr.upper))
+        if res:
+          yield filename
+      elif isinstance(distr, Discrete):
+        count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
+        yield filename
+      else:
+        assert False
+
+  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
     today = datetime.datetime.now().strftime("%B %d, %Y")
     latex_title = 'Results of optimization procedure from ({})'.format(today)
     latex = LatexFile(latex_title)
@@ -148,36 +165,34 @@ class Metaoptimizer(object):
     if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
       latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
 
-    tmp_nums = count()
-    files = []
-    with TemporaryDirectory() as tmpdir:
-      for distr in self.distribution_list:
-        filename = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
-        if isinstance(distr, NumericalDistribution):
-          log_scale = isinstance(distr, TruncatedLogNormal)
-          res = distribution(self.full_df, 'iteration', distr.param_name,
-                             filename=filename, metric_logscale=log_scale,
-                             transition_colors=True, x_bounds=(distr.lower, distr.upper))
-          if res:
-            files.append(filename)
-        elif isinstance(distr, Discrete):
-          count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
-          files.append(filename)
-        else:
-          assert False
+    def filename_gen(base_path):
+      for num in count():
+        yield os.path.join(base_path, '{}.pdf'.format(num))
 
-      overall_progress_file = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
+    with TemporaryDirectory() as tmpdir:
+      file_gen = filename_gen(tmpdir)
+
+
+      overall_progress_file = next(file_gen)
       plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
 
-      sensitivity_file = os.path.join(tmpdir, '{}.pdf'.format(next(tmp_nums)))
+      sensitivity_file = next(file_gen)
       importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
                                    sensitivity_file)
+
+      distr_plot_files = self.distribution_plots(file_gen)
 
       latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
       latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
       latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
-      latex.add_section_from_figures('Distribution development', files)
+      latex.add_section_from_figures('Distribution development', distr_plot_files)
       latex.add_section_from_python_script('Specification', calling_script)
+
+      hook_args = dict(df=self.full_df,
+                       path_to_results=current_result_path)
+
+      for hook in self.report_hooks:
+        hook.write_section(latex, file_gen, hook_args)
       latex.produce_pdf(output_file)
 
   def save_data_and_self(self, directory):

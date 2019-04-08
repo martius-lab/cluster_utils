@@ -3,7 +3,7 @@ import os
 from shutil import copyfile
 from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
-from .git_utils import GitConnector
+from abc import ABC, abstractmethod
 
 def subsection(section_name, content):
   begin = '\\begin{{subsection}}{{{}}}\n'.format(section_name)
@@ -57,28 +57,11 @@ class LatexFile(object):
   def add_generic_section(self, name, content):
     self.sections.append(section(name, content))
 
-  def add_section_from_json(self, json_file, name):
+  def add_section_from_json(self, name, json_file):
     with open(json_file) as f:
       raw = f.read()
     content = '\\begin{{lstlisting}}[language=json]\n {}\\end{{lstlisting}}'.format(raw)
     self.sections.append(section(name, content))
-
-
-  # def add_section_from_git(self, name='Git Meta Information'):
-  #   """
-  #   Adds section with git meta information to the output
-  #
-  #   :return: None
-  #   """
-  #
-  #   gc = GitConnector()
-  #
-  #   if gc._repo is None:
-  #     return
-  #
-  #   content = gc.formatted_meta_information
-  #
-  #   self.sections.append(section(name, content))
 
   def produce_pdf(self, output_file):
     full_content = '\n'.join(self.sections)
@@ -96,6 +79,44 @@ class LatexFile(object):
 
 def latex_format(string):
   return string.replace('_', '-')
+
+
+class SectionHook(ABC):
+  def __init__(self, *, section_title, section_generator):
+    self.title = section_title
+    self.generator = section_generator
+
+  def write_section(self, latex_object, filename_generator, generator_args):
+    section_content = self.generator(**generator_args, filename_generator=filename_generator)
+    self.add_section(latex_object, section_content)
+
+  @abstractmethod
+  def add_section(self, latex_object, section_content):
+    pass
+
+
+class SectionFromFiguresHook(SectionHook):
+  def __init__(self, *, figure_scale=1.0, **kwargs):
+    super().__init__(**kwargs)
+    self.figure_scale = figure_scale
+
+  def add_section(self, latex_object, section_content):
+    latex_object.add_section_from_figures(self.title, section_content, common_scale=self.figure_scale)
+
+
+class SectionFromJsonHook(SectionHook):
+  def add_section(self, latex_object, section_content):
+    latex_object.add_section_from_json(name=self.title, json_file=section_content)
+
+
+class SectionFromPyHook(SectionHook):
+  def add_section(self, latex_object, section_content):
+    latex_object.add_section_from_python_script(self.title, section_content)
+
+
+class SectionFromDataframeHook(SectionHook):
+  def add_section(self, latex_object, section_content):
+    latex_object.add_section_from_dataframe(self.title, section_content)
 
 
 LATEX_BEGIN = '''

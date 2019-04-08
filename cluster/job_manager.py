@@ -8,7 +8,7 @@ from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import update_recursive
 from .submission import execute_submission
-from .utils import get_sample_generator, process_other_params, get_caller_file
+from .utils import get_sample_generator, process_other_params, get_caller_file, rm_dir_full
 from .git_utils import ClusterSubmissionGitHook
 from .dummy_cluster_system import Dummy_ClusterSubmission
 from warnings import warn
@@ -17,11 +17,6 @@ def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
     shutil.rmtree(dir_name, ignore_errors=True)
   os.makedirs(dir_name)
-
-
-def rm_dir_full(dir_name):
-  if os.path.exists(dir_name):
-    shutil.rmtree(dir_name, ignore_errors=True)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -113,7 +108,7 @@ def update_best_job_datadirs(result_dir, model_dirs):
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, distribution_list, other_params,
                                 number_of_samples, with_restarts, total_rounds, fraction_that_need_to_finish,
                                 best_fraction_to_use_for_update, metric_to_optimize, minimize, remove_jobs_dir=True,
-                                git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0):
+                                git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None):
   def produce_cluster_run_all_args(distributions, iteration, num_samples, extra_settings):
     submission_name = 'iteration_{}'.format(iteration + 1)
     new_paths = {key: value for key, value in base_paths_and_files.items()}
@@ -145,9 +140,10 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
   possible_pickle = os.path.join(base_paths_and_files['result_dir'], STATUS_PICKLE_FILE)
   meta_opt = Metaoptimizer.try_load_from_pickle(possible_pickle, distribution_list, metric_to_optimize,
-                                                best_jobs_to_take, minimize, with_restarts)
+                                                best_jobs_to_take, minimize, with_restarts, report_hooks)
   if meta_opt is None:
-    meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize, with_restarts)
+    meta_opt = Metaoptimizer(distribution_list, metric_to_optimize, best_jobs_to_take, minimize,
+                             with_restarts, report_hooks)
 
   if git_params and 'url' in git_params:
       git_params['remove_local_copy'] = True  # always remove git repo copy in case of hyperparameter optimization
@@ -178,7 +174,8 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
     meta_opt.process_new_df(df)
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
-    meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats)
+
+    meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
 
     if num_best_jobs_whose_data_is_kept > 0:
         best_model_dirs = meta_opt.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
