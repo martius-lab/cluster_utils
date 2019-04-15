@@ -171,6 +171,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
         return ast.literal_eval(cmd_string[index: -1])   # string ends with " so it is ignored 
       except SyntaxError:
         return None
+      except ValueError:
+        return None
 
 
     cmd_dicts = [extract_dict_from_cmd(dct) for dct in self.cmds]
@@ -182,8 +184,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
       if dct is not None:
         dct['cluster_job_id'] = id_num
 
-      for key in dct:   # Turn all to one element lists
-        dct[key] = [dct[key]]
+        for key in dct:   # Turn all to one element lists
+          dct[key] = [dct[key]]
 
     dfs = [pd.DataFrame.from_dict(dct) for dct in cmd_dicts if dct is not None]
     big_df = pd.concat(dfs)

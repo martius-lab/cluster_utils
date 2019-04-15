@@ -120,6 +120,8 @@ class IntNormal(TruncatedNormal, DistributionOverIntegers):
 class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
+    if not self.lower < 1e-10:
+      raise ValueError("Bounds for {} must be positive.".format(self.__class__.__name__))
     self.log_lower = np.log(self.lower)
     self.log_upper = np.log(self.upper)
     self.log_mean = 0.5 * (self.log_lower + self.log_upper)
