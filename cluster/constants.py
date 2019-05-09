@@ -22,7 +22,6 @@ MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash
 # %(name)s%(id)d
 
-export PATH=${HOME}/bin:/usr/bin:$PATH:/bin
 %(cmd)s
 rc=$?
 if [[ $rc == 0 ]]; then
