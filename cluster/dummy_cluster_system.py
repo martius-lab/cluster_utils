@@ -86,7 +86,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
   def check_error_msgs(self):
 
     failed = [future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1]
-    errs = set([future.stderr.decode() for future in failed])
+    errs = set([future.exception(timeout=0.1) for future in failed])
     for err in errs:
       if err not in self.exceptions_seen:
         self.exceptions_seen.add(err)
