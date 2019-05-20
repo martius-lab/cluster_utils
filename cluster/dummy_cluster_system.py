@@ -84,6 +84,11 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     return min(running, self.concurrent_jobs), idle, held
 
   def check_error_msgs(self):
-    found_err = False
-    # failed = [future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1]
-    return found_err
+
+    failed = [future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1]
+    errs = set([future.stderr.decode() for future in failed])
+    for err in errs:
+      if err not in self.exceptions_seen:
+        self.exceptions_seen.add(err)
+        warn(err)
+    return len(errs) > 0
