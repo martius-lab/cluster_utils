@@ -96,11 +96,11 @@ def get_cluster_type(requirements, run_local=None):
       return Slurm_ClusterSubmissionParallel
   else:
     if run_local is None:
-      answer = input('No cluster detected. Do you want to run locally? [y/N]: ')
-      if answer.lower() == 'y':
-        run_local = True
-      else:
+      answer = input('No cluster detected. Do you want to run locally? [Y/n]: ')
+      if answer.lower() == 'n':
         run_local = False
+      else:
+        run_local = True
 
     if run_local:
       return Dummy_ClusterSubmission
