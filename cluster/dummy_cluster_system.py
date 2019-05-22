@@ -7,6 +7,7 @@ import concurrent.futures
 from subprocess import run, PIPE
 from .constants import *
 from warnings import warn
+import random
 from time import sleep
 
 class Dummy_ClusterSubmission(ClusterSubmission):
@@ -16,6 +17,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})
+    self.available_cpus = range(cpu_count())
 
     self.submission_cmds = []
     for id, cmd in enumerate(self.cmds):
@@ -57,7 +59,14 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     self.submitted = True
 
     self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
-    self.futures = [self.executor.submit(run, ['bash', submit_cmd], stdout=PIPE, stderr=PIPE) for submit_cmd in self.submission_cmds]
+    self.futures = []
+    for submit_cmd in self.submission_cmds:
+      free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
+      free_cpus_str = ','.join(map(str, free_cpus))
+
+
+      cmd_start = 'taskset --cpucount {} bash'.format(free_cpus_str)
+      self.futures.append(self.executor.submit(run, [cmd_start, submit_cmd], stdout=PIPE, stderr=PIPE))
 
     print('Jobs submitted successfully.')
 
