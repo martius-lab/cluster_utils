@@ -65,8 +65,8 @@ class Dummy_ClusterSubmission(ClusterSubmission):
       free_cpus_str = ','.join(map(str, free_cpus))
 
 
-      cmd_start = 'taskset --cpucount {} bash'.format(free_cpus_str)
-      self.futures.append(self.executor.submit(run, [cmd_start, submit_cmd], stdout=PIPE, stderr=PIPE))
+      cmd = 'taskset --cpucount {} bash {}'.format(free_cpus_str, submit_cmd)
+      self.futures.append(self.executor.submit(run, [cmd], stdout=PIPE, stderr=PIPE))
 
     print('Jobs submitted successfully.')
 
