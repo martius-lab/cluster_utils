@@ -1,5 +1,6 @@
 import ast
 import collections
+from datetime import datetime
 import json
 import os
 import sys
@@ -151,6 +152,12 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     update_recursive(default_params, json_base)
 
   update_recursive(default_params, cmd_params)
+
+  if '{timestamp}' in default_params.get('model_dir', ''):
+    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
+    default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
+
+
   final_params = recursive_objectify(default_params)
   if verbose:
     print(final_params)

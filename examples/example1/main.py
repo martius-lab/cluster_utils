@@ -14,13 +14,14 @@ def fn_to_optimize(*, u, v, w, x, y, z, flag, noisy=True, **kwargs):
 
 
 # Default values of params
-default_params = {'model_dir': '.',
+default_params = {'model_dir': '{timestamp}',   # Cluster utils actually replace this with the timestamp
                   'u': 0.0,
                   'v': 0.0,
                   'w': 0.0,
                   'x': 0.0,
                   'y': 0.0,
                   'z': 0.0,
+                  'flag': False
                   }
 
 params = update_params_from_cmdline(default_params=default_params)
