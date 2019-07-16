@@ -11,49 +11,21 @@ from .constants import *
 SlurmRecord = namedtuple('SlurmRecord',
                          ['ID', 'partition', 'name', 'owner', 'status', 'run_time', 'nodes', 'node_list'])
 
+RUN_SCRIPT = SLURM_CLUSTER_RUN_SCRIPT
+JOB_SPEC_FILE = SLURM_CLUSTER_JOB_SPEC_FILE
 
 class Slurm_ClusterSubmission(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
-    super().__init__(submission_dir, remove_jobs_dir)
-    self.njobs = len(job_commands)
-    self.cmds = job_commands
+  def __init__(self, requirements, jobs, submission_dir, name, remove_jobs_dir=True):
+    super().__init__(jobs, name, submission_dir, remove_jobs_dir)
+    self.njobs = len(jobs)
     self._process_requirements(requirements)
-    self.name = name
     self.exceptions_seen = set({})
 
-    RUN_SCRIPT = SLURM_CLUSTER_RUN_SCRIPT
-    JOB_SPEC_FILE = SLURM_CLUSTER_JOB_SPEC_FILE
+  def get_submit_cmd(self, job_spec_file_path):
+    return 'sbatch {}\n'.format(job_spec_file_path)
 
-    # Prepare all submission files
-
-    self.submit_all_file = os.path.join(self.submission_dir, 'submit_{}.sh'.format(self.name))
-    self.submission_cmds = []
-    with open(self.submit_all_file, 'w') as submit_file:
-      submit_file.write('#/bin/bash\n')
-      cmd_enum = enumerate(self.cmds)
-      for id, cmd in cmd_enum:
-        job_file_name = '{}_{}.sh'.format(self.name, id)
-        run_script_file_path = os.path.join(self.submission_dir, job_file_name)
-        job_spec_file_path = os.path.join(self.submission_dir, 'submission_' + job_file_name)
-
-        # Prepare namespace for string formatting (class vars + locals)
-        namespace = copy(vars(self))
-        namespace.update(locals())
-
-        with open(run_script_file_path, 'w') as script_file:
-          script_file.write(RUN_SCRIPT % namespace)
-        os.chmod(run_script_file_path, 0O755)  # Make executable
-        with open(job_spec_file_path, 'w') as spec_file:
-          spec_file.write(JOB_SPEC_FILE % namespace)
-
-        submit_cmd = 'sbatch {}\n'.format(job_spec_file_path)
-        submit_file.write(submit_cmd)
-        self.submission_cmds.append(submit_cmd)
-
-    # shuffle submission commands so that restarts of the same setting are spread
-    shuffle(self.submission_cmds)
-
-    os.chmod(self.submit_all_file, 0O755)  # Make executable
+  def get_close_cmd(self, cluster_id):
+    return 'scancel {}'.format(cluster_id)
 
   @property
   def total_jobs(self):
@@ -82,8 +54,8 @@ class Slurm_ClusterSubmission(ClusterSubmission):
       raise RuntimeError('Attempt for second submission!')
     self.submitted = True
     self.id_nums = []
-    for submit_cmd in self.submission_cmds:
-      result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+    for idx, job in enumerate(self.jobs):
+      result = job.submit(self, idx)
       good_lines = [line for line in result.split('\n') if 'Submitted' in line]
       bad_lines = [line for line in result.split('\n') if 'warning' in line or 'error' in line]
       if not good_lines or bad_lines:
@@ -98,9 +70,8 @@ class Slurm_ClusterSubmission(ClusterSubmission):
     print('Killing remaining jobs...')
     if not self.submitted:
       raise RuntimeError('Submission cleanup called before submission completed')
-
-    for id in self.id_nums:
-      run(['scancel {}'.format(id)], shell=True, stdout=PIPE, stderr=PIPE)
+    for job in self.jobs:
+      job.close(self)
     print('Remaining jobs killed')
     self.finished = True
     super().close()

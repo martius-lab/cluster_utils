@@ -7,6 +7,7 @@ import pandas as pd
 from .constants import *
 from .errors import OneTimeExceptionHandler
 
+
 class SubmissionStatus(object):
   def __init__(self, total_jobs, fraction_to_finish, min_fraction_to_finish):
 
@@ -80,8 +81,9 @@ class SubmissionStatus(object):
       *(6 * [self]))
 
 
-def execute_submission(submission, collect_data_directory, fraction_need_to_finish=1.0, min_fraction_to_finish=0.5,
-                       ignore_errors=True):
+def execute_iterated_submission(submission, collect_data_directory, fraction_need_to_finish=1.0,
+                                min_fraction_to_finish=0.5,
+                                ignore_errors=True):
   error_handler = OneTimeExceptionHandler(ignore_errors=ignore_errors)
   submission_status = SubmissionStatus(total_jobs=submission.total_jobs,
                                        fraction_to_finish=fraction_need_to_finish,

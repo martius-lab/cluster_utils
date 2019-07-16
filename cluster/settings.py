@@ -7,7 +7,8 @@ import sys
 from copy import deepcopy
 from warnings import warn
 import time
-
+import nevergrad as ng
+from .optimizers import Metaoptimizer, NGOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
 
@@ -49,10 +50,11 @@ def recursive_objectify(nested_dict):
 
 class SafeDict(dict):
   """ A dict with prohibiting init from a list of pairs containing duplicates"""
+
   def __init__(self, *args, **kwargs):
     if args and args[0] and not isinstance(args[0], dict):
       keys, _ = zip(*args[0])
-      duplicates =[item for item, count in collections.Counter(keys).items() if count > 1]
+      duplicates = [item for item, count in collections.Counter(keys).items() if count > 1]
       if duplicates:
         raise TypeError("Keys {} repeated in json parsing".format(duplicates))
     super().__init__(*args, **kwargs)
@@ -162,7 +164,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
     default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
 
-
   final_params = recursive_objectify(default_params)
   if verbose:
     print(final_params)
@@ -170,4 +171,8 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   update_params_from_cmdline.start_time = time.time()
   return final_params
 
+
 update_params_from_cmdline.start_time = None
+
+optimizer_dict = {'cem_metaoptimizer': Metaoptimizer,
+                  'ng': NGOptimizer}

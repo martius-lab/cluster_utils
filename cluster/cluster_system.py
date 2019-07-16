@@ -3,10 +3,13 @@ from .utils import rm_dir_full
 from abc import ABC, abstractmethod
 from subprocess import run, DEVNULL
 from warnings import warn
-
+from random import shuffle
 
 class ClusterSubmission(ABC):
-  def __init__(self, submission_dir, remove_jobs_dir=True):
+  def __init__(self, jobs, name, submission_dir, remove_jobs_dir=True):
+    self.jobs = list(jobs)
+    shuffle(self.jobs)
+    self.name = name
     self.remove_jobs_dir = remove_jobs_dir
     self.submission_dir = submission_dir
     self.submitted = False
@@ -45,7 +48,15 @@ class ClusterSubmission(ABC):
 
   @abstractmethod
   def submit(self):
-    pass
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_submit_cmd(self, job_spec_file_path):
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_close_cmd(self, cluster_id):
+    raise NotImplementedError
 
   def __enter__(self):
     try:

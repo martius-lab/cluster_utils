@@ -11,35 +11,21 @@ import random
 from time import sleep
 
 class Dummy_ClusterSubmission(ClusterSubmission):
-  def __init__(self, job_commands, submission_dir, requirements, name, remove_jobs_dir=True):
-    super().__init__(submission_dir, remove_jobs_dir)
-    self.cmds = job_commands
+  def __init__(self, requirements, jobs, submission_dir, name, remove_jobs_dir=True):
+    super().__init__(jobs, name, submission_dir, remove_jobs_dir)
     self._process_requirements(requirements)
-    self.name = name
     self.exceptions_seen = set({})
     self.available_cpus = range(cpu_count())
 
-    self.submission_cmds = []
-    for id, cmd in enumerate(self.cmds):
-      job_file_name = '{}_{}.sh'.format(self.name, id)
-      run_script_file_path = os.path.join(self.submission_dir, job_file_name)
+  def get_submit_cmd(self, job_spec_file_path):
+    raise NotImplementedError
 
-      # Prepare namespace for string formatting (class vars + locals)
-      namespace = copy(vars(self))
-      namespace.update(locals())
-
-      with open(run_script_file_path, 'w') as script_file:
-        script_file.write(LOCAL_RUN_SCRIPT % namespace)
-      os.chmod(run_script_file_path, 0O755)  # Make executable
-
-      self.submission_cmds.append(run_script_file_path)
-
-    # shuffle submission commands so that restarts of the same setting are spread
-    shuffle(self.submission_cmds)
+  def get_close_cmd(self, cluster_id):
+    raise NotImplementedError
 
   @property
   def total_jobs(self):
-    return len(self.submission_cmds)
+    return len(self.jobs)
 
   def _process_requirements(self, requirements):
     self.cpus_per_job = requirements['request_cpus']
@@ -60,12 +46,12 @@ class Dummy_ClusterSubmission(ClusterSubmission):
 
     self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
     self.futures = []
-    for submit_cmd in self.submission_cmds:
+    for job in self.jobs:
       free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
       free_cpus_str = ','.join(map(str, free_cpus))
 
 
-      cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, submit_cmd)
+      cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.execution_cmd)
       self.futures.append(self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
 
     print('Jobs submitted successfully.')
