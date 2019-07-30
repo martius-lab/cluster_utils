@@ -14,13 +14,13 @@ OBJECT_SEPARATOR = '.'
 
 PARAM_TYPES = (bool, str, int, float, tuple)
 
-RESERVED_PARAMS = ('model_dir', 'id', 'iteration', RESTART_PARAM_NAME, 'cluster_job_id')
+RESERVED_PARAMS = ('model_dir', 'id_number', 'iteration', RESTART_PARAM_NAME, 'cluster_job_id')
 
 DISTR_BASE_COLORS = [(0.99, 0.7, 0.18), (0.7, 0.7, 0.9), (0.56, 0.692, 0.195), (0.923, 0.386, 0.209)]
 
 MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash
-# %(name)s%(id)d
+# %(name)s%(id_number)d
 
 %(cmd)s
 rc=$?
@@ -124,7 +124,7 @@ SLURM_PARALLEL_CLUSTER_RUN_SCRIPT = '''#!/bin/bash -l
 '''
 
 LOCAL_RUN_SCRIPT = '''#!/bin/bash
-# %(name)s%(id)d
+# %(name)s%(id_number)d
 
 %(cmd)s
 '''

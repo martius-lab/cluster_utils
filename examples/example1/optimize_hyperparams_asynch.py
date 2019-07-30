@@ -1,7 +1,7 @@
 import os
 from pathlib2 import Path
 
-from cluster import hyperparameter_optimization, init_plotting
+from cluster import asynchronous_optimization, init_plotting
 from cluster.distributions import *
 from cluster.latex_utils import *
 from cluster.utils import mkdtemp
@@ -35,9 +35,8 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=150,
-                            total_rounds=10,
-                            fraction_that_need_to_finish=0.8,
+                            number_of_samples=10,
+                            min_n_jobs=2,
                             minimize=True)
 
 other_params = {'flag': False}
@@ -55,7 +54,7 @@ def find_json(df, path_to_results, filename_generator):
 
 
 #json_hook = SectionFromJsonHook(section_title='Random script', section_generator=find_json)
-hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
+asynchronous_optimization(base_paths_and_files=base_paths_and_files,
                             submission_requirements=submission_requirements,
                             optimizer_str=optimizer_str,
                             optimizer_settings=optimizer_settings,
@@ -63,6 +62,6 @@ hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
                             other_params=other_params,
                             git_params=git_params,
                             num_best_jobs_whose_data_is_kept=5,
-                            report_hooks=None,#[json_hook],
+                            report_hooks=None,
                             run_local=True,
                             **optimization_setting)

@@ -22,15 +22,13 @@ class Condor_ClusterSubmission(ClusterSubmission):
     self.name = name
     self.exceptions_seen = set({})
 
-  def get_submit_cmd(self, job_spec_file_path):
-    return 'condor_submit_bid {} {}\n'.format(self.bid, job_spec_file_path)
+  def submit_fn(self, job_spec_file_path):
+    cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job_spec_file_path)
+    return run([cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
 
-  def get_close_cmd(self, cluster_id):
-    return 'condor_rm {}'.format(cluster_id)
-
-  @property
-  def total_jobs(self):
-    return len(self.jobs)
+  def close_fn(self, cluster_id):
+    cmd = 'condor_rm {}'.format(cluster_id)
+    return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
   def _process_requirements(self, requirements):
     # Job requirements
@@ -53,19 +51,28 @@ class Condor_ClusterSubmission(ClusterSubmission):
     else:
       self.gpu_memory_line = ''
 
-  def submit(self):
-    if self.submitted:
-      raise RuntimeError('Attempt for second submission!')
-    self.submitted = True
+  def submit(self, job, idx):
+    submit_cmd = self.get_submit_cmd(job.generate_job_spec_file(idx))
+    result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+
+    good_lines = [line for line in result.split('\n') if 'submitted' in line]
+    bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
+    if not good_lines or bad_lines:
+      self.close()
+      raise RuntimeError('Cluster submission failed')
+    assert len(good_lines) == 1
+    job.cluster_id = good_lines[0].split(' ')[-1][:-1]
+
+  def submit_all(self):
+    submitted = False
     for idx, job in enumerate(self.jobs):
-      result = job.submit(self, idx)
-      good_lines = [line for line in result.split('\n') if 'submitted' in line]
-      bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
-      if not good_lines or bad_lines:
-        self.close()
-        raise RuntimeError('Cluster submission failed')
-      assert len(good_lines) == 1
-      job.cluster_id = good_lines[0].split(' ')[-1][:-1]
+      if job.submitted():
+        continue
+      self.submit(job, idx)
+      submitted = True
+
+    if not submitted:
+      warn('All jobs were already submitted!')
     print('Jobs submitted successfully')
 
   def close(self):

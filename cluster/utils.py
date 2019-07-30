@@ -23,6 +23,8 @@ def get_caller_file(depth=2):
   _, filename, _, _, _, _ = inspect.stack()[depth]
   return filename
 
+def get_submission_name(iteration):
+  return 'iteration_{}'.format(iteration + 1)
 
 def check_valid_name(string):
   pat = '[A-Za-z0-9_.-]*$'
@@ -79,22 +81,19 @@ def save_dict_as_one_line_csv(dct, filename):
     writer.writerow(dct)
 
 
-def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
-  if bool(hyperparam_dict) == bool(distribution_list):
+def get_sample_generator(num_samples, hyperparam_dict, optimizer=None):
+  if bool(hyperparam_dict) == bool(optimizer):
     raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
-  if distribution_list and not samples:
+  if optimizer and not num_samples:
     raise TypeError('Number of samples not specified')
-  if distribution_list:
-    ans = distribution_list_sampler(distribution_list, samples)
-  elif samples:
+  if optimizer:
+    ans = optimizer_sampler(optimizer, num_samples)
+  elif num_samples:
     assert hyperparam_dict
-    ans = hyperparam_dict_samples(hyperparam_dict, samples)
+    ans = hyperparam_dict_samples(hyperparam_dict, num_samples)
   else:
     ans = hyperparam_dict_product(hyperparam_dict)
-  if extra_settings is not None:
-    return itertools.chain(extra_settings, ans)
-  else:
-    return ans
+  return ans
 
 
 
@@ -124,6 +123,13 @@ def validate_hyperparam_dict(hyperparam_dict):
       if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
         raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
 
+def optimizer_sampler(optimizer, num_samples):
+  return optimizer.ask(num_samples)
+  #for distr in distribution_list:
+  #  distr.prepare_samples(howmany=num_samples)
+  #for i in range(num_samples):
+  #  nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
+  #  yield nested_to_dict(nested_items)
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):
   validate_hyperparam_dict(hyperparam_dict)
@@ -161,12 +167,7 @@ def nested_to_dict(nested_items):
   return default_to_regular(result)
 
 
-def distribution_list_sampler(distribution_list, num_samples):
-  for distr in distribution_list:
-    distr.prepare_samples(howmany=num_samples)
-  for i in range(num_samples):
-    nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
-    yield nested_to_dict(nested_items)
+
 
 from pathlib2 import Path
 home = str(Path.home())
@@ -181,3 +182,9 @@ def temp_directory(prefix='cluster_utils', suffix=''):
   return tempfile.TemporaryDirectory(prefix=new_prefix, dir=os.path.join(home, '.cache'))
 
 
+def dict_to_dirname(setting, id, smart_naming=True):
+  vals = ['{}={}'.format(str(key)[:3], str(value)[:6]) for key, value in setting.items() if not isinstance(value, dict)]
+  res = '{}_{}'.format(id, '_'.join(vals))
+  if len(res) < 35 and smart_naming:
+    return res
+  return str(id)

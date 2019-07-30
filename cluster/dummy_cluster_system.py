@@ -9,78 +9,96 @@ from .constants import *
 from warnings import warn
 import random
 from time import sleep
+import numpy as np
+
 
 class Dummy_ClusterSubmission(ClusterSubmission):
-  def __init__(self, requirements, jobs, submission_dir, name, remove_jobs_dir=True):
-    super().__init__(jobs, name, submission_dir, remove_jobs_dir)
+  def __init__(self, requirements, paths, name, remove_jobs_dir=True):
+    super().__init__(name, paths, remove_jobs_dir)
     self._process_requirements(requirements)
     self.exceptions_seen = set({})
     self.available_cpus = range(cpu_count())
+    self.futures_tuple = []
+    self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
 
-  def get_submit_cmd(self, job_spec_file_path):
-    raise NotImplementedError
+  def submit_fn(self, job):
+    self.generate_job_spec_file(job)
+    free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
+    free_cpus_str = ','.join(map(str, free_cpus))
+    cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.job_spec_file_path)
+    cluster_id = np.random.randint(1e10)
+    self.futures_tuple.append((cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True)))
+    return cluster_id
 
-  def get_close_cmd(self, cluster_id):
-    raise NotImplementedError
+  def stop_fn(self, job):
+    for cluster_id, future in self.futures_tuple:
+      if cluster_id == job.cluster_id:
+        future.cancel()
+    concurrent.futures.wait(self.futures)
+
+  def generate_job_spec_file(self, job):
+    job_file_name = '{}_{}.sh'.format(self.name, job.id_number)
+    run_script_file_path = os.path.join(self.submission_dir, job_file_name)
+    cmd = job.generate_execution_cmd(self.paths)
+    # Prepare namespace for string formatting (class vars + locals)
+    namespace = copy(vars(self))
+    namespace.update(vars(job))
+    namespace.update(locals())
+
+    with open(run_script_file_path, 'w') as script_file:
+      script_file.write(LOCAL_RUN_SCRIPT % namespace)
+    os.chmod(run_script_file_path, 0O755)  # Make executable
+
+    job.job_spec_file_path = run_script_file_path
+    print('run script file path', run_script_file_path)
+
+  def status(self, job):
+    future = [future for cluster_id, future in self.futures_tuple if cluster_id == job.cluster_id]
+    if len(future) == 0:
+      return 0
+    future = future[0]
+    if future.running():
+      return 2
+    return 1
+
+  def is_blocked(self):
+    return True
 
   @property
   def total_jobs(self):
     return len(self.jobs)
+
+  @property
+  def futures(self):
+    return [future for _, future in self.futures_tuple]
 
   def _process_requirements(self, requirements):
     self.cpus_per_job = requirements['request_cpus']
     self.max_cpus = requirements.get('max_cpus', cpu_count())
     if self.max_cpus <= 0:
       raise ValueError('CPU limit must be positive. Not {}.'.format(self.max_cpus))
-    self.available_cpus =  min(self.max_cpus, cpu_count())
+    self.available_cpus = min(self.max_cpus, cpu_count())
     self.concurrent_jobs = self.available_cpus // self.cpus_per_job
     if self.concurrent_jobs == 0:
       warn('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
       self.concurrent_jobs = self.available_cpus
     assert self.concurrent_jobs > 0
 
-  def submit(self):
-    if self.submitted:
-      raise RuntimeError('Attempt for second submission!')
-    self.submitted = True
-
-    self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
-    self.futures = []
-    for job in self.jobs:
-      free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
-      free_cpus_str = ','.join(map(str, free_cpus))
-
-
-      cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.execution_cmd)
-      self.futures.append(self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
-
-    print('Jobs submitted successfully.')
-
-  def close(self):
-    print('Killing remaining jobs...')
-    if not self.submitted:
-      raise RuntimeError('Submission cleanup called before submission completed')
-    for future in self.futures:
-      future.cancel()
-    concurrent.futures.wait(self.futures)
-    print('Remaining jobs killed')
-    self.finished = True
-
-    super().close()
-
   def get_status(self):
-    running = min(sum([future.running() for future in self.futures]),
+    running = min(sum([future.running() for _, future in self.futures_tuple]),
                   self.concurrent_jobs)
-    done = sum([future.done() for future in self.futures])
+    done = sum([future.done() for _, future in self.futures_tuple])
     idle = self.total_jobs - (done + running)
-    failed = len([future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1])
+    failed = len(
+      [future for _, future in self.futures_tuple if future.done() and future.result().__dict__['returncode'] == 1])
     held = failed
 
     return min(running, self.concurrent_jobs), idle, held
 
   def check_error_msgs(self):
 
-    failed = [future for future in self.futures if future.done() and future.result().__dict__['returncode'] == 1]
+    failed = [future for _, future in self.futures_tuple if
+              future.done() and future.result().__dict__['returncode'] == 1]
     errs = set([future.result().stderr.decode() for future in failed])
     for err in errs:
       if err not in self.exceptions_seen:

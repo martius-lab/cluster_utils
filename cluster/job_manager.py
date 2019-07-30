@@ -8,13 +8,14 @@ from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import update_recursive, optimizer_dict
 from .submission import execute_iterated_submission
-from .utils import get_sample_generator, process_other_params, get_caller_file, rm_dir_full
+from .utils import get_sample_generator, process_other_params, get_caller_file, rm_dir_full, get_submission_name
 from .git_utils import ClusterSubmissionGitHook
 from .job import Job
 from .dummy_cluster_system import Dummy_ClusterSubmission
 from warnings import warn
 import nevergrad as ng
 import pickle
+import time
 
 
 def ensure_empty_dir(dir_name):
@@ -132,7 +133,7 @@ def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_
 
 def produce_cluster_run_all_args(optimizer, iteration, num_samples, base_paths_and_files, submission_requirements,
                                  other_params, remove_jobs_dir, git_params, run_local):
-  submission_name = 'iteration_{}'.format(iteration + 1)
+  submission_name = get_submission_name(iteration)
   new_paths = {key: value for key, value in base_paths_and_files.items()}
   new_paths['result_dir'] = os.path.join(new_paths['result_dir'], submission_name)
 
@@ -149,19 +150,137 @@ def produce_cluster_run_all_args(optimizer, iteration, num_samples, base_paths_a
               num_samples=num_samples)
 
 
-def asynchronous_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                              number_of_samples, metric_to_optimize, minimize, optimizer_str='cem_metaoptimizer',
-                              remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                              report_hooks=None, optimizer_settings={}):
+# def generate_paths():
+#  calling_script = get_caller_file(depth=2)
+#  pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
+#  current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
+global T
+T = time.time()
+delta_t = 60
+
+
+def time_to_print():
+  global T
+  if time.time() - T > 60:
+    T = time.time()
+    return True
+  return False
+
+
+def pre_opt(base_paths_and_files, submission_requirements, optimized_params, number_of_samples, metric_to_optimize,
+            minimize, optimizer_str, remove_jobs_dir, git_params, run_local, report_hooks, optimizer_settings, submission_name):
+  delta_t = 60
+  print('%%%%%%%%%%')
+  print(base_paths_and_files)
+  print('%%%%%%%%%%')
+  ensure_empty_dir(base_paths_and_files['result_dir'])
+  ensure_empty_dir(base_paths_and_files['jobs_dir'])
+
   hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
                                          metric_to_optimize, minimize, report_hooks, number_of_samples,
                                          **optimizer_settings)
-  all_args = produce_cluster_run_all_args(hp_optimizer, hp_optimizer.iteration, number_of_samples)
-  submission = cluster_run(**all_args, )
+
+  cluster_type = get_cluster_type(requirements=submission_requirements, run_local=run_local)
+
+  cluster_interface = cluster_type(paths=base_paths_and_files,
+                                   requirements=submission_requirements,
+                                   name=submission_name,
+                                   remove_jobs_dir=remove_jobs_dir)
+  cluster_interface.register_submission_hook(
+    ClusterSubmissionGitHook(git_params, base_paths_and_files['script_to_run']))
+  return delta_t, hp_optimizer, cluster_interface
+
+
+def post_opt(cluster_interface):
+  cluster_interface.close()
+
+
+def asynchronous_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
+                              number_of_samples, metric_to_optimize, minimize, optimizer_str='cem_metaoptimizer',
+                              remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
+                              report_hooks=None, optimizer_settings={}, min_n_jobs=5):
+  base_paths_and_files['result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'asynch_opt')
+  # todo: check where other_params went
+  delta_t, hp_optimizer, cluster_interface = pre_opt(base_paths_and_files, submission_requirements, optimized_params,
+                                                      number_of_samples, metric_to_optimize,
+                                                      minimize, optimizer_str, remove_jobs_dir, git_params, run_local,
+                                                      report_hooks, optimizer_settings, 'asynch_opt')
   n_successful_jobs = 0
+
   while n_successful_jobs < number_of_samples:
-    submission.submit()
-    n_successful_jobs = submission.get_n_successful_jobs()
+    n_submitted_jobs = cluster_interface.get_n_running_jobs()
+    completed_jobs = cluster_interface.get_completed_jobs()
+    for completed_job in completed_jobs:
+      if not completed_job.results_accessed:
+        hp_optimizer.tell(completed_job.get_results())
+    while (n_submitted_jobs < min_n_jobs) or not cluster_interface.is_blocked():
+      for new_settings in hp_optimizer.ask(1):
+        print(new_settings)
+        new_job = Job(id_number=cluster_interface.inc_job_id, settings=new_settings, paths=base_paths_and_files)
+        cluster_interface.add_jobs(new_job)
+        cluster_interface.submit(new_job)  # should be threaded
+      n_submitted_jobs = cluster_interface.get_n_running_jobs()
+    n_successful_jobs = cluster_interface.get_n_successful_jobs()
+
+    if time_to_print():
+      print('Number of successfully ran jobs:', str(n_successful_jobs))
+    time.sleep(1)
+
+  post_opt(cluster_interface)
+
+  # hp_optimizer.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
+
+  # if num_best_jobs_whose_data_is_kept > 0:
+  #  best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
+  #  update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+
+  # rm_dir_full(current_result_path)
+  # print('Intermediate results deleted...')
+
+
+def new_hyperparameter_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
+                                    number_of_samples, metric_to_optimize, minimize, total_rounds,
+                                    fraction_that_need_to_finish,
+                                    optimizer_str='cem_metaoptimizer', remove_jobs_dir=True, git_params=None,
+                                    run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
+                                    optimizer_settings={}):
+  delta_t, hp_optimizer, cluster_interface = pre_opt(base_paths_and_files, submission_requirements, optimized_params,
+                                                     number_of_samples, metric_to_optimize, minimize, optimizer_str,
+                                                     remove_jobs_dir, git_params, run_local, report_hooks,
+                                                     optimizer_settings, 'TODO')
+
+  for i in range(total_rounds):
+    submission_name = 'iteration_{}'.format(i + 1)
+    base_paths_and_files['results_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
+    print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
+    n_successful_jobs = 0
+    settings = [setting for setting in hp_optimizer.ask(number_of_samples)]
+    jobs = [Job(id_number=cluster_interface.inc_job_id, settings=setting, paths=base_paths_and_files)
+            for setting in settings]
+
+    cluster_interface.add_jobs(jobs)
+    cluster_interface.submit_all()
+    while n_successful_jobs / number_of_samples < fraction_that_need_to_finish:
+      n_successful_jobs = cluster_interface.get_n_successful_jobs()
+      if time_to_print():
+        print('Number of successfully ran jobs:', str(n_successful_jobs))
+      time.sleep(1)
+
+    for completed_job in cluster_interface.get_completed_jobs():
+      print('************************************************************************************************')
+      hp_optimizer.tell(completed_job)
+    cluster_interface.stop_all()
+
+    # meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
+    # pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
+    # meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
+    # if num_best_jobs_whose_data_is_kept > 0:
+    #  best_model_dirs = meta_opt.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
+    #  update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+
+    # rm_dir_full(current_result_path)
+
+  post_opt(cluster_interface)
 
 
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
@@ -170,8 +289,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                 optimizer_str='cem_metaoptimizer', remove_jobs_dir=True, git_params=None,
                                 run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
                                 optimizer_settings={}):
-  calling_script = get_caller_file(depth=2)
-
   hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
                                          metric_to_optimize, minimize, report_hooks, number_of_samples,
                                          **optimizer_settings)
@@ -187,7 +304,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
 
     # run_local = isinstance(submission, Dummy_ClusterSubmission)
 
-    current_result_path = os.path.join(base_paths_and_files['result_dir'], all_args['submission_name'])
+
 
     print(hp_optimizer.get_best())
 
@@ -202,15 +319,15 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
 
     hp_optimizer.tell(df)
     hp_optimizer.save_data_and_self(base_paths_and_files['result_dir'])
-    pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
 
-    hp_optimizer.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
 
-    if num_best_jobs_whose_data_is_kept > 0:
-      best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
-      update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+    # hp_optimizer.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
 
-    rm_dir_full(current_result_path)
-    print('Intermediate results deleted...')
+    # if num_best_jobs_whose_data_is_kept > 0:
+    #  best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
+    #  update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+
+    # rm_dir_full(current_result_path)
+    # print('Intermediate results deleted...')
 
   print('Procedure successfully finished')

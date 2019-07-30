@@ -183,11 +183,11 @@ class GitConnector(object):
         return self._get_latex_template().format(**self.meta_information)
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
-    def __init__(self, params=None, paths=None):
+    def __init__(self, params=None, script_to_run=None):
         self.params = params or {}
 
-        if 'local_path' not in self.params and 'script_to_run' in paths:
-            self.params['local_path'] = os.path.dirname(paths['script_to_run'])
+        if 'local_path' not in self.params and not script_to_run is None:
+            self.params['local_path'] = os.path.dirname(script_to_run)
 
         self.git_conn = None
 
@@ -196,7 +196,8 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         if self.state > 0:
             print('Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook'\
                 .format(self.params['local_path'], self.identifier))
-
+        #TODO: change
+        self.first_submission = True
     def determine_state(self):
         self.state = 1
 
@@ -215,20 +216,25 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
                 pass
 
     def pre_submission_routine(self):
-        self.git_conn = GitConnector(**self.params)
-        if 'url' in self.params and self.params.get('commit', None) is None:
-            commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
-            commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
-            print('Using commit {} in each iteration'.format(commit_hexsha_short))
-            self.params['commit'] = commit_hexsha_short
-        return self.git_conn
+        if self.first_submission:
+            self.first_submission = False
+            self.git_conn = GitConnector(**self.params)
+            if 'url' in self.params and self.params.get('commit', None) is None:
+                commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
+                commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
+                print('Using commit {} in each iteration'.format(commit_hexsha_short))
+                self.params['commit'] = commit_hexsha_short
+            return self.git_conn
+        else:
+            return self.git_conn
 
     def post_submission_routine(self):
-        super().post_submission_routine()
-        if self.git_conn:
-            self.git_conn.remove_local_copy()
-            del self.git_conn
-            self.git_conn = None
+        pass
+        #super().post_submission_routine()
+        #if self.git_conn:
+        #    self.git_conn.remove_local_copy()
+        #    del self.git_conn
+        #    self.git_conn = None
 
     def update_status(self):
         if self.git_conn:
