@@ -66,8 +66,6 @@ class ClusterSubmission(ABC):
 
   def get_running_jobs(self):
     running_jobs = [job for job in self.jobs if self.check_runs(job)]
-    print('RUNNING JOBS')
-    print(running_jobs)
     return running_jobs
 
   def get_n_running_jobs(self):
@@ -75,26 +73,28 @@ class ClusterSubmission(ABC):
 
   def get_completed_jobs(self):
     completed_jobs =  [job for job in self.jobs if self.check_done(job)]
-    print('COMPLETED JOBS')
-    print(completed_jobs)
     return completed_jobs
 
-  def get_n_successful_jobs(self):
+  def get_n_completed_jobs(self):
     return len(self.get_completed_jobs())
+
+  def get_submitted_not_running_jobs(self):
+    submitted_jobs = [job for job in self.jobs if self.status(job) == 1]
+    return submitted_jobs
+
+  def get_n_submitted_jobs(self):
+    return len([job for job in self.jobs if not job.cluster_id is None])
 
   @property
   def total_jobs(self):
     return len(self.jobs)
 
-  def _job(self, job):
-    return self.jobs[self.jobs.index(job)]
-
   def submit(self, job):
     t = Thread(target=self._submit, args=(job,))
+    self.exec_pre_submission_routines()
     t.start()
 
   def _submit(self, job):
-    self.exec_pre_submission_routines()
     if self.check_done(job):
       raise RuntimeError('Can not run a job that already ran')
     if not job in self.jobs:
@@ -102,23 +102,17 @@ class ClusterSubmission(ABC):
       self.add_jobs(job)
 
     cluster_id = self.submit_fn(job)
-    print('SETTING CLUSTER ID', cluster_id)
-    self._job(job).cluster_id = cluster_id
-    for job in self.jobs:
-      print(job.cluster_id)
+    job.cluster_id = cluster_id
     self.exec_post_submission_routines()
-    print('Jobs submitted successfully.')
+   # print('Jobs submitted successfully.')
 
   def check_runs(self, job):
     return self.status(job) == 2
 
   def check_done(self, job):
-    print('CHECK DONE', self.check_runs(job), self._job(job).cluster_id)
-    for j in self.jobs:
-      print(j.cluster_id)
     return ((not self.check_runs(job)) and (not job.cluster_id is None))
 
-  def check_submitted(self, job):
+  def check_submitted_not_running(self, job):
     return self.status(job) == 1
 
   def stop(self, job):

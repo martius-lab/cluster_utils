@@ -11,11 +11,13 @@ from .submission import execute_iterated_submission
 from .utils import get_sample_generator, process_other_params, get_caller_file, rm_dir_full, get_submission_name
 from .git_utils import ClusterSubmissionGitHook
 from .job import Job
+from .errors import OneTimeExceptionHandler
 from .dummy_cluster_system import Dummy_ClusterSubmission
 from warnings import warn
 import nevergrad as ng
 import pickle
 import time
+import pandas as pd
 
 
 def ensure_empty_dir(dir_name):
@@ -170,9 +172,6 @@ def time_to_print():
 def pre_opt(base_paths_and_files, submission_requirements, optimized_params, number_of_samples, metric_to_optimize,
             minimize, optimizer_str, remove_jobs_dir, git_params, run_local, report_hooks, optimizer_settings, submission_name):
   delta_t = 60
-  print('%%%%%%%%%%')
-  print(base_paths_and_files)
-  print('%%%%%%%%%%')
   ensure_empty_dir(base_paths_and_files['result_dir'])
   ensure_empty_dir(base_paths_and_files['jobs_dir'])
 
@@ -188,7 +187,8 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, num
                                    remove_jobs_dir=remove_jobs_dir)
   cluster_interface.register_submission_hook(
     ClusterSubmissionGitHook(git_params, base_paths_and_files['script_to_run']))
-  return delta_t, hp_optimizer, cluster_interface
+  error_handler = OneTimeExceptionHandler(ignore_errors=True)
+  return delta_t, hp_optimizer, cluster_interface, error_handler
 
 
 def post_opt(cluster_interface):
@@ -201,29 +201,38 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                               report_hooks=None, optimizer_settings={}, min_n_jobs=5):
   base_paths_and_files['result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'asynch_opt')
   # todo: check where other_params went
-  delta_t, hp_optimizer, cluster_interface = pre_opt(base_paths_and_files, submission_requirements, optimized_params,
+  delta_t, hp_optimizer, cluster_interface, error_handler = pre_opt(base_paths_and_files, submission_requirements, optimized_params,
                                                       number_of_samples, metric_to_optimize,
                                                       minimize, optimizer_str, remove_jobs_dir, git_params, run_local,
                                                       report_hooks, optimizer_settings, 'asynch_opt')
-  n_successful_jobs = 0
+  n_completed_jobs = 0
 
-  while n_successful_jobs < number_of_samples:
-    n_submitted_jobs = cluster_interface.get_n_running_jobs()
+  while n_completed_jobs <= number_of_samples:
+    n_queuing_or_running_jobs = cluster_interface.get_n_submitted_jobs() - cluster_interface.get_n_completed_jobs()
     completed_jobs = cluster_interface.get_completed_jobs()
     for completed_job in completed_jobs:
       if not completed_job.results_accessed:
-        hp_optimizer.tell(completed_job.get_results())
-    while (n_submitted_jobs < min_n_jobs) or not cluster_interface.is_blocked():
+        df, params, metrics = completed_job.get_results()
+        hp_optimizer.tell(df)
+    while (n_queuing_or_running_jobs < min_n_jobs) or not cluster_interface.is_blocked():
       for new_settings in hp_optimizer.ask(1):
-        print(new_settings)
         new_job = Job(id_number=cluster_interface.inc_job_id, settings=new_settings, paths=base_paths_and_files)
         cluster_interface.add_jobs(new_job)
         cluster_interface.submit(new_job)  # should be threaded
-      n_submitted_jobs = cluster_interface.get_n_running_jobs()
-    n_successful_jobs = cluster_interface.get_n_successful_jobs()
+        time.sleep(0.1)
+      n_queuing_or_running_jobs = cluster_interface.get_n_submitted_jobs()-cluster_interface.get_n_completed_jobs()
+    n_queuing_or_running_jobs = cluster_interface.get_n_submitted_jobs() - cluster_interface.get_n_completed_jobs()
+    n_completed_jobs = cluster_interface.get_n_completed_jobs()
+
+    any_errors = cluster_interface.check_error_msgs()
+    if any_errors:
+      error_handler.maybe_raise('Some jobs had errors!')
 
     if time_to_print():
-      print('Number of successfully ran jobs:', str(n_successful_jobs))
+      print('Number of successfully ran jobs:', str(n_completed_jobs))
+      total_df = pd.concat([job.get_results()[0] for job in cluster_interface.get_completed_jobs()], ignore_index=True)
+      df = total_df.sort_values(metric_to_optimize)
+      print(df[:min(10, df.shape[0])])
     time.sleep(1)
 
   post_opt(cluster_interface)

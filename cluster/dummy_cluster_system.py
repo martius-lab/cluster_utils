@@ -21,13 +21,20 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     self.futures_tuple = []
     self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
 
+  def generate_cluster_id(self):
+    cluster_id = np.random.randint(1e10)
+    while cluster_id in [c_id for c_id, future in self.futures_tuple]:
+      cluster_id = np.random.randint(1e10)
+    return cluster_id
+
   def submit_fn(self, job):
     self.generate_job_spec_file(job)
     free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
     free_cpus_str = ','.join(map(str, free_cpus))
     cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.job_spec_file_path)
-    cluster_id = np.random.randint(1e10)
-    self.futures_tuple.append((cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True)))
+    cluster_id = self.generate_cluster_id()
+    new_futures_tuple = (cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
+    self.futures_tuple.append(new_futures_tuple)
     return cluster_id
 
   def stop_fn(self, job):
@@ -50,7 +57,6 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     os.chmod(run_script_file_path, 0O755)  # Make executable
 
     job.job_spec_file_path = run_script_file_path
-    print('run script file path', run_script_file_path)
 
   def status(self, job):
     future = [future for cluster_id, future in self.futures_tuple if cluster_id == job.cluster_id]
@@ -96,7 +102,6 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     return min(running, self.concurrent_jobs), idle, held
 
   def check_error_msgs(self):
-
     failed = [future for _, future in self.futures_tuple if
               future.done() and future.result().__dict__['returncode'] == 1]
     errs = set([future.result().stderr.decode() for future in failed])

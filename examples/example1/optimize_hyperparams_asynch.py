@@ -21,7 +21,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='new_plots',
+                  branch='looped_optimization',
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -35,8 +35,8 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=10,
-                            min_n_jobs=2,
+                            number_of_samples=2000,
+                            min_n_jobs=8,
                             minimize=True)
 
 other_params = {'flag': False}

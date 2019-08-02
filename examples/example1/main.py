@@ -7,6 +7,8 @@ from cluster import save_metrics_params, update_params_from_cmdline
 def fn_to_optimize(*, u, v, w, x, y, z, flag, noisy=True, **kwargs):
   result = (x - 3.14) ** 2 + (y - 2.78) ** 2 + (u * v * w + 1) ** 2 + (u + v + w + z - 5) ** 2
   time.sleep(np.random.randint(20))
+  if np.random.rand()>.8:
+    raise ValueError('this job crashed on purpose')
   if noisy:
     result += 0.5 * np.random.normal()
   #if (x-3.14) ** 2 < 0.5 and flag:
