@@ -66,7 +66,11 @@ class Optimizer(ABC):
     raise NotImplementedError
 
   def best_jobs_model_dirs(self, how_many):
-    df_to_use = self.full_df[['model_dir', self.metric_to_optimize]]
+    df_to_use = self.full_df
+    if how_many > df_to_use.shape[0]:
+      warn('Requesting more best_job_model_dirs than data is available, reducing number to: ', df_to_use.shape[0])
+      how_many = df_to_use.shape[0]
+    df_to_use = df_to_use[['model_dir', self.metric_to_optimize]]
     return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['model_dir']
 
   @property
@@ -84,7 +88,8 @@ class Optimizer(ABC):
 class Metaoptimizer(Optimizer):
   def __init__(self, *, best_fraction_to_use_for_update, with_restarts, iteration_mode=True, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
-    self.update_best_jobs_to_take(best_fraction_to_use_for_update)
+    self.best_fraction_to_use_for_update = best_fraction_to_use_for_update
+    self.update_best_jobs_to_take()
     self.with_restarts = with_restarts
     self.best_param_values = {}
 
@@ -102,22 +107,23 @@ class Metaoptimizer(Optimizer):
       if distr.param_name in metaopt.params:
         distr.fit(current_best_params[distr.param_name])
 
-    metaopt.update_best_jobs_to_take(best_fraction_to_use_for_update)
+    metaopt.update_best_jobs_to_take()
     metaopt.optimized_params = optimized_params
     setattr(metaopt, 'with_restarts', with_restarts)
     metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
     metaopt.report_hooks = report_hooks or []
     return metaopt
 
-  def update_best_jobs_to_take(self, best_fraction_to_use_for_update):
-    best_jobs_to_take = int(self.number_of_samples * best_fraction_to_use_for_update)
-    if best_jobs_to_take < 2:
-      warn('Less than 2 jobs would be taken for distribution update. '
-           'Resorting to taking exactly 2 best jobs. '
+  def update_best_jobs_to_take(self):
+    if self.iteration_mode:
+      best_jobs_to_take = int(self.full_df.shape[0] * self.best_fraction_to_use_for_update)
+    else:
+      best_jobs_to_take = int(self.number_of_samples * self.best_fraction_to_use_for_update)
+    if best_jobs_to_take < 10:
+      warn('Less than 10 jobs would be taken for distribution update. '
+           'Resorting to taking exactly 10 best jobs. '
            'Perhaps choose higher \'best_fraction_to_use_for_update\' ')
-      best_jobs_to_take = 2
-      best_fraction_to_use_for_update = best_jobs_to_take / self.number_of_samples
-    self.best_fraction_to_use_for_update = best_fraction_to_use_for_update
+      best_jobs_to_take = 10
     self.best_jobs_to_take = best_jobs_to_take
 
   def ask(self, num_samples):
@@ -140,6 +146,8 @@ class Metaoptimizer(Optimizer):
       distr.fit(current_best_params[distr.param_name])
 
   def get_best_params(self):
+    self.update_best_jobs_to_take()
+    print(self.best_jobs_to_take, '<- that many jobs were used for refitting')
     return best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
                        minimum=self.minimize, how_many=self.best_jobs_to_take)
 

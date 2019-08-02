@@ -198,6 +198,7 @@ def fit_forest(df, params, metric):
 
 def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
   df = df_for_iter.sort_values([metric], ascending=minimum)
+  print(df)
   df = df[:-len(df) // 4]
 
   ys_base = df[metric]

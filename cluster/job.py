@@ -47,6 +47,8 @@ class Job():
     base_path = self.paths['result_dir']
     job_output_files = (CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
     path = os.path.join(base_path, str(self.id_number))
-    param_df, metric_df = (pd.read_csv(os.path.join(path, filename)) for filename in job_output_files)
-    resulting_df = pd.concat([param_df, metric_df], axis=1)
-    return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
+    if os.path.isdir(path) and all([filename in os.listdir(path) for filename in job_output_files]):
+      param_df, metric_df = (pd.read_csv(os.path.join(path, filename)) for filename in job_output_files)
+      resulting_df = pd.concat([param_df, metric_df], axis=1)
+      return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
+    return None

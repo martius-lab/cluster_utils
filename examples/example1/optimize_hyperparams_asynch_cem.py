@@ -1,4 +1,5 @@
 import os
+
 from pathlib2 import Path
 
 from cluster import asynchronous_optimization, init_plotting
@@ -12,8 +13,9 @@ init_plotting()
 
 opt_procedure_name = 'dummy2_ng'
 
-optimizer_str = 'ng'
-optimizer_settings = {'opt_alg': 'cma'}
+optimizer_str = 'cem_metaoptimizer'
+optimizer_settings = {'with_restarts': False,
+                      'best_fraction_to_use_for_update': 0.15}
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -35,18 +37,19 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=10,
+                            number_of_samples=1000,
                             min_n_jobs=8,
                             minimize=True)
 
 other_params = {'flag': False}
-
-optimized_params = [NGVariable(param='u'),
-                    NGVariable(param='v'),
-                    NGVariable(param='w'),
-                    NGVariable(param='x'),
-                    NGVariable(param='y'),
-                    NGVariable(param='z')]
+optimized_params = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='v', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='w', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='x', bounds=(-3.0, 4.0)),
+                     TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
+                     TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
+                     Discrete(param='flag', options=[False, True])
+                     ]
 
 def find_json(df, path_to_results, filename_generator):
     return '/is/sg/mrolinek/Projects/mbrl/optimization_scripts/gym/halfcheetah/mpc_opt_script.json'
