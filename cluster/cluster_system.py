@@ -7,8 +7,9 @@ from random import shuffle
 from subprocess import run, PIPE
 from threading import Thread
 
+
 class ClusterSubmission(ABC):
-  def __init__(self, name, paths, remove_jobs_dir=True):
+  def __init__(self, name, paths, remove_jobs_dir=True, iteration_mode=True):
     self.jobs = []
     self.name = name
     self.remove_jobs_dir = remove_jobs_dir
@@ -17,6 +18,16 @@ class ClusterSubmission(ABC):
     self.finished = False
     self.submission_hooks = dict()
     self._inc_job_id = -1
+    self.iteration_mode = iteration_mode
+
+  @property
+  def current_jobs(self):
+    if not self.iteration_mode:
+      return self.jobs
+    if len(self.jobs) == 0:
+      return []
+    max_it = max([job.iteration for job in self.jobs])
+    return [job for job in self.jobs if job.iteration == max_it]
 
   @property
   def submission_dir(self):
@@ -50,6 +61,14 @@ class ClusterSubmission(ABC):
     for hook in self.submission_hooks.values():
       hook.post_submission_routine()
 
+  def exec_pre_run_routines(self):
+    for hook in self.submission_hooks.values():
+      hook.pre_run_routine()
+
+  def exec_post_run_routines(self):
+    for hook in self.submission_hooks.values():
+      hook.post_run_routine()
+
   def collect_stats_from_hooks(self):
     stats = {hook.identifier: hook.status for hook in self.submission_hooks.values()}
     return stats
@@ -60,34 +79,69 @@ class ClusterSubmission(ABC):
   def add_jobs(self, jobs):
     if not isinstance(jobs, list):
       jobs = [jobs]
-    self.jobs = self.jobs + jobs
     for job in jobs:
       job.submission_name = self.name
-
-  def get_running_jobs(self):
-    running_jobs = [job for job in self.jobs if self.check_runs(job)]
-    return running_jobs
-
-  def get_n_running_jobs(self):
-    return len(self.get_running_jobs())
-
-  def get_completed_jobs(self):
-    completed_jobs =  [job for job in self.jobs if self.check_done(job)]
-    return completed_jobs
-
-  def get_n_completed_jobs(self):
-    return len(self.get_completed_jobs())
-
-  def get_submitted_not_running_jobs(self):
-    submitted_jobs = [job for job in self.jobs if self.status(job) == 1]
-    return submitted_jobs
-
-  def get_n_submitted_jobs(self):
-    return len([job for job in self.jobs if not job.cluster_id is None])
+    self.jobs = self.jobs + jobs
 
   @property
-  def total_jobs(self):
-    return len(self.jobs)
+  def submitted_jobs(self):
+    return [job for job in self.current_jobs if self.check_submitted(job)]
+
+  @property
+  def n_submitted_jobs(self):
+    return len(self.submitted_jobs)
+
+  @property
+  def running_jobs(self):
+    running_jobs = [job for job in self.current_jobs if self.check_runs(job)]
+    return running_jobs
+
+  @property
+  def n_running_jobs(self):
+    return len(self.running_jobs)
+
+  @property
+  def completed_jobs(self):
+    completed_jobs = [job for job in self.current_jobs if self.check_done(job)]
+    return completed_jobs
+
+  @property
+  def n_completed_jobs(self):
+    return len(self.completed_jobs)
+
+  @property
+  def idle_jobs(self):
+    idle_jobs = [job for job in self.current_jobs if self.status(job) == 1]
+    return idle_jobs
+
+  @property
+  def n_idle_jobs(self):
+    return len(self.idle_jobs)
+
+  @property
+  def successful_jobs(self):
+    return [job for job in self.completed_jobs if not job.get_results(False) is None]
+
+  @property
+  def n_successful_jobs(self):
+    return len(self.successful_jobs)
+
+  @property
+  def failed_jobs(self):
+    return [job for job in self.current_jobs if self.check_done(job) and job.get_results(False) is None]
+
+  @property
+  def n_failed_jobs(self):
+    return len(self.failed_jobs)
+
+  @property
+  def n_total_jobs(self):
+    return len(self.current_jobs)
+
+  def submit_all(self):
+    for job in self.current_jobs:
+      if job.cluster_id is None:
+        self.submit(job)
 
   def submit(self, job):
     t = Thread(target=self._submit, args=(job,))
@@ -95,7 +149,7 @@ class ClusterSubmission(ABC):
     t.start()
 
   def _submit(self, job):
-    if self.check_done(job):
+    if self.check_submitted(job):
       raise RuntimeError('Can not run a job that already ran')
     if not job in self.jobs:
       warn('Submitting job that was not yet added to the cluster system interface, will add it now')
@@ -104,21 +158,21 @@ class ClusterSubmission(ABC):
     cluster_id = self.submit_fn(job)
     job.cluster_id = cluster_id
     self.exec_post_submission_routines()
-   # print('Jobs submitted successfully.')
+    # print('Jobs submitted successfully.')
 
   def check_runs(self, job):
     return self.status(job) == 2
 
   def check_done(self, job):
-    return ((not self.check_runs(job)) and (not job.cluster_id is None))
+    return self.status(job) > 2
 
-  def check_submitted_not_running(self, job):
-    return self.status(job) == 1
+  def check_submitted(self, job):
+    return not job.cluster_id is None
 
   def stop(self, job):
     if job.cluster_id is None:
       raise RuntimeError('Can not close a job unless its cluster_id got specified')
-    self.stop_fn(job.cluster_id)
+    self.stop_fn(job)
 
   def stop_all(self):
     print('Killing remaining jobs...')
@@ -151,7 +205,7 @@ class ClusterSubmission(ABC):
     raise NotImplementedError
 
   def __enter__(self):
-    #TODO: take emergency cleanup to new implementation
+    # TODO: take emergency cleanup to new implementation
     try:
       self.exec_pre_submission_routines()
       self.submit()
@@ -161,19 +215,22 @@ class ClusterSubmission(ABC):
       raise
 
   def close(self):
-    self.exec_post_submission_routines()
     if self.remove_jobs_dir:
       print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
       rm_dir_full(self.submission_dir)
       print('Done')
 
-  @abstractmethod
-  def get_status(self):
-    pass
+  #@abstractmethod
+  #def get_status(self):
+  #  pass
 
   @abstractmethod
   def check_error_msgs(self):
     pass
+
+  def __repr__(self):
+    return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '
+            'Failed: {.n_failed_jobs}, Running: {.n_running_jobs}, Idle: {.n_idle_jobs}').format(*(6 * [self]))
 
 
 from .dummy_cluster_system import Dummy_ClusterSubmission
@@ -239,7 +296,15 @@ class ClusterSubmissionHook(ABC):
   def pre_submission_routine(self):
     pass
 
+  @abstractmethod
   def post_submission_routine(self):
+    pass
+
+  @abstractmethod
+  def pre_run_routine(self):
+    pass
+
+  def post_run_routine(self):
     self.update_status()
 
   @abstractmethod

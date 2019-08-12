@@ -1,7 +1,7 @@
 import os
 from pathlib2 import Path
 
-from cluster import asynchronous_optimization, init_plotting
+from cluster import hyperparameter_optimization, init_plotting
 from cluster.distributions import *
 from cluster.latex_utils import *
 from cluster.utils import mkdtemp
@@ -10,11 +10,10 @@ home = str(Path.home())
 
 init_plotting()
 
-opt_procedure_name = 'dummy2_asynch_ng_with_disc'
+opt_procedure_name = 'dummy2_ng_iteration'
 
 optimizer_str = 'ng'
-optimizer_settings = {'opt_alg': 'cma',
-                      'n_jobs_per_iteration': 150}
+optimizer_settings = {'opt_alg': 'cma'}
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -22,7 +21,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='new_plots',#looped_optimization',
+                  branch='new_plots',
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -36,19 +35,22 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=10000,
-                            min_n_jobs=50,
+                            number_of_samples=150,
+                            fraction_that_need_to_finish=0.9,
+                            total_rounds=15,
+                            remove_jobs_dir=False,
                             minimize=True)
 
-other_params = {}
+other_params = {Discrete(param='flag', options=[False, True])
+               }
 
-optimized_params = [NGScalar(param='u'),
-                    NGScalar(param='v'),
-                    NGScalar(param='w'),
-                    NGScalar(param='x'),
-                    NGScalar(param='y'),
-                    NGScalar(param='z'),
-                    NGDiscrete(param='flag', values=[True, False])]
+optimized_params = [NGVariable(param='u'),
+                    NGVariable(param='v'),
+                    NGVariable(param='w'),
+                    NGVariable(param='x'),
+                    NGVariable(param='y'),
+                    NGVariable(param='z')]
+
 
 def find_json(df, path_to_results, filename_generator):
     return '/is/sg/mrolinek/Projects/mbrl/optimization_scripts/gym/halfcheetah/mpc_opt_script.json'
@@ -56,7 +58,7 @@ def find_json(df, path_to_results, filename_generator):
 
 
 #json_hook = SectionFromJsonHook(section_title='Random script', section_generator=find_json)
-asynchronous_optimization(base_paths_and_files=base_paths_and_files,
+hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
                             submission_requirements=submission_requirements,
                             optimizer_str=optimizer_str,
                             optimizer_settings=optimizer_settings,
@@ -64,6 +66,6 @@ asynchronous_optimization(base_paths_and_files=base_paths_and_files,
                             other_params=other_params,
                             git_params=git_params,
                             num_best_jobs_whose_data_is_kept=5,
-                            report_hooks=None,
+                            report_hooks=None,#[json_hook],
                             run_local=True,
                             **optimization_setting)

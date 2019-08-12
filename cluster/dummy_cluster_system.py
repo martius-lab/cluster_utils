@@ -13,8 +13,8 @@ import numpy as np
 
 
 class Dummy_ClusterSubmission(ClusterSubmission):
-  def __init__(self, requirements, paths, name, remove_jobs_dir=True):
-    super().__init__(name, paths, remove_jobs_dir)
+  def __init__(self, requirements, paths, name, remove_jobs_dir=True, iteration_mode=True):
+    super().__init__(name, paths, remove_jobs_dir, iteration_mode)
     self._process_requirements(requirements)
     self.exceptions_seen = set({})
     self.available_cpus = range(cpu_count())
@@ -65,14 +65,15 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     future = future[0]
     if future.running():
       return 2
-    return 1
+    else:
+      if future.done():
+        if future.result().__dict__['returncode'] == 1:
+          return 4
+        return 3
+      return 1
 
   def is_blocked(self):
     return True
-
-  @property
-  def total_jobs(self):
-    return len(self.jobs)
 
   @property
   def futures(self):
@@ -90,6 +91,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
       self.concurrent_jobs = self.available_cpus
     assert self.concurrent_jobs > 0
 
+  '''
   def get_status(self):
     running = min(sum([future.running() for _, future in self.futures_tuple]),
                   self.concurrent_jobs)
@@ -100,6 +102,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     held = failed
 
     return min(running, self.concurrent_jobs), idle, held
+    '''
 
   def check_error_msgs(self):
     failed = [future for _, future in self.futures_tuple if

@@ -39,6 +39,7 @@ optimization_setting = dict(metric_to_optimize='result',
                             number_of_samples=150,
                             fraction_that_need_to_finish=0.9,
                             total_rounds=15,
+                            remove_jobs_dir=False,
                             minimize=True)
 
 other_params = {}

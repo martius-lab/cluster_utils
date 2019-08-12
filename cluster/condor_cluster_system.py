@@ -9,26 +9,90 @@ from warnings import warn
 from .constants import *
 from contextlib import suppress
 import pandas as pd
+from threading import Thread
+import time
 
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
 
 class Condor_ClusterSubmission(ClusterSubmission):
-  def __init__(self, requirements, jobs, submission_dir, name, remove_jobs_dir=True):
-    super().__init__(jobs, name, submission_dir, remove_jobs_dir)
+  def __init__(self, requirements, paths, name, remove_jobs_dir=True, iteration_mode=True):
+    super().__init__(name, paths, remove_jobs_dir, iteration_mode)
 
     os.environ["MPLBACKEND"] = 'agg'
     self._process_requirements(requirements)
     self.name = name
     self.exceptions_seen = set({})
+    user_name = run('whoami', shell=True, stdout=PIPE, stderr=PIPE).stdout.decode('utf-8').rstrip('\n')
+    self.condor_q_cmd = 'condor_q {}\n'.format(user_name)
+    print('condor_q_cmd: ', self.condor_q_cmd)
+    condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
+    self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
+    self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
+    t = Thread(target=self.update_condor_q_info, args=())
+    self.exec_pre_submission_routines()
+    t.start()
 
-  def submit_fn(self, job_spec_file_path):
-    cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job_spec_file_path)
-    return run([cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+  def submit_fn(self, job):
+    self.generate_job_spec_file(job)
+    submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
+    result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+    good_lines = [line for line in result.split('\n') if 'submitted' in line]
+    bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
+    if not good_lines or bad_lines:
+      self.close()
+      print('########################\n',result,'########################\n')
+      raise RuntimeError('Cluster submission failed')
+    assert len(good_lines) == 1
+    new_cluster_id = good_lines[0].split(' ')[-1][:-1]
+    return new_cluster_id
 
-  def close_fn(self, cluster_id):
+  def stop_fn(self, cluster_id):
     cmd = 'condor_rm {}'.format(cluster_id)
     return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
+
+  def generate_job_spec_file(self, job):
+    job_file_name = '{}_{}.sh'.format(self.name, job.id_number)
+    run_script_file_path = os.path.join(self.submission_dir, job_file_name)
+    job_spec_file_path = os.path.join(self.submission_dir, job_file_name + '.sub')
+    cmd = job.generate_execution_cmd(self.paths)
+    # Prepare namespace for string formatting (class vars + locals)
+    namespace = copy(vars(self))
+    namespace.update(vars(job))
+    namespace.update(locals())
+
+    with open(run_script_file_path, 'w') as script_file:
+      script_file.write(MPI_CLUSTER_RUN_SCRIPT % namespace)
+    os.chmod(run_script_file_path, 0O755)  # Make executable
+
+    with open(job_spec_file_path, 'w') as spec_file:
+      spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
+
+    job.job_spec_file_path = job_spec_file_path
+
+  def status(self, job):
+    parsed_info = self._parse_condor_info(job.cluster_id)
+    if parsed_info is None:
+      if job.cluster_id is None:
+        return 0
+      else:
+        return 10
+    parsed_info = parsed_info[0]
+    status = parsed_info.status
+    if status == 'R':
+      return 2
+    if status == 'H':
+      return 4
+    if status == 'I':
+      return 1
+    if status == 'C':
+      return 3
+    print(parsed_info)
+
+  def is_blocked(self):
+    return True
+
+  #TODO: Check that two simultaneous HPOs dont collide
 
   def _process_requirements(self, requirements):
     # Job requirements
@@ -51,7 +115,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
     else:
       self.gpu_memory_line = ''
 
-  def submit(self, job, idx):
+  '''
+  def submit_fn(self, job, idx):
     submit_cmd = self.get_submit_cmd(job.generate_job_spec_file(idx))
     result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
 
@@ -62,29 +127,19 @@ class Condor_ClusterSubmission(ClusterSubmission):
       raise RuntimeError('Cluster submission failed')
     assert len(good_lines) == 1
     job.cluster_id = good_lines[0].split(' ')[-1][:-1]
+  '''
 
-  def submit_all(self):
-    submitted = False
-    for idx, job in enumerate(self.jobs):
-      if job.submitted():
-        continue
-      self.submit(job, idx)
-      submitted = True
 
-    if not submitted:
-      warn('All jobs were already submitted!')
-    print('Jobs submitted successfully')
+  def update_condor_q_info(self):
+    #TODO: update only if new results make sense
+    while(True):
+      condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
+      self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
+      self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
+      time.sleep(5)
+    #regression has limited depth self.update_condor_q_info()
 
-  def close(self):
-    print('Killing remaining jobs...')
-    if not self.submitted:
-      raise RuntimeError('Submission cleanup called before submission completed')
-    for job in self.jobs:
-      job.close(self)
-    print('Remaining jobs killed')
-    self.finished = True
-    super().close()
-
+  '''
   def get_status(self):
     parsed_condor = self._parse_condor_info()
     if not parsed_condor:
@@ -94,24 +149,27 @@ class Condor_ClusterSubmission(ClusterSubmission):
     self.id_nums = [sub.ID.split('.')[0] for sub in my_submissions]
     nums = Counter([sub.status for sub in my_submissions])
     return nums['R'], nums['I'], nums['H']
+  '''
 
-  @staticmethod
-  def _parse_condor_info():
-    result = run(['condor_q'], shell=True, stdout=PIPE, stderr=PIPE)
-    raw = result.stdout.decode('utf-8')
-    err = result.stderr.decode('utf-8')
+  def _parse_condor_info(self, cluster_id=None):
+    raw = self.condor_q_info_raw
+    err = self.condor_q_info_err
     if 'Failed' in err:
       warn('Condor_q currently unavailable')
       return None
     condor_lines = raw.split('\n')
-    condor_parsed_lines = [[item for item in line.split(' ') if item] for line in condor_lines]
+    condor_parsed_lines = [[item for item in line.split(' ') if item] for line in condor_lines[:-2]]
     condor_parsed_lines = [line for line in condor_parsed_lines if len(line) > 8]
     if len(condor_parsed_lines) == 0 or 'SUBMITTED' not in raw:
-      warn('Condor_q currently unavailable')
       return None
-
     stripped_db = [[item.strip() for item in line] for line in condor_parsed_lines]
     concat_last = [line[:8] + [' '.join(line[8:])] for line in stripped_db]
+    if not cluster_id is None:
+      concat_last = [line for line in concat_last if str(int(float(line[0]))) == cluster_id]
+      if len(concat_last) == 0:
+        return None
+      if len(concat_last) > 1:
+        raise ValueError('Found two jobs with same cluster ID')
     fully_parsed = [CondorRecord(*line) for line in concat_last]
     return fully_parsed
 
@@ -138,6 +196,10 @@ class Condor_ClusterSubmission(ClusterSubmission):
             found_err = True
       return found_err
 
+
+
+
+'''
   def save_job_info(self, result_dir):
 
     def extract_dict_from_cmd(cmd_string):
@@ -170,5 +232,4 @@ class Condor_ClusterSubmission(ClusterSubmission):
     big_df = big_df.sort_values(['cluster_job_id'], ascending=True)
     big_df.to_csv(os.path.join(result_dir, JOB_INFO_FILE))
     return True
-
-
+'''

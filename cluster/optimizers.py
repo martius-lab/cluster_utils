@@ -8,7 +8,7 @@ import pandas as pd
 import itertools
 from .constants import *
 from .data_analysis import *
-from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete
+from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete, NGDiscrete, NGScalar
 from .latex_utils import LatexFile
 from .utils import nested_to_dict, shorten_string
 import nevergrad as ng
@@ -35,9 +35,7 @@ class Optimizer(ABC):
 
   @abstractmethod
   def tell(self, df):
-    if self.iteration_mode:
-      self.iteration += 1
-      df['iteration'] = self.iteration
+    df['iteration'] = self.iteration + 1
 
     self.full_df = pd.concat([self.full_df, df], ignore_index=True)
     self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
@@ -54,21 +52,46 @@ class Optimizer(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
+  def content_pdf_report(self, latex, file_gen, calling_script):
     raise NotImplementedError
+
+  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
+    today = datetime.datetime.now().strftime("%B %d, %Y")
+    latex_title = 'Results of optimization procedure from ({})'.format(today)
+    latex = LatexFile(latex_title)
+
+    if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
+      latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
+
+    def filename_gen(base_path):
+      for num in count():
+        yield os.path.join(base_path, '{}.pdf'.format(num))
+
+    with TemporaryDirectory() as tmpdir:
+      file_gen = filename_gen(tmpdir)
+
+      self.content_pdf_report(latex, file_gen, calling_script)
+
+      hook_args = dict(df=self.full_df,
+                       path_to_results=current_result_path)
+
+      for hook in self.report_hooks:
+        hook.write_section(latex, file_gen, hook_args)
+      latex.produce_pdf(output_file)
 
   @abstractmethod
   def min_fraction_to_finish(self):
     raise NotImplementedError
 
   @abstractmethod
-  def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks, **optimizer_settings):
+  def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
+                           **optimizer_settings):
     raise NotImplementedError
 
   def best_jobs_model_dirs(self, how_many):
     df_to_use = self.full_df
     if how_many > df_to_use.shape[0]:
-      warn('Requesting more best_job_model_dirs than data is available, reducing number to: ', df_to_use.shape[0])
+      warn('Requesting more best_job_model_dirs than data is available, reducing number to: ' + str(df_to_use.shape[0]))
       how_many = df_to_use.shape[0]
     df_to_use = df_to_use[['model_dir', self.metric_to_optimize]]
     return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['model_dir']
@@ -84,6 +107,36 @@ class Optimizer(ABC):
     else:
       return ''
 
+  def provide_recommendations(self, how_many):
+    jobs_df = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count].copy()
+
+    metric_std = self.metric_to_optimize + STD_ENDING
+    final_metric = f'expected {self.metric_to_optimize}'
+    if self.with_restarts and self.minimal_restarts_to_count > 1:
+      sign = -1.0 if self.minimize else 1.0
+      mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
+      median_std = jobs_df[metric_std].median()
+      print('Median noise noise over restarts', median_std)
+
+      # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
+      expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+      jobs_df[final_metric] = expected_metric
+    else:
+      jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
+
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[:how_many].reset_index()
+    del best_jobs_df[metric_std]
+    del best_jobs_df[self.metric_to_optimize]
+    del best_jobs_df[RESTART_PARAM_NAME]
+    del best_jobs_df['index']
+
+    best_jobs_df.index += 1
+    best_jobs_df[final_metric] = list(smart_round(best_jobs_df[final_metric]))
+
+    best_jobs_df = best_jobs_df.transpose()
+    best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
+    return best_jobs_df
+
 
 class Metaoptimizer(Optimizer):
   def __init__(self, *, best_fraction_to_use_for_update, with_restarts, iteration_mode=True, **kwargs):
@@ -95,9 +148,12 @@ class Metaoptimizer(Optimizer):
 
   @classmethod
   def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize,
-                           report_hooks, best_fraction_to_use_for_update, with_restarts):
+                           report_hooks, **optimizer_settings):
+
     if not os.path.exists(file):
       return None
+
+    best_fraction_to_use_for_update, with_restarts = optimizer_settings
 
     metaopt = pickle.load(open(file, 'rb'))
     if (metric_to_optimize, minimize) != (metaopt.metric_to_optimize, metaopt.minimize):
@@ -112,10 +168,12 @@ class Metaoptimizer(Optimizer):
     setattr(metaopt, 'with_restarts', with_restarts)
     metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
     metaopt.report_hooks = report_hooks or []
+    if not metaopt is None:
+      print('Loaded HP optimizer from pickle!')
     return metaopt
 
   def update_best_jobs_to_take(self):
-    if self.iteration_mode:
+    if not self.iteration_mode:
       best_jobs_to_take = int(self.full_df.shape[0] * self.best_fraction_to_use_for_update)
     else:
       best_jobs_to_take = int(self.number_of_samples * self.best_fraction_to_use_for_update)
@@ -132,14 +190,19 @@ class Metaoptimizer(Optimizer):
       if extra_settings is not None:
         num_samples = num_samples - self.best_jobs_to_take
         sampled_settings = self.distribution_list_sampler(num_samples)
-        return itertools.chain(extra_settings, sampled_settings)
+        return None, itertools.chain(extra_settings, sampled_settings)
       else:
         sampled_settings = self.distribution_list_sampler(num_samples)
-        return sampled_settings
+        return None, sampled_settings
     else:
-      return self.distribution_list_sampler(num_samples)
+      return None, self.distribution_list_sampler(num_samples)
 
-  def tell(self, df):
+  def tell(self, jobs):
+    results = jobs.get_results()
+    if not results is None:
+      df, params, metrics = results
+    else:
+      return
     super().tell(df)
     current_best_params = self.get_best_params()
     for distr in self.optimized_params:
@@ -147,7 +210,6 @@ class Metaoptimizer(Optimizer):
 
   def get_best_params(self):
     self.update_best_jobs_to_take()
-    print(self.best_jobs_to_take, '<- that many jobs were used for refitting')
     return best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
                        minimum=self.minimize, how_many=self.best_jobs_to_take)
 
@@ -182,35 +244,21 @@ class Metaoptimizer(Optimizer):
     else:
       return 1
 
-  def provide_recommendations(self, how_many):
-    jobs_df = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count].copy()
+  def content_pdf_report(self, latex, file_gen, calling_script):
+    overall_progress_file = next(file_gen)
+    plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
 
-    metric_std = self.metric_to_optimize + STD_ENDING
-    final_metric = f'expected {self.metric_to_optimize}'
-    if self.with_restarts and self.minimal_restarts_to_count > 1:
-      sign = -1.0 if self.minimize else 1.0
-      mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
-      median_std = jobs_df[metric_std].median()
-      print('Median noise noise over restarts', median_std)
+    sensitivity_file = next(file_gen)
+    importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
+                                 sensitivity_file)
 
-      # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-      expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
-      jobs_df[final_metric] = expected_metric
-    else:
-      jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
+    distr_plot_files = self.distribution_plots(file_gen)
 
-    best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[:how_many].reset_index()
-    del best_jobs_df[metric_std]
-    del best_jobs_df[self.metric_to_optimize]
-    del best_jobs_df[RESTART_PARAM_NAME]
-    del best_jobs_df['index']
-
-    best_jobs_df.index += 1
-    best_jobs_df[final_metric] = list(smart_round(best_jobs_df[final_metric]))
-
-    best_jobs_df = best_jobs_df.transpose()
-    best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
-    return best_jobs_df
+    latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
+    latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
+    latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
+    latex.add_section_from_figures('Distribution development', distr_plot_files)
+    latex.add_section_from_python_script('Specification', calling_script)
 
   def distribution_plots(self, filename_generator):
     for distr in self.optimized_params:
@@ -227,43 +275,6 @@ class Metaoptimizer(Optimizer):
         yield filename
       else:
         assert False
-
-  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
-    today = datetime.datetime.now().strftime("%B %d, %Y")
-    latex_title = 'Results of optimization procedure from ({})'.format(today)
-    latex = LatexFile(latex_title)
-
-    if 'GitConnector' in submission_hook_stats and submission_hook_stats['GitConnector']:
-      latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
-
-    def filename_gen(base_path):
-      for num in count():
-        yield os.path.join(base_path, '{}.pdf'.format(num))
-
-    with TemporaryDirectory() as tmpdir:
-      file_gen = filename_gen(tmpdir)
-
-      overall_progress_file = next(file_gen)
-      plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
-
-      sensitivity_file = next(file_gen)
-      importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
-                                   sensitivity_file)
-
-      distr_plot_files = self.distribution_plots(file_gen)
-
-      latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
-      latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
-      latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
-      latex.add_section_from_figures('Distribution development', distr_plot_files)
-      latex.add_section_from_python_script('Specification', calling_script)
-
-      hook_args = dict(df=self.full_df,
-                       path_to_results=current_result_path)
-
-      for hook in self.report_hooks:
-        hook.write_section(latex, file_gen, hook_args)
-      latex.produce_pdf(output_file)
 
   def distribution_list_sampler(self, num_samples):
     for distr in self.optimized_params:
@@ -296,44 +307,42 @@ class NGOptimizer(Optimizer):
     trunc_dict = {k: float('%.8f' % (v)) for k, v in dict.items()}
     return hash(frozenset(trunc_dict.items()))
 
-  def __init__(self, *, opt_alg, iteration_mode=False, **kwargs):
+  def __init__(self, *, opt_alg, n_jobs_per_iteration, iteration_mode=False, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
     assert opt_alg in ng_optimizer_dict.keys()
     # TODO: Adjust for arbitrary types
-    self.instrumentation = {param.param_name: ng.var.Array(1).asscalar() for param in self.optimized_params}
+    self.instrumentation = {param.param_name: (ng.var.Scalar() if type(param) == NGScalar else ng.var.OrderedDiscrete(param.values)) for
+                            param in self.optimized_params}
     self.instrumentation = ng.Instrumentation(**self.instrumentation)
     self.optimizer = ng_optimizer_dict[opt_alg](instrumentation=self.instrumentation)
-    self.map = {}
-
+    self.with_restarts = False
 
   def ask(self, num_samples):
     for _ in range(num_samples):
       candidate = self.optimizer.ask()
-      self.map[self._hash(candidate.kwargs)] = candidate
-      yield candidate.kwargs
+      yield candidate, candidate.kwargs
 
-  def tell(self, df):
-    super().tell(df)
-    idx = [param.param_name for param in self.optimized_params]
-    parameters = df[idx].to_dict(orient='records')
-    values = df[self.metric_to_optimize]
-    for parameterset, value in zip(parameters, values):
-      candidate = self.map[self._hash(parameterset)]
-      self.optimizer.tell(candidate, value)
+  def tell(self, jobs):
+    for job in jobs:
+      results = job.get_results()
+      if not results is None:
+        df, params, metrics = results
+      else:
+        return
+      super().tell(df)
+      self.optimizer.tell(job.candidate, df.iloc[0][self.metric_to_optimize])
 
-  def get_best_params(self, how_many=1):
+  def provide_recommendation_settings(self, how_many=1):
     if self.iteration > 0:
       for _ in range(how_many):
         yield self.optimizer.provide_recommendation().kwargs
     else:
       return ''
 
-  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
-    pass
-
   @classmethod
-  def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks, opt_alg):
-    # Todo: Make sure optimizer progress is part of the pickle
+  def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
+                           **optimizer_settings):
+    opt_alg = optimizer_settings['opt_alg']
 
     if not os.path.exists(file):
       return None
@@ -358,3 +367,19 @@ class NGOptimizer(Optimizer):
     self_file = os.path.join(directory, STATUS_PICKLE_FILE)
     with open(self_file, 'wb') as f:
       pickle.dump(self, f)
+
+  def content_pdf_report(self, latex, file_gen, calling_script):
+    overall_progress_file = next(file_gen)
+    plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
+
+    sensitivity_file = next(file_gen)
+    importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
+                                 sensitivity_file)
+
+    # distr_plot_files = self.distribution_plots(file_gen)
+
+    latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
+    latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
+    latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
+    # latex.add_section_from_figures('Distribution development', distr_plot_files)
+    latex.add_section_from_python_script('Specification', calling_script)
