@@ -190,20 +190,30 @@ class Metaoptimizer(Optimizer):
       if extra_settings is not None:
         num_samples = num_samples - self.best_jobs_to_take
         sampled_settings = self.distribution_list_sampler(num_samples)
-        return None, itertools.chain(extra_settings, sampled_settings)
+        return_settings = itertools.chain(extra_settings, sampled_settings)
       else:
         sampled_settings = self.distribution_list_sampler(num_samples)
-        return None, sampled_settings
+        return_settings = sampled_settings
     else:
-      return None, self.distribution_list_sampler(num_samples)
+        return_settings = self.distribution_list_sampler(num_samples)
+    for setting in return_settings:
+      yield None, setting
 
   def tell(self, jobs):
-    results = jobs.get_results()
-    if not results is None:
-      df, params, metrics = results
-    else:
+    iteration_df = None
+    if not isinstance(jobs, list):
+      jobs = [jobs]
+    for job in jobs:
+      result = job.get_results()
+      if not result is None:
+        df, _, _ = result
+      if not iteration_df is None:
+        iteration_df = pd.concat((iteration_df, df), axis=0)
+      else:
+        iteration_df = df
+    if iteration_df is None:
       return
-    super().tell(df)
+    super().tell(iteration_df)
     current_best_params = self.get_best_params()
     for distr in self.optimized_params:
       distr.fit(current_best_params[distr.param_name])

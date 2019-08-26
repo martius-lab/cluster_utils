@@ -187,7 +187,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
     n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
     n_successful_jobs = cluster_interface.n_successful_jobs
-
+    # TODO: Move this part to the inner loop
     if n_successful_jobs // optimizer_settings['n_jobs_per_iteration'] + iteration_offset > hp_optimizer.iteration:
       post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
                          num_best_jobs_whose_data_is_kept)

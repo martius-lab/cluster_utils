@@ -79,7 +79,7 @@ class ClusterSubmission(ABC):
   def add_jobs(self, jobs):
     if not isinstance(jobs, list):
       jobs = [jobs]
-    for job in jobs:
+    for job in self.jobs:
       job.submission_name = self.name
     self.jobs = self.jobs + jobs
 
@@ -215,6 +215,7 @@ class ClusterSubmission(ABC):
       raise
 
   def close(self):
+    self.stop_all()
     if self.remove_jobs_dir:
       print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
       rm_dir_full(self.submission_dir)

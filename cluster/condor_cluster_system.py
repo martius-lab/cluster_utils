@@ -90,7 +90,10 @@ class Condor_ClusterSubmission(ClusterSubmission):
     print(parsed_info)
 
   def is_blocked(self):
-    return True
+    for job in self.jobs:
+      if self.status(job) == 1:
+        return True
+    return False
 
   #TODO: Check that two simultaneous HPOs dont collide
 
