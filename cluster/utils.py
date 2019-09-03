@@ -80,8 +80,11 @@ def save_dict_as_one_line_csv(dct, filename):
 
 
 def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
-  if bool(hyperparam_dict) == bool(distribution_list):
-    raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
+  if hyperparam_dict and distribution_list:
+    raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
+  if not hyperparam_dict and not distribution_list:
+    warn('No hyperparameters vary. Only running restarts')
+    return [{}]
   if distribution_list and not samples:
     raise TypeError('Number of samples not specified')
   if distribution_list:
