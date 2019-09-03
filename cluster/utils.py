@@ -106,8 +106,10 @@ def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_sett
 def process_other_params(other_params, hyperparam_dict, distribution_list):
   if hyperparam_dict:
     name_list = hyperparam_dict.keys()
-  else:
+  elif distribution_list:
     name_list = [distr.param_name for distr in distribution_list]
+  else:
+    name_list = []
   for name, value in other_params.items():
     check_valid_name(name)
     if name in name_list:
