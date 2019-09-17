@@ -39,13 +39,17 @@ class ParamDict(dict):
     return json.dumps(self, indent=4, sort_keys=True)
 
 
-def recursive_objectify(nested_dict):
+def recursive_objectify(nested_dict, make_immutable=True):
   "Turns a nested_dict into a nested ParamDict"
   result = deepcopy(nested_dict)
   for k, v in result.items():
     if isinstance(v, collections.Mapping):
-      result[k] = recursive_objectify(v)
-  return ParamDict(result)
+      result[k] = recursive_objectify(v, make_immutable)
+  if make_immutable:
+    returned_result = ParamDict(result)
+  else:
+    returned_result = dict(result)
+  return returned_result
 
 
 class SafeDict(dict):
@@ -120,7 +124,7 @@ def is_parseable_dict(cmd_line):
     return False
 
 
-def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, verbose=True):
+def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, verbose=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
@@ -164,9 +168,9 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
     default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
 
-  final_params = recursive_objectify(default_params)
+  final_params = recursive_objectify(default_params, make_immutable=make_immutable)
   if verbose:
-    print(final_params)
+    print(json.dumps(final_params, indent=4, sort_keys=True))
 
   update_params_from_cmdline.start_time = time.time()
   return final_params

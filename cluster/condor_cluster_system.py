@@ -88,6 +88,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
     if status == 'C':
       return 3
     print(parsed_info)
+    print('Weird status showed up!!')
+    return 1
 
   def is_blocked(self):
     for job in self.jobs:
