@@ -15,7 +15,7 @@ import time
 import pandas as pd
 import signal
 import sys
-
+from warnings import warn
 
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
@@ -213,7 +213,6 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
   post_opt(cluster_interface, hp_optimizer)
 
-
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
                                 number_of_samples, metric_to_optimize, minimize, total_rounds,
                                 fraction_that_need_to_finish,
@@ -231,8 +230,8 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                                                                    run_local,
                                                                                    report_hooks,
                                                                                    optimizer_settings, submission_name)
-
   for i in range(total_rounds):
+    time_when_severe_warning_happened = None
     submission_name = 'iteration_{}'.format(hp_optimizer.iteration + 1)
     cluster_interface.name = submission_name
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
@@ -254,7 +253,12 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
         print('n_successful_jobs: ', n_successful_jobs)
         print('number_of_samples: ', number_of_samples)
         print('fraction_that_need_to_finish: ', fraction_that_need_to_finish)
-        raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
+        if not time_when_severe_warning_happened is None and time.time()-time_when_severe_warning_happened > 5:
+          raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
+        else:
+          time_when_severe_warning_happened = time.time()
+          warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
+               'cause an collapse of the procedure.')
       if time_to_print():
         print(cluster_interface)
       time.sleep(1)

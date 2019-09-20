@@ -10,7 +10,7 @@ home = str(Path.home())
 
 init_plotting()
 
-opt_procedure_name = 'dummy2'
+opt_procedure_name = 'dummy12'
 
 optimizer_str = 'cem_metaoptimizer'
 optimizer_settings = {'with_restarts': True,
@@ -33,20 +33,19 @@ submission_requirements = dict(request_cpus=1,
                                request_gpus=0,
                                cuda_requirement=None,  # 'x.0' or None (GPU only)
                                memory_in_mb=4000,
-                               bid=10)
+                               bid=2000)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=150,
+                            number_of_samples=10,
                             fraction_that_need_to_finish=0.9,
                             total_rounds=15,
                             remove_jobs_dir=False,
                             minimize=True)
 
-other_params = {}
+other_params = {'w': 5.0}
 
 optimized_params = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='v', bounds=(-3.0, 3.0)),
-                     TruncatedNormal(param='w', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='x', bounds=(-3.0, 4.0)),
                      TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
