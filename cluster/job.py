@@ -6,14 +6,16 @@ from subprocess import run, PIPE
 from copy import deepcopy
 from warnings import warn
 from .utils import dict_to_dirname
+from .settings import update_recursive
 import pandas as pd
 
 class Job():
-  def __init__(self, id_number, candidate, settings, paths, iteration):
+  def __init__(self, id_number, candidate, settings, other_params, paths, iteration):
     self.paths = paths
     self.id_number = id_number
     self.candidate = candidate
     self.settings = settings
+    self.other_params = other_params
     self.submission_name = None
     self.cluster_id = None
     self.results_accessed = False
@@ -22,6 +24,7 @@ class Job():
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)
+    update_recursive(current_setting, self.other_params)
     current_setting['id'] = self.id_number
     job_res_dir = dict_to_dirname(current_setting, self.id_number, smart_naming=False)
     current_setting['model_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
