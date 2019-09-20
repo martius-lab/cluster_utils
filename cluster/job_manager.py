@@ -239,6 +239,10 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
       n_successful_jobs = cluster_interface.n_successful_jobs
       n_ran_jobs = cluster_interface.n_completed_jobs
       if (n_ran_jobs - n_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
+        print('n_ran_job: ', n_ran_jobs)
+        print('n_successful_jobs: ', n_successful_jobs)
+        print('number_of_samples: ', number_of_samples)
+        print('fraction_that_need_to_finish: ', fraction_that_need_to_finish)
         raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
       if time_to_print():
         print(cluster_interface)

@@ -136,13 +136,16 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
 
   def update_condor_q_info(self):
-    #TODO: update only if new results make sense
     while(True):
       condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
-      self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
-      self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
+      raw =condor_q_info.stdout.decode('utf-8')
+      err = condor_q_info.stderr.decode('utf-8')
+      if not 'Failed' in err:
+        self.condor_q_info_raw = raw
+        self.condor_q_info_err = err
+      else:
+        print('Condor_q currently unavailable')
       time.sleep(5)
-    #regression has limited depth self.update_condor_q_info()
 
   '''
   def get_status(self):
