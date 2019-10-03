@@ -22,10 +22,6 @@ MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash
 # %(name)s%(id)d
 
-export PATH=${HOME}/bin:/usr/bin:$PATH:/bin
-export LD_LIBRARY_PATH=/is/software/nvidia/cuda-9.0/lib64:/is/software/nvidia/cudnn-7.0-cu9.0/lib64:$LD_LIBRARY_PATH
-module load cuda/9.0
-module load cudnn/7.0-cu9.0
 %(cmd)s
 rc=$?
 if [[ $rc == 0 ]]; then

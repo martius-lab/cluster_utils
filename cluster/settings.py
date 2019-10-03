@@ -1,5 +1,6 @@
 import ast
 import collections
+from datetime import datetime
 import json
 import os
 import sys
@@ -13,7 +14,12 @@ from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
-  __getattr__ = dict.__getitem__
+
+  def __getattr__(self, *args, **kwargs):
+    try:
+      return self.__getitem__(*args, **kwargs)
+    except KeyError as e:
+      raise AttributeError(e)
 
   def __delattr__(self, item):
     raise TypeError("Setting object not mutable after settings are fixed!")
@@ -151,6 +157,12 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     update_recursive(default_params, json_base)
 
   update_recursive(default_params, cmd_params)
+
+  if '{timestamp}' in default_params.get('model_dir', ''):
+    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
+    default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
+
+
   final_params = recursive_objectify(default_params)
   if verbose:
     print(final_params)

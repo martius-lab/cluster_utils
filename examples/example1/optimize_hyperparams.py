@@ -3,13 +3,14 @@ from pathlib2 import Path
 
 from cluster import hyperparameter_optimization, init_plotting
 from cluster.distributions import *
+from cluster.latex_utils import *
 from cluster.utils import mkdtemp
 
 home = str(Path.home())
 
 init_plotting()
 
-opt_procedure_name = 'dummy'
+opt_procedure_name = 'dummy2'
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -17,7 +18,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='master'
+                  branch='new_plots',
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -31,10 +32,10 @@ submission_requirements = dict(request_cpus=1,
                                bid=10)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=20,
+                            number_of_samples=150,
                             with_restarts=True,
                             fraction_that_need_to_finish=0.9,
-                            best_fraction_to_use_for_update=0.2,
+                            best_fraction_to_use_for_update=0.15,
                             total_rounds=15,
                             minimize=True)
 
@@ -46,12 +47,20 @@ distribution_list = [TruncatedNormal(param='u', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='x', bounds=(-3.0, 4.0)),
                      TruncatedNormal(param='y', bounds=(-3.0, 3.0)),
                      TruncatedNormal(param='z', bounds=(-3.0, 3.0)),
+                     Discrete(param='flag', options=[False, True])
                      ]
 
+def find_json(df, path_to_results, filename_generator):
+    return '/is/sg/mrolinek/Projects/mbrl/optimization_scripts/gym/halfcheetah/mpc_opt_script.json'
+
+
+
+json_hook = SectionFromJsonHook(section_title='Random script', section_generator=find_json)
 hyperparameter_optimization(base_paths_and_files=base_paths_and_files,
                             submission_requirements=submission_requirements,
                             distribution_list=distribution_list,
                             other_params=other_params,
                             git_params=git_params,
                             num_best_jobs_whose_data_is_kept=5,
+                            report_hooks=[json_hook],
                             **optimization_setting)

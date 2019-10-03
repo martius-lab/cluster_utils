@@ -1,5 +1,5 @@
 import os
-import shutil
+from .utils import rm_dir_full
 from abc import ABC, abstractmethod
 from subprocess import run, DEVNULL
 from warnings import warn
@@ -60,7 +60,7 @@ class ClusterSubmission(ABC):
     self.exec_post_submission_routines()
     if self.remove_jobs_dir:
       print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
-      shutil.rmtree(self.submission_dir, ignore_errors=True)
+      rm_dir_full(self.submission_dir)
       print('Done')
 
   def __exit__(self, *args):
@@ -96,11 +96,11 @@ def get_cluster_type(requirements, run_local=None):
       return Slurm_ClusterSubmissionParallel
   else:
     if run_local is None:
-      answer = input('No cluster detected. Do you want to run locally? [y/N]: ')
-      if answer.lower() == 'y':
-        run_local = True
-      else:
+      answer = input('No cluster detected. Do you want to run locally? [Y/n]: ')
+      if answer.lower() == 'n':
         run_local = False
+      else:
+        run_local = True
 
     if run_local:
       return Dummy_ClusterSubmission

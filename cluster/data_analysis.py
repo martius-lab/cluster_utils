@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 from .constants import *
+from .utils import shorten_string
 
 
 def performance_summary(df, metrics):
@@ -82,7 +83,7 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
     fig.savefig(filename, format='pdf', dpi=1200)
   else:
     plt.show()
-  plt.clf()
+  plt.close(fig)
   return True
 
 
@@ -97,7 +98,7 @@ def heat_map(df, param1, param2, metric, filename=None, annot=False):
     fig.savefig(filename, format='pdf', dpi=1200)
   else:
     plt.show()
-  plt.clf()
+  plt.close(fig)
 
 
 def best_params(df, params, metric, how_many, minimum=False):
@@ -121,4 +122,130 @@ def count_plot_horizontal(df, time, count_over, filename=None):
     fig.savefig(filename, format='pdf', dpi=1200)
   else:
     plt.show()
-  plt.clf()
+  plt.close(fig)
+
+
+def detect_scale(arr):
+  array = arr[~np.isnan(arr)]
+  data_points = len(array)
+  bins = 2 + int(np.sqrt(data_points))
+
+  log_space_data = np.log(np.abs(array) + 1e-8)
+
+  norm_densities, _ = np.histogram(array, bins=bins)
+  log_densities, _ = np.histogram(log_space_data, bins=bins)
+
+  if np.std(norm_densities) < np.std(log_densities):
+    return 'linear'
+  elif min(array) > 0:
+    return 'log'
+  else:
+    return 'symlog'
+
+
+def plot_opt_progress(df, metric, filename=None):
+  fig = plt.figure()
+  ax = sns.boxplot(x="iteration", y=metric, data=df)
+  ax.set_yscale(detect_scale(df[metric]))
+  plt.title('Optimization progress')
+
+  if filename:
+    fig.savefig(filename, format='pdf', dpi=1200)
+  else:
+    plt.show()
+  plt.close(fig)
+  return True
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+
+def turn_categorical_to_numerical(df, params):
+  res = df.copy()
+  non_numerical = [col for col in params if not np.issubdtype(df[col].dtype, np.number)]
+
+  for non_num in non_numerical:
+    res[non_num], _ = pd.factorize(res[non_num])
+
+  return res
+
+
+class Normalizer:
+  def __init__(self, params):
+    self.means = None
+    self.stds = None
+    self.params = params
+
+  def __call__(self, df):
+    if self.means is None or self.stds is None:
+      self.means = df[self.params].mean()
+      self.stds = df[self.params].std()
+    res = df.copy()
+    res[self.params] = (df[self.params] - self.means) / (self.stds + 1e-8)
+    return res
+
+
+def fit_forest(df, params, metric):
+  data = df[params + [metric]]
+  clf = RandomForestRegressor(n_estimators=1000)
+
+  x = data[params]  # Features
+  y = data[metric]  # Labels
+
+  clf.fit(x, y)
+  return clf
+
+
+def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
+  df = df_for_iter.sort_values([metric], ascending=minimum)
+  df = df[:-len(df) // 4]
+
+  ys_base = df[metric]
+
+  ys = clf.predict(df[params])
+  forest_error = np.mean(np.abs(ys_base - ys))
+
+  for param in params:
+    copy_df = df.copy()
+    copy_df[param] = np.random.permutation(copy_df[param])
+    ys = clf.predict(copy_df[params])
+    diffs = ys - copy_df[metric]
+    error = np.mean(np.abs(diffs))
+    yield max(0, (error - forest_error) / np.sqrt(len(params)))
+
+
+def compute_performance_gains(df, params, metric, minimum):
+  df = turn_categorical_to_numerical(df, params)
+  df = df.dropna(subset=[metric])
+  normalize = Normalizer(params)
+
+  forest = fit_forest(normalize(df), params, metric)
+
+  max_iteration = df['iteration'].max()
+  dfs = [normalize(df[df['iteration'] == 1 + i]) for i in range(max_iteration)]
+
+  names = [f'iteration {1 + i}' for i in range(max_iteration)]
+  importances = [list(performance_gain_for_iteration(forest, df_, params, metric, minimum)) for df_ in dfs]
+
+  data_dict = dict(zip(names, list(importances)))
+  feature_imp = pd.DataFrame.from_dict(data_dict)
+  feature_imp.index = [shorten_string(param, 40) for param in params]
+  return feature_imp
+
+
+def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
+  importances = compute_performance_gains(df, params, metric, minimum)
+  importances.T.plot(kind='bar', stacked=True, legend=False)
+  lgd = plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.55), ncol=2)
+
+  ax = plt.gca()
+  fig = plt.gcf()
+  ax.set_yscale(detect_scale(importances.mean().values))
+  ax.set_ylabel(f'Potential change in {metric}')
+  ax.set_title('Influence of hyperparameters on performance')
+  if filename:
+    fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')
+  else:
+    plt.show()
+  plt.close(fig)
+  return True

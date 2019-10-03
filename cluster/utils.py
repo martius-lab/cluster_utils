@@ -7,8 +7,16 @@ import re
 import shutil
 from collections import defaultdict
 import tempfile
+from time import sleep
+from warnings import warn
 
 from .constants import *
+
+
+def shorten_string(string, max_len):
+  if len(string) > max_len - 3:
+    return '...' + string[-max_len + 3:]
+  return string
 
 
 def get_caller_file(depth=2):
@@ -32,8 +40,20 @@ def check_valid_name(string):
 
 
 def rm_dir_full(dir_name):
+  sleep(0.5)
   if os.path.exists(dir_name):
     shutil.rmtree(dir_name, ignore_errors=True)
+
+  # filesystem is sometimes slow to response
+  if os.path.exists(dir_name):
+    sleep(1.0)
+    shutil.rmtree(dir_name, ignore_errors=True)
+
+  if os.path.exists(dir_name):
+    warn(f'Removing of dir {dir_name} failed')
+
+
+
 
 
 def create_dir(dir_name):
@@ -60,8 +80,11 @@ def save_dict_as_one_line_csv(dct, filename):
 
 
 def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
-  if bool(hyperparam_dict) == bool(distribution_list):
-    raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
+  if hyperparam_dict and distribution_list:
+    raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
+  if not hyperparam_dict and not distribution_list:
+    warn('No hyperparameters vary. Only running restarts')
+    return [{}]
   if distribution_list and not samples:
     raise TypeError('Number of samples not specified')
   if distribution_list:
@@ -83,8 +106,10 @@ def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_sett
 def process_other_params(other_params, hyperparam_dict, distribution_list):
   if hyperparam_dict:
     name_list = hyperparam_dict.keys()
-  else:
+  elif distribution_list:
     name_list = [distr.param_name for distr in distribution_list]
+  else:
+    name_list = []
   for name, value in other_params.items():
     check_valid_name(name)
     if name in name_list:
