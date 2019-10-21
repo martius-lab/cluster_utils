@@ -100,19 +100,19 @@ def execute_submission(submission, collect_data_directory, fraction_need_to_fini
 
       sleep(sleep_time)  # First sleep much shorter
       sleep_time = 60
-      print('Checking for files... ', end='')
+      print('Checking for files... ', end='', flush=True)
       df, params, metrics = load_cluster_results(collect_data_directory)
-      print('Done   ', end='')
+      print('Done   ', end='', flush=True)
       completed_succesfully = len(df)
 
-      print('Checking error messages...', end='')
+      print('Checking error messages...', end='', flush=True)
       any_errors = submission.check_error_msgs()
-      print('Done   ', end='')
+      print('Done   ', end='', flush=True)
       if any_errors:
         error_handler.maybe_raise('Some jobs had errors!')
-      print('Checking condor_q...', end='')
+      print('Checking condor_q...', end='', flush=True)
       status = submission.get_status()
-      print('Done')
+      print('Done', flush=True)
       submission_status.update(completed_succesfully, status)
       submission_status.do_checks(error_handler)
 
