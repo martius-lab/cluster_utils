@@ -119,12 +119,9 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
   @staticmethod
   def _parse_condor_info():
-    print('Running condor_q...', end='', flush=True)
     result = run(['condor_q'], shell=True, stdout=PIPE, stderr=PIPE)
-    print('done', end='', flush=True)
     raw = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
-    print(raw, err, end='', flush=True)
     if 'Failed' in err:
       warn('Condor_q currently unavailable')
       return None
