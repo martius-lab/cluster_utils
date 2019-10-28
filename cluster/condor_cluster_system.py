@@ -80,6 +80,16 @@ class Condor_ClusterSubmission(ClusterSubmission):
     else:
       self.gpu_memory_line = ''
 
+    def hostnames_to_requirement(hostnames):
+      single_reqs = [f'UtsnameNodename =?= \"{hostname}\"' for hostname in hostnames]
+      return 'requirements=(' + ' || '.join(single_reqs) + ')'
+
+    hostname_list = requirements.get('hostname_list', [])
+    if hostname_list:
+      self.node_requirement_line = hostnames_to_requirement(hostname_list)
+    else:
+      self.node_requirement_line = ''
+
   def submit(self):
     if self.submitted:
       raise RuntimeError('Attempt for second submission!')
