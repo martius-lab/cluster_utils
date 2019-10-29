@@ -60,13 +60,21 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
         if 'custom_python_executable_path' in paths:
             warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
+        python_executor = paths.get('custom_python_executable_path', 'python3')
+        is_python_script = paths.get('is_python_script', True)
 
-        if paths['script_to_run'].endswith('.py'):
-          base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {}'
-          exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+        if is_python_script:
+            run_script_as_module_main = paths.get('run_script_as_module_main', False)
+            setting_string = '\"' + str(current_setting) + '\"'
+            if run_script_as_module_main:
+                exec_cmd = f"{python_executor} -m {os.path.basename(paths['script_to_run'])} {setting_string}"
+            else:
+                base_exec_cmd = '{}'.format(python_executor) + ' {} {}'
+                exec_cmd = base_exec_cmd.format(paths['script_to_run'], setting_string)
         else:
           base_exec_cmd = '{} {}'
           exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+
         yield '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
         generate_commands.id_number += 1
 
