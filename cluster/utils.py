@@ -25,7 +25,7 @@ def get_caller_file(depth=2):
 
 
 def check_valid_name(string):
-  pat = '[A-Za-z0-9_.-]*$'
+  pat = '[A-Za-z0-9_.-:]*$'
   if type(string) is not str:
     raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
   if string in RESERVED_PARAMS:
