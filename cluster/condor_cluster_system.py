@@ -89,6 +89,11 @@ class Condor_ClusterSubmission(ClusterSubmission):
     if hostname_list:
       other_requirements.append(hostnames_to_requirement(hostname_list))
 
+    forbidden_hostnames = requirements.get('forbidden_hostnames', [])
+    if forbidden_hostnames:
+      single_reqs = [f'UtsnameNodename =!= \"{hostname}\"' for hostname in forbidden_hostnames]
+      other_requirements.extend(single_reqs)
+                     
     if other_requirements:
       concat_requirements = ' && '.join(other_requirements)
       self.requirements_line = f"requirements={concat_requirements}"
