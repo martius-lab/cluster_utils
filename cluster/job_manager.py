@@ -13,10 +13,17 @@ from .git_utils import ClusterSubmissionGitHook
 from .dummy_cluster_system import Dummy_ClusterSubmission
 from warnings import warn
 
-def ensure_empty_dir(dir_name):
+def ensure_empty_dir(dir_name, defensive=False):
   if os.path.exists(dir_name):
-    shutil.rmtree(dir_name, ignore_errors=True)
-  os.makedirs(dir_name)
+    if defensive:
+        print(f"Directory {dir_name} exists. Delete everything? (y/N)")
+        ans = input()
+        if ans.lower() == 'y':
+            shutil.rmtree(dir_name, ignore_errors=True)
+            os.makedirs(dir_name)
+    else:
+        shutil.rmtree(dir_name, ignore_errors=True)
+        os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -31,7 +38,7 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
                 samples=None, distribution_list=None, restarts_per_setting=1,
                 smart_naming=True, remove_jobs_dir=True, git_params=None, run_local=None, extra_settings=None):
   # Directories and filenames
-  ensure_empty_dir(paths['result_dir'])
+  ensure_empty_dir(paths['result_dir'], defensive=True)
   ensure_empty_dir(paths['jobs_dir'])
 
   setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings)
