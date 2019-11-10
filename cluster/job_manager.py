@@ -24,6 +24,8 @@ def ensure_empty_dir(dir_name, defensive=False):
     else:
         shutil.rmtree(dir_name, ignore_errors=True)
         os.makedirs(dir_name)
+  else:
+      os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
