@@ -24,3 +24,4 @@ from . import settings
 from . import submission
 from . import report
 from . import parallel_executor
+from . import optimize_hyperparams
