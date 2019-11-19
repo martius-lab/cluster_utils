@@ -48,7 +48,7 @@ results_path = os.path.join(home, params.results_dir, opt_procedure_name)
 jobs_path = mkdtemp(suffix=opt_procedure_name + "-" + "jobs")
 
 
-given_url = getattr(params.git_params, "url")
+given_url = params.git_params.get("url")
 if not given_url:
     auto_url = get_git_url()
     if not auto_url:
