@@ -14,7 +14,7 @@ opt_procedure_name = 'dummy2_asynch_ng_with_disc'
 
 optimizer_str = 'ng'
 optimizer_settings = {'opt_alg': 'cma',
-                      'n_jobs_per_iteration': 150}
+                      'n_jobs_per_iteration': 50}
 
 project_path = mkdtemp(suffix=opt_procedure_name + '-' + 'project')
 results_path = os.path.join(home, 'experiments/results')
@@ -22,7 +22,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='new_plots',#looped_optimization',
+                  branch='looped_optimization',
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),
@@ -33,11 +33,11 @@ submission_requirements = dict(request_cpus=1,
                                request_gpus=0,
                                cuda_requirement=None,  # 'x.0' or None (GPU only)
                                memory_in_mb=4000,
-                               bid=10)
+                               bid=2000)
 
 optimization_setting = dict(metric_to_optimize='result',
-                            number_of_samples=10000,
-                            min_n_jobs=50,
+                            number_of_samples=200,
+                            min_n_jobs=20,
                             minimize=True)
 
 other_params = {}
@@ -66,4 +66,5 @@ asynchronous_optimization(base_paths_and_files=base_paths_and_files,
                             num_best_jobs_whose_data_is_kept=5,
                             report_hooks=None,
                             run_local=True,
+                            remove_jobs_dir=False,
                             **optimization_setting)
