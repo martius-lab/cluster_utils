@@ -34,6 +34,6 @@ if __name__ == '__main__':
     params = update_params_from_cmdline()
     result = fn_to_optimize(**params.fn_args)
 
-    metrics = {'result': result, 'noiseless_result': fn_to_optimize(**params.fn_args, noisy=False)}
+    metrics = {'result': result, 'noiseless_result': fn_to_optimize(**dict(**params.fn_args, noisy=False))}
     save_metrics_params(metrics, params)
     print(result)
