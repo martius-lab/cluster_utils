@@ -1,0 +1,64 @@
+{
+  "optimization_procedure_name": "test",
+  "results_dir": "/tmp/example_results",
+  "git_params": {
+    "branch": "executable_submodules",
+    "commit": null
+  },
+  "script_relative_path": "examples/examples1/main.py",
+  "num_best_jobs_whose_data_is_kept": 5,
+  "environment_setup": {
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 8000,
+    "gpu_memory_mb": 32000,
+    "bid": 1000
+  },
+  "optimization_setting": {
+    "metric_to_optimize": "result",
+    "minimize": true,
+    "number_of_samples": 40,
+    "with_restarts": true,
+    "fraction_that_need_to_finish": 0.85,
+    "total_rounds": 8,
+    "best_fraction_to_use_for_update":  0.15
+  },
+  "fixed_params": {
+    "fn_args.noisy": true
+  },
+  "optimized_params": [
+    {
+      "param": "fn_args.u",
+      "distribution": "TruncatedNormal",
+      "bounds": [-3.0, 3.0]
+    },
+    {
+      "param": "fn_args.v",
+      "distribution": "IntLogNormal",
+      "bounds": [1, 1000]
+    },
+    {
+      "param": "fn_args.w",
+      "distribution": "IntNormal",
+      "bounds": [-5, 5]
+    },
+    {
+      "param": "fn_args.x",
+      "distribution": "TruncatedNormal",
+      "bounds": [-3.0, 3.0]
+    },
+    {
+      "param": "fn_args.y",
+      "distribution": "TruncatedLogNormal",
+      "bounds": [1e-2, 1e2]
+    },
+    {
+      "param": "fn_args.sharp_penalty",
+      "distribution": "Discrete",
+      "options": [false, true]
+    }
+  ]
+}
