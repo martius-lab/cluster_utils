@@ -22,6 +22,7 @@ class ClusterSubmission(ABC):
 
   @property
   def current_jobs(self):
+    return self.jobs
     if not self.iteration_mode:
       return self.jobs
     if len(self.jobs) == 0:
@@ -128,7 +129,7 @@ class ClusterSubmission(ABC):
 
   @property
   def failed_jobs(self):
-    return [job for job in self.current_jobs if self.check_done(job) and job.get_results(False) is None]
+    return [job for job in self.completed_jobs if job.get_results(False) is None]
 
   @property
   def n_failed_jobs(self):
@@ -144,7 +145,7 @@ class ClusterSubmission(ABC):
         self.submit(job)
 
   def submit(self, job):
-    t = Thread(target=self._submit, args=(job,))
+    t = Thread(target=self._submit, args=(job,), daemon=True)
     self.exec_pre_submission_routines()
     t.start()
 
@@ -164,7 +165,8 @@ class ClusterSubmission(ABC):
     return self.status(job) == 2
 
   def check_done(self, job):
-    return self.status(job) > 2
+    status = self.status(job)
+    return status > 2
 
   def check_submitted(self, job):
     return not job.cluster_id is None

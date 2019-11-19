@@ -16,6 +16,7 @@ import pandas as pd
 import signal
 import sys
 from warnings import warn
+import threading
 
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
@@ -106,6 +107,10 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
   def signal_handler(sig, frame):
     cluster_interface.close()
+    #for t in threading.enumerate():
+      #t.stop()
+      #t.join()
+    print('Exiting now')
     sys.exit(0)
 
   signal.signal(signal.SIGINT, signal_handler)
@@ -174,28 +179,26 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                                                                                    'asynch_opt')
   hp_optimizer.iteration_mode = False
   cluster_interface.iteration_mode = False
-  n_completed_jobs = 0
+  n_successful_jobs = 0
 
   iteration_offset = hp_optimizer.iteration
 
-  while n_completed_jobs <= number_of_samples:
-    n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-    completed_jobs = cluster_interface.completed_jobs
-    hp_optimizer.tell([job for job in completed_jobs if not job.results_accessed])
+  while n_successful_jobs <= number_of_samples:
+    successful_jobs = cluster_interface.successful_jobs
+    hp_optimizer.tell([job for job in successful_jobs if not job.results_accessed])
 
-    while (n_queuing_or_running_jobs < min_n_jobs) or not cluster_interface.is_blocked():
+    n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
+    while (n_queuing_or_running_jobs < min_n_jobs):# or not cluster_interface.is_blocked():
       for new_candidate, new_settings in hp_optimizer.ask(1):
         new_job = Job(id_number=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                       other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1)
         cluster_interface.add_jobs(new_job)
         cluster_interface.submit(new_job)
-        time.sleep(0.1)
       n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
+      n_successful_jobs = cluster_interface.n_successful_jobs
       if n_successful_jobs // optimizer_settings['n_jobs_per_iteration'] + iteration_offset > hp_optimizer.iteration:
         break
-
-    n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
-    n_successful_jobs = cluster_interface.n_successful_jobs
+    #n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
     if n_successful_jobs // optimizer_settings['n_jobs_per_iteration'] + iteration_offset > hp_optimizer.iteration:
       post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
                          num_best_jobs_whose_data_is_kept)
@@ -261,7 +264,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                'cause an collapse of the procedure.')
       if time_to_print():
         print(cluster_interface)
-      time.sleep(1)
     post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
