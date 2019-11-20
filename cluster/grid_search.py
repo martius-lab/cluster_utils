@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import git
+from cluster.latex_utils import SectionFromJsonHook
 from pathlib2 import Path
 
 from cluster import cluster_run, execute_submission, update_params_from_cmdline
@@ -64,6 +65,15 @@ if __name__ == '__main__':
 
     relevant_params = list(hyperparam_dict.keys())
     output_pdf = os.path.join(base_paths_and_files["result_dir"], f"{params.optimization_procedure_name}_report.pdf")
+
+
+    # noinspection PyUnusedLocal
+    def find_json(df, path_to_results, filename_generator):
+        return json_full_name
+
+
+    json_hook = SectionFromJsonHook(section_title="Optimization setting script", section_generator=find_json)
+
     produce_basic_report(
         df,
         relevant_params,
@@ -71,8 +81,5 @@ if __name__ == '__main__':
         submission_hook_stats=submission_hook_stats,
         procedure_name=params.optimization_procedure_name,
         output_file=output_pdf,
+        report_hooks=[json_hook]
     )
-
-    # copy this script to the result dir
-    my_path = os.path.realpath(__file__)
-    shutil.copy(my_path, base_paths_and_files["result_dir"])

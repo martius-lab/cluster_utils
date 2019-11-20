@@ -195,7 +195,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, d
 
     meta_opt.process_new_df(df)
     meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
-    opt_procedure_name = os.path.dirname(base_paths_and_files['result_dir'])
+    opt_procedure_name = os.path.dirname(os.path.join(base_paths_and_files['result_dir'], 'dummy.tmp'))
     pdf_output = os.path.join(base_paths_and_files['result_dir'], f'{opt_procedure_name}.pdf')
 
     meta_opt.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)

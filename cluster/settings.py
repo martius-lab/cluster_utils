@@ -47,6 +47,32 @@ def recursive_objectify(nested_dict):
   return ParamDict(result)
 
 
+def fstring_in_json(format_string, namespace):
+  if type(format_string) != str:
+    return format_string
+  try:
+    formatted = eval('f\"' + format_string + '\"', namespace)
+  except:
+    return format_string
+
+  if formatted == format_string:
+    return format_string
+
+  try:
+    return eval(formatted, dict(__builtins__=None))
+  except:
+    return formatted
+
+
+def recursive_dynamic_json(nested_dict, namespace):
+  "Evaluates each key in nested dict as an f-string within a given namespace"
+  for k, v in nested_dict.items():
+    if isinstance(v, collections.Mapping):
+      recursive_dynamic_json(v, namespace)
+    else:
+      nested_dict[k] = fstring_in_json(v, namespace)
+
+
 class SafeDict(dict):
   """ A dict with prohibiting init from a list of pairs containing duplicates"""
   def __init__(self, *args, **kwargs):
@@ -118,7 +144,7 @@ def is_parseable_dict(cmd_line):
     return False
 
 
-def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, verbose=True):
+def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, verbose=True, dynamic_json=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
@@ -158,10 +184,15 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
   update_recursive(default_params, cmd_params)
 
-  if '{timestamp}' in default_params.get('model_dir', ''):
-    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
-    default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
+  if "__timestamp__" in default_params:
+    raise ValueError("Parameter name __timestamp__ is reserved!")
 
+
+  if dynamic_json:
+    objectified = recursive_objectify(default_params)
+    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
+    namespace = dict(__timestamp__=timestamp, **objectified)
+    recursive_dynamic_json(default_params, namespace)
 
   final_params = recursive_objectify(default_params)
   if verbose:
