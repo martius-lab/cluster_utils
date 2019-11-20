@@ -9,6 +9,7 @@ from collections import defaultdict
 import tempfile
 from time import sleep
 from warnings import warn
+import git
 
 from .constants import *
 
@@ -184,5 +185,18 @@ def mkdtemp(prefix='cluster_utils', suffix=''):
 def temp_directory(prefix='cluster_utils', suffix=''):
   new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
   return tempfile.TemporaryDirectory(prefix=new_prefix, dir=os.path.join(home, '.cache'))
+
+def get_git_url():
+  try:
+    repo = git.Repo(search_parent_directories=True)
+  except git.exc.InvalidGitRepositoryError:
+    return None
+
+  url_list = list(repo.remotes.origin.urls)
+  if url_list:
+    print(f"Auto-detected git repository with remote url: {url_list[0]}")
+    return url_list[0]
+
+  return None
 
 

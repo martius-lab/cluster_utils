@@ -14,13 +14,12 @@
     "request_gpus": 0,
     "cuda_requirement": null,
     "memory_in_mb": 8000,
-    "gpu_memory_mb": 32000,
     "bid": 1000
   },
   "optimization_setting": {
     "metric_to_optimize": "result",
     "minimize": true,
-    "number_of_samples": 40,
+    "number_of_samples": 100,
     "with_restarts": true,
     "fraction_that_need_to_finish": 0.85,
     "total_rounds": 8,

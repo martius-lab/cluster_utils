@@ -2,7 +2,7 @@ from pathlib2 import Path
 from . import hyperparameter_optimization, init_plotting
 from .distributions import *
 from .latex_utils import *
-from .utils import mkdtemp
+from .utils import mkdtemp, get_git_url
 from . import update_params_from_cmdline
 import sys
 import git
@@ -20,19 +20,6 @@ def get_distribution(distribution, **kwargs):
         raise NotImplementedError(f"Distribution {distribution} does not exist")
     return distr_dict[distribution](**kwargs)
 
-
-def get_git_url():
-    try:
-        repo = git.Repo(search_parent_directories=True)
-    except git.exc.InvalidGitRepositoryError:
-        return None
-
-    url_list = list(repo.remotes.origin.urls)
-    if url_list:
-        print(f"Auto-detected git repository with remote url: {url_list[0]}")
-        return url_list[0]
-
-    return None
 
 if __name__ == '__main__':
 
