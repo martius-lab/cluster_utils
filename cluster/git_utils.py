@@ -20,9 +20,6 @@ class GitConnector(object):
         self._repo = None
         self._remove_local_copy = remove_local_copy
 
-        if 'git' not in sys.modules:
-            return
-
         # make local copy of repo
         if self._orig_url is not None:
             self._make_local_copy(branch, commit)
@@ -53,7 +50,7 @@ class GitConnector(object):
             repo = git.Repo(path=local_path, search_parent_directories=True)
         except git.exc.InvalidGitRepositoryError:
             path = os.getcwd() if self._local_path is None else self._local_path
-            raise git.exc.InvalidGitRepositoryError('Could not find git repository at localtion {} or any of the parent directories'.format(path))
+            raise git.exc.InvalidGitRepositoryError('Could not find git repository at location {} or any of the parent directories'.format(path))
         except:
             raise
 
@@ -185,6 +182,7 @@ class GitConnector(object):
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def __init__(self, params=None, paths=None):
         self.params = params or {}
+        self.paths = paths or {}
 
         if 'local_path' not in self.params and 'script_to_run' in paths:
             self.params['local_path'] = os.path.dirname(paths['script_to_run'])
@@ -221,6 +219,12 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
             print('Using commit {} in each iteration'.format(commit_hexsha_short))
             self.params['commit'] = commit_hexsha_short
+
+        if not os.path.isfile(self.paths['script_to_run']):
+            print("Main python script {} does not exist. Continue? (y/N)".format(self.paths['script_to_run']))
+            ans = input()
+            if ans.lower != y:
+                raise FileNotFoundError(f"File {self.paths['script_to_run']} does not exist.")
         return self.git_conn
 
     def post_submission_routine(self):
