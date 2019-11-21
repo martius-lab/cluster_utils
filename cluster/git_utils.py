@@ -223,7 +223,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         if not os.path.isfile(self.paths['script_to_run']):
             print("Main python script {} does not exist. Continue? (y/N)".format(self.paths['script_to_run']))
             ans = input()
-            if ans.lower != y:
+            if ans.lower != "y":
                 raise FileNotFoundError(f"File {self.paths['script_to_run']} does not exist.")
         return self.git_conn
 
