@@ -12,7 +12,8 @@ import pickle
 from .optimizers import Metaoptimizer, NGOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
-from .submission_state import *
+#from .submission_state import *
+import cluster.submission_state as submission_state
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -89,9 +90,10 @@ def save_settings_to_json(setting_dict, model_dir):
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
 def confirm_exit_at_server(metrics, params):
+  print('Sending confirmation of exit to: ', (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
-  udp.try_send((communication_server_ip, communication_server_port), pickle.dumps((2, job_id, metrics, params)))
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port), pickle.dumps((2, submission_state.job_id, metrics, params)))
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
@@ -129,9 +131,10 @@ def is_parseable_dict(cmd_line):
     return False
 
 def register_at_server():
+  print('Sending registration to: ', (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
-  udp.try_send((communication_server_ip, communication_server_port), pickle.dumps((1, job_id)))
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port), pickle.dumps((1, submission_state.job_id)))
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, register_job=True, verbose=True):
   """ Updates default settings based on command line input.
@@ -158,10 +161,11 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if register_job:
     if len(cmd_line) < 2:
       cmd_params = {}
-    connection_details = cmd_line[1]
-    communication_server_ip = connection_details['ip']
-    communication_server_port = connection_details['port']
-    job_id = connection_details['id']
+    print(cmd_line)
+    connection_details = ast.literal_eval(cmd_line[1])
+    submission_state.communication_server_ip = connection_details['ip']
+    submission_state.communication_server_port = connection_details['port']
+    submission_state.job_id = connection_details['id']
     register_at_server()
     del cmd_line[1]
 

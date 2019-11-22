@@ -68,7 +68,7 @@ class CommunicationServer():
     signal_h = pyuv.Signal(loop)
     signal_h.start(signal_cb, signal.SIGINT)
 
-    loop.run()
+    loop.run(pyuv.UV_RUN_NOWAIT)
 
 
   def handle_job_started(self, message):
