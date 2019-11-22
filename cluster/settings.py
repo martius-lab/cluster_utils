@@ -88,6 +88,10 @@ def save_settings_to_json(setting_dict, model_dir):
   with open(filename, 'w') as file:
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
+def confirm_exit_at_server(metrics, params):
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  udp.try_send((communication_server_ip, communication_server_port), pickle.dumps((2, job_id, metrics, params)))
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
@@ -106,7 +110,7 @@ def save_metrics_params(metrics, params, save_dir=None):
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
-
+  confirm_exit_at_server(metrics, params)
 
 def is_json_file(cmd_line):
   try:
@@ -124,11 +128,10 @@ def is_parseable_dict(cmd_line):
     warn('Dict literal eval suppressed exception: ', e)
     return False
 
-def register_at_server(connection_details, final_params):
+def register_at_server():
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
-  ip, port = communication_server_ip, communication_server_port
-  udp.try_send((ip, port), pickle.dumps((1, final_params)))
+  udp.try_send((communication_server_ip, communication_server_port), pickle.dumps((1, job_id)))
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, register_job=True, verbose=True):
   """ Updates default settings based on command line input.
@@ -158,6 +161,8 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     connection_details = cmd_line[1]
     communication_server_ip = connection_details['ip']
     communication_server_port = connection_details['port']
+    job_id = connection_details['id']
+    register_at_server()
     del cmd_line[1]
 
   if len(cmd_line) < 2:

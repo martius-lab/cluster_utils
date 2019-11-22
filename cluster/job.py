@@ -10,7 +10,7 @@ from .settings import update_recursive
 import pandas as pd
 
 class Job():
-  def __init__(self, id_number, candidate, settings, other_params, paths, iteration):
+  def __init__(self, id_number, candidate, settings, other_params, paths, iteration, connection_info):
     self.paths = paths
     self.id_number = id_number
     self.candidate = candidate
@@ -21,6 +21,9 @@ class Job():
     self.results_accessed = False
     self.job_spec_file_path = False
     self.iteration = iteration
+    self.comm_server_info = {'id': id_number,
+                             'ip': connection_info[0],
+                             'port': connection_info[1]}
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)
@@ -43,7 +46,9 @@ class Job():
       warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
     base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {}'
-    exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+    exec_cmd = base_exec_cmd.format(paths['script_to_run'],
+                                    ' \"' + str(self.comm_server_info) + '\"',
+                                    ' \"' + str(current_setting) + '\"')
 
     res = '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
     return res

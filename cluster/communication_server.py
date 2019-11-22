@@ -72,14 +72,14 @@ class CommunicationServer():
 
 
   def handle_job_started(self, message):
-    job_id, settings, _ = message
+    job_id, settings = message
     if not self.get_job(job_id) is None:
       raise ValueError('Job was already in the list of jobs but claims to just have been started.')
     self.jobs.append(JobTuple(job_id, settings, 1))
 
 
   def handle_error_encountered(self, message):
-    job_id, settings, _ = message
+    job_id, settings = message
     job = self.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
@@ -87,7 +87,7 @@ class CommunicationServer():
 
 
   def handle_job_concluded(self, message):
-    job_id, settings, _ = message
+    job_id, metrics, settings = message
     job = self.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but claims to just have concluded.')
@@ -118,5 +118,3 @@ class CommunicationServer():
   @property
   def failed_jobs(self):
     return [job for job in self.jobs if job.status == 2]
-
-cs = CommunicationServer()

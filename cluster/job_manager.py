@@ -16,7 +16,9 @@ import pandas as pd
 import signal
 import sys
 from warnings import warn
+from .communication_server import CommunicationServer
 import threading
+
 
 def ensure_empty_dir(dir_name):
   if os.path.exists(dir_name):
@@ -104,18 +106,16 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
     ClusterSubmissionGitHook(git_params, base_paths_and_files['script_to_run']))
   cluster_interface.exec_pre_run_routines()
   error_handler = OneTimeExceptionHandler(ignore_errors=True)
+  comm_server = CommunicationServer()
 
   def signal_handler(sig, frame):
     cluster_interface.close()
-    #for t in threading.enumerate():
-      #t.stop()
-      #t.join()
     print('Exiting now')
     sys.exit(0)
 
   signal.signal(signal.SIGINT, signal_handler)
 
-  return hp_optimizer, cluster_interface, error_handler, processed_other_params
+  return hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params
 
 
 def post_opt(cluster_interface, hp_optimizer):
@@ -188,17 +188,18 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
     hp_optimizer.tell([job for job in successful_jobs if not job.results_accessed])
 
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-    while (n_queuing_or_running_jobs < min_n_jobs):# or not cluster_interface.is_blocked():
+    while (n_queuing_or_running_jobs < min_n_jobs):  # or not cluster_interface.is_blocked():
       for new_candidate, new_settings in hp_optimizer.ask(1):
         new_job = Job(id_number=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
-                      other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1)
+                      other_params=processed_other_params, paths=base_paths_and_files,
+                      iteration=hp_optimizer.iteration + 1)
         cluster_interface.add_jobs(new_job)
         cluster_interface.submit(new_job)
       n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
       n_successful_jobs = cluster_interface.n_successful_jobs
       if n_successful_jobs // optimizer_settings['n_jobs_per_iteration'] + iteration_offset > hp_optimizer.iteration:
         break
-    #n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
+    # n_queuing_or_running_jobs = cluster_interface.n_idle_jobs + cluster_interface.n_running_jobs
     if n_successful_jobs // optimizer_settings['n_jobs_per_iteration'] + iteration_offset > hp_optimizer.iteration:
       post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
                          num_best_jobs_whose_data_is_kept)
@@ -216,6 +217,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
   post_opt(cluster_interface, hp_optimizer)
 
+
 def hyperparameter_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
                                 number_of_samples, metric_to_optimize, minimize, total_rounds,
                                 fraction_that_need_to_finish,
@@ -223,16 +225,20 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                 run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
                                 optimizer_settings={}):
   submission_name = 'iteration_{}'.format(1)
-  hp_optimizer, cluster_interface, error_handler, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                   submission_requirements,
-                                                                                   optimized_params, other_params,
-                                                                                   number_of_samples,
-                                                                                   metric_to_optimize, minimize,
-                                                                                   optimizer_str,
-                                                                                   remove_jobs_dir, git_params,
-                                                                                   run_local,
-                                                                                   report_hooks,
-                                                                                   optimizer_settings, submission_name)
+  hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
+                                                                                                submission_requirements,
+                                                                                                optimized_params,
+                                                                                                other_params,
+                                                                                                number_of_samples,
+                                                                                                metric_to_optimize,
+                                                                                                minimize,
+                                                                                                optimizer_str,
+                                                                                                remove_jobs_dir,
+                                                                                                git_params,
+                                                                                                run_local,
+                                                                                                report_hooks,
+                                                                                                optimizer_settings,
+                                                                                                submission_name)
   for i in range(total_rounds):
     time_when_severe_warning_happened = None
     submission_name = 'iteration_{}'.format(hp_optimizer.iteration + 1)
@@ -243,7 +249,8 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     n_successful_jobs = 0
     settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask(number_of_samples)]
     jobs = [Job(id_number=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
-                other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1)
+                other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
+                connection_info=comm_server.connection_info)
             for candidate, setting in settings]
 
     cluster_interface.add_jobs(jobs)
@@ -256,7 +263,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
         print('n_successful_jobs: ', n_successful_jobs)
         print('number_of_samples: ', number_of_samples)
         print('fraction_that_need_to_finish: ', fraction_that_need_to_finish)
-        if not time_when_severe_warning_happened is None and time.time()-time_when_severe_warning_happened > 5:
+        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 5:
           raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
         else:
           time_when_severe_warning_happened = time.time()
@@ -269,7 +276,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
   post_opt(cluster_interface, hp_optimizer)
 
 
-  comm_server = CommunicationServer()
-  cluster = ClusterInterface()
-  job = Job(,comm_server.connection_info)
-  cluster.submit_job(job)
+  #cluster = ClusterInterface()
+  #job = Job(, comm_server.connection_info)
+  #cluster.submit_job(job)
