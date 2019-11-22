@@ -267,3 +267,9 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
+
+
+  comm_server = CommunicationServer()
+  cluster = ClusterInterface()
+  job = Job(,comm_server.connection_info)
+  cluster.submit_job(job)

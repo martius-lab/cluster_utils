@@ -7,11 +7,12 @@ import sys
 from copy import deepcopy
 from warnings import warn
 import time
-import nevergrad as ng
+import pyuv
+import pickle
 from .optimizers import Metaoptimizer, NGOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
-
+from .submission_state import *
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -123,22 +124,41 @@ def is_parseable_dict(cmd_line):
     warn('Dict literal eval suppressed exception: ', e)
     return False
 
+def register_at_server(connection_details, final_params):
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  ip, port = communication_server_ip, communication_server_port
+  udp.try_send((ip, port), pickle.dumps((1, final_params)))
 
-def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, verbose=True):
+def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, register_job=True, verbose=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
   :param default_params: Dictionary of default params
   :param custom_parser: callable that returns a dict of params on success
   and None on failure (suppress exceptions!)
+  :param register_job: Boolean whether to register the job to the communication server
   :param verbose: Boolean to determine if final settings are pretty printed
   :return: Immutable nested dict with (deep) dot access. Priority: default_params < default_json < cmd_line
   """
+
+  if register_job:
+    pass
+    #make sure that port and ip are parsed
+
   if not cmd_line:
     cmd_line = sys.argv
 
   if default_params is None:
     default_params = {}
+
+  if register_job:
+    if len(cmd_line) < 2:
+      cmd_params = {}
+    connection_details = cmd_line[1]
+    communication_server_ip = connection_details['ip']
+    communication_server_port = connection_details['port']
+    del cmd_line[1]
 
   if len(cmd_line) < 2:
     cmd_params = {}
@@ -171,6 +191,9 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   final_params = recursive_objectify(default_params, make_immutable=make_immutable)
   if verbose:
     print(json.dumps(final_params, indent=4, sort_keys=True))
+
+  if register_job:
+    register_at_server(connection_details, final_params)
 
   update_params_from_cmdline.start_time = time.time()
   return final_params
