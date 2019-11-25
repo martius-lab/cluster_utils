@@ -25,8 +25,8 @@ default_params = {'model_dir': '{timestamp}',   # Cluster utils actually replace
                   'z': 0.0,
                   'flag': False
                   }
-time.sleep(np.random.randint(0,10))
 params = update_params_from_cmdline(default_params=default_params)
+time.sleep(np.random.randint(0,10))
 
 result = fn_to_optimize(**params)
 

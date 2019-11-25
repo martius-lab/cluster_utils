@@ -22,7 +22,6 @@ class ClusterSubmission(ABC):
 
   @property
   def current_jobs(self):
-    return self.jobs
     if not self.iteration_mode:
       return self.jobs
     if len(self.jobs) == 0:
@@ -121,7 +120,7 @@ class ClusterSubmission(ABC):
 
   @property
   def successful_jobs(self):
-    return [job for job in self.completed_jobs if not job.get_results(False) is None]
+    return [job for job in self.current_jobs if not job.get_results(False) is None]
 
   @property
   def n_successful_jobs(self):
@@ -232,7 +231,8 @@ class ClusterSubmission(ABC):
     pass
 
   def __repr__(self):
-    return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '
+    return ('Cluster Interface Information \n'
+            'Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '
             'Failed: {.n_failed_jobs}, Running: {.n_running_jobs}, Idle: {.n_idle_jobs}').format(*(6 * [self]))
 
 

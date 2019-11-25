@@ -76,7 +76,7 @@ def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_
 
 global T
 T = time.time()
-delta_t = 60
+delta_t = 3
 
 
 def time_to_print():
@@ -130,7 +130,7 @@ def pre_iteration_opt(base_paths_and_files):
   # TODO: Check if this is necessary, somehow cant delete cache dirs ensure_empty_dir(base_paths_and_files['jobs_dir'])
 
 
-def post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
+def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept):
   pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
   current_result_path = os.path.join(base_paths_and_files['result_dir'], cluster_interface.name)
@@ -147,6 +147,8 @@ def post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, me
   print(hp_optimizer.full_df[:10])
 
   hp_optimizer.save_data_and_self(base_paths_and_files['result_dir'])
+
+  comm_server.jobs = []
 
   if hp_optimizer.iteration_mode:
     cluster_interface.stop_all()
@@ -246,7 +248,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
     pre_iteration_opt(base_paths_and_files)
     print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
-    n_successful_jobs = 0
+    n_confirmed_successful_jobs = 0
     settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask(number_of_samples)]
     jobs = [Job(id_number=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
                 other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
@@ -255,19 +257,21 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
 
     cluster_interface.add_jobs(jobs)
     cluster_interface.submit_all()
-    while n_successful_jobs / number_of_samples < fraction_that_need_to_finish:
-      n_successful_jobs = cluster_interface.n_successful_jobs
+    while n_confirmed_successful_jobs / number_of_samples < fraction_that_need_to_finish:
+      n_confirmed_successful_jobs = cluster_interface.n_successful_jobs
       n_ran_jobs = len(comm_server.concluded_jobs)
-      if (n_ran_jobs - n_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
-        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 50:
+      if (n_ran_jobs - n_confirmed_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
+        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 5:
           raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
         else:
-          time_when_severe_warning_happened = time.time()
-          warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
-               'cause an collapse of the procedure.')
+          if time_when_severe_warning_happened is None:
+            time_when_severe_warning_happened = time.time()
+            warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
+                 'cause an collapse of the procedure.')
       if time_to_print():
         print(cluster_interface)
-    post_iteration_opt(cluster_interface, hp_optimizer, base_paths_and_files, metric_to_optimize,
+        print(comm_server)
+    post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
 

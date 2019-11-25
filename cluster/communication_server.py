@@ -4,6 +4,7 @@ import signal
 import pickle
 import collections
 import threading
+import time
 
 msg_types = {0: 'job_started',
              1: 'error_encountered',
@@ -85,9 +86,10 @@ class CommunicationServer():
 
   def handle_job_started(self, message):
     job_id, settings = message
+    print("Job Started ", job_id, ' at time ', time.time())
     if not self.get_job(job_id) is None:
       raise ValueError('Job was already in the list of jobs but claims to just have been started.')
-    self.jobs.append(Job(job_id, settings, 1))
+    self.jobs.append(Job(job_id, settings, 0))
 
 
   def handle_error_encountered(self, message):
@@ -95,15 +97,16 @@ class CommunicationServer():
     job = self.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
-    job.status = 2
+    job.status = 1
 
 
   def handle_job_concluded(self, message):
     job_id, metrics, settings = message
     job = self.get_job(job_id)
+    print("Job Concluded ", job_id, ' at time ', time.time())
     if job is None:
       raise ValueError('Job was not in the list of jobs but claims to just have concluded.')
-    job.status = 0
+    job.status = 2
 
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
@@ -121,12 +124,29 @@ class CommunicationServer():
 
   @property
   def running_jobs(self):
-    return [job for job in self.jobs if job.status == 1]
-
-  @property
-  def concluded_jobs(self):
     return [job for job in self.jobs if job.status == 0]
 
   @property
-  def failed_jobs(self):
+  def n_running_jobs(self):
+      return len(self.running_jobs)
+
+  @property
+  def concluded_jobs(self):
     return [job for job in self.jobs if job.status == 2]
+
+  @property
+  def n_concluded_jobs(self):
+    return len(self.concluded_jobs)
+
+  @property
+  def failed_jobs(self):
+    return [job for job in self.jobs if job.status == 1]
+
+  @property
+  def n_failed_jobs(self):
+    return len(self.failed_jobs)
+
+
+  def __repr__(self):
+    return ('Communication Server Information \n'
+            'Running: {.n_running_jobs}, Failed: {.n_failed_jobs}, Completed: {.n_concluded_jobs}').format(*(3 * [self]))
