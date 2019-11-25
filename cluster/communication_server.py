@@ -3,12 +3,17 @@ import pyuv
 import signal
 import pickle
 import collections
+import threading
 
 msg_types = {0: 'job_started',
              1: 'error_encountered',
              2: 'job_concluded'}
 
-JobTuple = collections.namedtuple('Job', 'id settings status')
+class Job():
+  def __init__(self, id, settings, status):
+    self.id =  id
+    self.settings = settings
+    self.status = status
 
 class CommunicationServer():
 
@@ -52,12 +57,16 @@ class CommunicationServer():
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)
 
-
-    def signal_cb(handle, signum):
+    def async_exit(async):
+      async.close()
       signal_h.close()
       server.close()
 
+    def signal_cb(sig, frame):
+      async.send(async_exit)
+
     loop = pyuv.Loop.default_loop()
+    async = pyuv.Async(loop)
 
     server = pyuv.UDP(loop)
     server.bind((self.ip_adress, 0))
@@ -68,14 +77,17 @@ class CommunicationServer():
     signal_h = pyuv.Signal(loop)
     signal_h.start(signal_cb, signal.SIGINT)
 
-    loop.run(pyuv.UV_RUN_NOWAIT)
+    t = threading.Thread(target=loop.run, daemon=True)
+    t.start()
+
+    signal.signal(signal.SIGINT, signal_cb)
 
 
   def handle_job_started(self, message):
     job_id, settings = message
     if not self.get_job(job_id) is None:
       raise ValueError('Job was already in the list of jobs but claims to just have been started.')
-    self.jobs.append(JobTuple(job_id, settings, 1))
+    self.jobs.append(Job(job_id, settings, 1))
 
 
   def handle_error_encountered(self, message):

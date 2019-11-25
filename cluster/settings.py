@@ -12,8 +12,10 @@ import pickle
 from .optimizers import Metaoptimizer, NGOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
-#from .submission_state import *
+# from .submission_state import *
 import cluster.submission_state as submission_state
+import inspect
+
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -39,6 +41,9 @@ class ParamDict(dict):
 
   def __repr__(self):
     return json.dumps(self, indent=4, sort_keys=True)
+
+  def get_pickleable(self):
+    return recursive_objectify(self, make_immutable=False)
 
 
 def recursive_objectify(nested_dict, make_immutable=True):
@@ -89,11 +94,15 @@ def save_settings_to_json(setting_dict, model_dir):
   with open(filename, 'w') as file:
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
+
 def confirm_exit_at_server(metrics, params):
-  print('Sending confirmation of exit to: ', (submission_state.communication_server_ip, submission_state.communication_server_port))
+  print('Sending confirmation of exit to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port), pickle.dumps((2, submission_state.job_id, metrics, params)))
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((2, (submission_state.job_id, metrics, params))))
+
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
@@ -112,7 +121,8 @@ def save_metrics_params(metrics, params, save_dir=None):
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
-  confirm_exit_at_server(metrics, params)
+  confirm_exit_at_server(metrics, params.get_pickleable())
+
 
 def is_json_file(cmd_line):
   try:
@@ -130,13 +140,18 @@ def is_parseable_dict(cmd_line):
     warn('Dict literal eval suppressed exception: ', e)
     return False
 
-def register_at_server():
-  print('Sending registration to: ', (submission_state.communication_server_ip, submission_state.communication_server_port))
+
+def register_at_server(final_params):
+  print('Sending registration to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port), pickle.dumps((1, submission_state.job_id)))
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((0, (submission_state.job_id, final_params))))
 
-def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True, register_job=True, verbose=True):
+
+def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
+                               register_job=True, verbose=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
@@ -150,7 +165,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
   if register_job:
     pass
-    #make sure that port and ip are parsed
+    # make sure that port and ip are parsed
 
   if not cmd_line:
     cmd_line = sys.argv
@@ -166,7 +181,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     submission_state.communication_server_ip = connection_details['ip']
     submission_state.communication_server_port = connection_details['port']
     submission_state.job_id = connection_details['id']
-    register_at_server()
     del cmd_line[1]
 
   if len(cmd_line) < 2:
@@ -201,8 +215,10 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if verbose:
     print(json.dumps(final_params, indent=4, sort_keys=True))
 
+  bin_params = pickle.dumps(final_params.get_pickleable())
+  final_params_new = pickle.loads(bin_params)
   if register_job:
-    register_at_server(connection_details, final_params)
+    register_at_server(final_params.get_pickleable())
 
   update_params_from_cmdline.start_time = time.time()
   return final_params

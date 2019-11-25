@@ -257,13 +257,9 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     cluster_interface.submit_all()
     while n_successful_jobs / number_of_samples < fraction_that_need_to_finish:
       n_successful_jobs = cluster_interface.n_successful_jobs
-      n_ran_jobs = cluster_interface.n_completed_jobs
+      n_ran_jobs = len(comm_server.concluded_jobs)
       if (n_ran_jobs - n_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
-        print('n_ran_job: ', n_ran_jobs)
-        print('n_successful_jobs: ', n_successful_jobs)
-        print('number_of_samples: ', number_of_samples)
-        print('fraction_that_need_to_finish: ', fraction_that_need_to_finish)
-        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 5:
+        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 50:
           raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
         else:
           time_when_severe_warning_happened = time.time()

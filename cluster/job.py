@@ -45,10 +45,10 @@ class Job():
     if 'custom_python_executable_path' in paths:
       warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
-    base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {}'
+    base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {} {}'
     exec_cmd = base_exec_cmd.format(paths['script_to_run'],
-                                    ' \"' + str(self.comm_server_info) + '\"',
-                                    ' \"' + str(current_setting) + '\"')
+                                    '\"' + str(self.comm_server_info) + '\"',
+                                    '\"' + str(current_setting) + '\"')
 
     res = '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
     return res
