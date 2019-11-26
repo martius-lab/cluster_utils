@@ -102,7 +102,6 @@ def execute_iterated_submission(submission, collect_data_directory, fraction_nee
 
       sleep(sleep_time)  # First sleep much shorter
       sleep_time = 60
-
       df, params, metrics = load_cluster_results(collect_data_directory)
       completed_succesfully = len(df)
 

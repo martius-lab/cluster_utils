@@ -59,6 +59,32 @@ def recursive_objectify(nested_dict, make_immutable=True):
   return returned_result
 
 
+def fstring_in_json(format_string, namespace):
+  if type(format_string) != str:
+    return format_string
+  try:
+    formatted = eval('f\"' + format_string + '\"', namespace)
+  except:
+    return format_string
+
+  if formatted == format_string:
+    return format_string
+
+  try:
+    return eval(formatted, dict(__builtins__=None))
+  except:
+    return formatted
+
+
+def recursive_dynamic_json(nested_dict, namespace):
+  "Evaluates each key in nested dict as an f-string within a given namespace"
+  for k, v in nested_dict.items():
+    if isinstance(v, collections.Mapping):
+      recursive_dynamic_json(v, namespace)
+    else:
+      nested_dict[k] = fstring_in_json(v, namespace)
+
+
 class SafeDict(dict):
   """ A dict with prohibiting init from a list of pairs containing duplicates"""
 
@@ -151,7 +177,7 @@ def register_at_server(final_params):
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
-                               register_job=True, verbose=True):
+                               register_job=True, verbose=True, dynamic_json=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
@@ -207,16 +233,19 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
   update_recursive(default_params, cmd_params)
 
-  if '{timestamp}' in default_params.get('model_dir', ''):
-    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
-    default_params['model_dir'] = default_params['model_dir'].replace('{timestamp}', timestamp)
+  if "__timestamp__" in default_params:
+    raise ValueError("Parameter name __timestamp__ is reserved!")
 
+  if dynamic_json:
+    objectified = recursive_objectify(default_params, make_immutable=make_immutable)
+    timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
+    namespace = dict(__timestamp__=timestamp, **objectified)
+    recursive_dynamic_json(default_params, namespace)
   final_params = recursive_objectify(default_params, make_immutable=make_immutable)
+
   if verbose:
     print(json.dumps(final_params, indent=4, sort_keys=True))
 
-  bin_params = pickle.dumps(final_params.get_pickleable())
-  final_params_new = pickle.loads(bin_params)
   if register_job:
     register_at_server(final_params.get_pickleable())
 

@@ -4,32 +4,39 @@ from cluster import save_metrics_params, update_params_from_cmdline
 
 
 
-def fn_to_optimize(*, u, v, w, x, y, z, flag, noisy=True, **kwargs):
-  result = (x - 3.14) ** 2 + (y - 2.78) ** 2 + (u * v * w + 1) ** 2 + (u + v + w + z - 5) ** 2
-# if np.random.rand()>.8:
-#   raise ValueError('this job crashed on purpose')
-  if noisy:
-    result += 0.5 * np.random.normal()
-  #if (x-3.14) ** 2 < 0.5 and flag:
-  #  result += 3.0
-  return result
+def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, noisy=True):
+    """
+    :param u: real variable
+    :param v: integer variable living on logscale
+    :param w: integer variable
+    :param x: real variable
+    :param y: real variable living on log-scale
+    :param sharp_penalty: discrete variable
+    :param noisy: flag for noise addition
+    :return: result of some random computation
+    """
+    y_log = np.log(np.abs(y+1e-7))
+    v_log = np.log(np.abs(v+1e-7))
+    assert (type(w) == type(v) == int), "w and v have to be integers"
+
+    result = (x - 3.14) ** 2 + (y_log - 2.78) ** 2 + (u * v_log * w + 1) ** 2 + (u + v_log + w - 5) ** 2
+    if sharp_penalty and x > 3.20:
+        result += 1
+
+    if noisy:
+        result += 0.5 * np.random.normal()
+
+    return result
 
 
-# Default values of params
-default_params = {'model_dir': '{timestamp}',   # Cluster utils actually replace this with the timestamp
-                  'u': 0.0,
-                  'v': 0.0,
-                  'w': 0.0,
-                  'x': 0.0,
-                  'y': 0.0,
-                  'z': 0.0,
-                  'flag': False
-                  }
-params = update_params_from_cmdline(default_params=default_params)
-time.sleep(np.random.randint(0,10))
+if __name__ == '__main__':
+    params = update_params_from_cmdline()
+    time.sleep(np.random.randint(0, 10))
+    result = fn_to_optimize(**params.fn_args)
 
-result = fn_to_optimize(**params)
+    noiseless_dict = dict(params.fn_args)
+    noiseless_dict['noisy'] = False
 
-metrics = {'result': result, 'noiseless_result': fn_to_optimize(**params, noisy=False)}
-save_metrics_params(metrics, params)
-print(result)
+    metrics = {'result': result, 'noiseless_result': fn_to_optimize(**noiseless_dict)}
+    save_metrics_params(metrics, params)
+    print(result)

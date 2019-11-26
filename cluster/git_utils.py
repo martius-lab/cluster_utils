@@ -68,39 +68,90 @@ class GitConnector(object):
              url to remote
     '''
 
-    try:
-      remote_handle = self._repo.remote(remote_name)
-    except:
-      remote_handle = None
+    def __init__(self, local_path=None, url=None, branch=None, commit=None, remove_local_copy=True):
+      self._local_path = local_path  # local working path
+      self._orig_url = url  # if given, make local copy of repo in local working path
+      self._repo = None
+      self._remove_local_copy = remove_local_copy
 
-    remote_url = '' if remote_handle is None else remote_handle.url
+      # make local copy of repo
+      if self._orig_url is not None:
+        self._make_local_copy(branch, commit)
 
-    return {'remote_handle': remote_handle, 'remote_url': remote_url}
+      self._init()
 
-  def _get_commit_meta(self, commit):
-    '''
-    Returns meta information for given commit
-    :param commit: handle to git.Commit object
-    :return: Dict with commit meta information
-    '''
+    def _init(self):
+      '''
+      Import library in a non-breaking fashion, connect to git repo
+      :return: None
+      '''
 
-    res = dict()
-    res['checkout_commit_hexsha'] = commit.hexsha
-    res['checkout_commit_hexsha_short'] = self._repo.git.rev_parse(res['checkout_commit_hexsha'],
-                                                                   short=7)
-    res['checkout_commit_author'] = commit.author.name
-    res['checkout_commit_date'] = commit.authored_datetime.strftime('%Y-%m-%d')
-    res['checkout_commit_msg'] = commit.summary
+      try:
+        self._repo = self._connect_local_repo(self._local_path)
+      except git.exc.InvalidGitRepositoryError:
+        # Here we ignore the exception, should not affect of execution of the script
+        pass
 
-    return res
+    def _connect_local_repo(self, local_path):
+      '''
+      Connects to local repo
+      :param path: path to local repo
+      :return: git.Repo object
+      '''
 
-  def _get_latex_template(self):
-    '''
-    Returns string containing latex template that is used to produce formatted output
-    :return: String containing latex template
-    '''
+      repo = None
+      try:
+        repo = git.Repo(path=local_path, search_parent_directories=True)
+      except git.exc.InvalidGitRepositoryError:
+        path = os.getcwd() if self._local_path is None else self._local_path
+        raise git.exc.InvalidGitRepositoryError(
+          'Could not find git repository at location {} or any of the parent directories'.format(path))
+      except:
+        raise
 
-    template = '''\\begin{{tabular}}{{ l l }}
+      return repo
+
+    def _get_remote_meta(self, remote_name):
+      '''
+      Returns meta information about specified remote
+      :param remote_name: Name of the remote
+      :return: Dict containing handle to git.Remote object (or None if not existing) and string containing
+               url to remote
+      '''
+
+      try:
+        remote_handle = self._repo.remote(remote_name)
+      except:
+        remote_handle = None
+
+      remote_url = '' if remote_handle is None else remote_handle.url
+
+      return {'remote_handle': remote_handle, 'remote_url': remote_url}
+
+    def _get_commit_meta(self, commit):
+      '''
+      Returns meta information for given commit
+      :param commit: handle to git.Commit object
+      :return: Dict with commit meta information
+      '''
+
+      res = dict()
+      res['checkout_commit_hexsha'] = commit.hexsha
+      res['checkout_commit_hexsha_short'] = self._repo.git.rev_parse(res['checkout_commit_hexsha'],
+                                                                     short=7)
+      res['checkout_commit_author'] = commit.author.name
+      res['checkout_commit_date'] = commit.authored_datetime.strftime('%Y-%m-%d')
+      res['checkout_commit_msg'] = commit.summary
+
+      return res
+
+    def _get_latex_template(self):
+      '''
+      Returns string containing latex template that is used to produce formatted output
+      :return: String containing latex template
+      '''
+
+      template = '''\\begin{{tabular}}{{ l l }}
     Use local copy: & {use_local_copy}\\\\
     Working dir: & {working_dir}\\\\
     Origin: & {origin_url}\\\\
@@ -108,8 +159,7 @@ class GitConnector(object):
     Commit: & {checkout_commit_hexsha_short} (from {checkout_commit_author} on {checkout_commit_date})\\\\
     ~ & {checkout_commit_msg}
 \end{{tabular}}'''
-
-    return template
+      return template
 
   def _make_local_copy(self, branch='master', commit=None):
     '''
@@ -176,7 +226,7 @@ class GitConnector(object):
       working_dir=self._repo.working_dir,
       origin_url=self._get_remote_meta('origin')['remote_url'],
       active_branch=self._repo.active_branch.name,
-      )
+    )
     res.update(self._get_commit_meta(self._repo.commit(res['active_branch'])))
 
     return res
@@ -187,11 +237,12 @@ class GitConnector(object):
 
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
-  def __init__(self, params=None, script_to_run=None):
+  def __init__(self, params=None, paths=None):
     self.params = params or {}
+    self.paths = paths or {}
 
-    if 'local_path' not in self.params and not script_to_run is None:
-      self.params['local_path'] = os.path.dirname(script_to_run)
+    if 'local_path' not in self.params and 'script_to_run' in paths:
+      self.params['local_path'] = os.path.dirname(paths['script_to_run'])
 
     self.git_conn = None
 
@@ -201,8 +252,6 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
       print(
         'Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook' \
         .format(self.params['local_path'], self.identifier))
-    # TODO: change
-    self.first_submission = True
 
   def determine_state(self):
     self.state = 1
@@ -222,23 +271,22 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         pass
 
   def pre_submission_routine(self):
-    pass
-
-  def post_submission_routine(self):
-    pass
-
-  def pre_run_routine(self):
-    self.first_submission = False
     self.git_conn = GitConnector(**self.params)
     if 'url' in self.params and self.params.get('commit', None) is None:
       commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
       commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
       print('Using commit {} in each iteration'.format(commit_hexsha_short))
       self.params['commit'] = commit_hexsha_short
+
+    if not os.path.isfile(self.paths['script_to_run']):
+      print("Main python script {} does not exist. Continue? (y/N)".format(self.paths['script_to_run']))
+      ans = input()
+      if ans.lower != "y":
+        raise FileNotFoundError(f"File {self.paths['script_to_run']} does not exist.")
     return self.git_conn
 
-  def post_run_routine(self):
-    super().post_run_routine()
+  def post_submission_routine(self):
+    super().post_submission_routine()
     if self.git_conn:
       self.git_conn.remove_local_copy()
       del self.git_conn

@@ -25,3 +25,4 @@ from . import submission
 from . import report
 from . import parallel_executor
 from . import submission_state
+from . import optimize_hyperparams

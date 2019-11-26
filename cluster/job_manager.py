@@ -20,10 +20,19 @@ from .communication_server import CommunicationServer
 import threading
 
 
-def ensure_empty_dir(dir_name):
+def ensure_empty_dir(dir_name, defensive=False):
   if os.path.exists(dir_name):
-    shutil.rmtree(dir_name, ignore_errors=True)
-  os.makedirs(dir_name)
+    if defensive:
+        print(f"Directory {dir_name} exists. Delete everything? (y/N)")
+        ans = input()
+        if ans.lower() == 'y':
+            shutil.rmtree(dir_name, ignore_errors=True)
+            os.makedirs(dir_name)
+    else:
+        shutil.rmtree(dir_name, ignore_errors=True)
+        os.makedirs(dir_name)
+  else:
+      os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -34,7 +43,79 @@ def dict_to_dirname(setting, id, smart_naming=True):
     return res
   return str(id)
 
+'''
+<<<<<<< HEAD
+=======
+def cluster_run(submission_name, paths, submission_requirements, other_params, hyperparam_dict=None,
+                samples=None, distribution_list=None, restarts_per_setting=1,
+                smart_naming=True, remove_jobs_dir=True, git_params=None, run_local=None, extra_settings=None):
+  # Directories and filenames
+  ensure_empty_dir(paths['result_dir'], defensive=True)
+  ensure_empty_dir(paths['jobs_dir'])
 
+  setting_generator = get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings)
+  processed_other_params = process_other_params(other_params, hyperparam_dict, distribution_list)
+
+  def generate_commands():
+    for setting in setting_generator:
+      for iteration in range(restarts_per_setting):
+        current_setting = deepcopy(setting)
+        local_other_params = deepcopy(processed_other_params)
+
+        local_other_params['id'] = generate_commands.id_number
+        job_res_dir = dict_to_dirname(current_setting, generate_commands.id_number, smart_naming)
+        local_other_params['model_dir'] = os.path.join(paths['result_dir'], job_res_dir)
+
+        update_recursive(current_setting, local_other_params)
+        setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
+        if 'virtual_env_path' in paths:
+            virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
+        else:
+            virtual_env_activate = ''
+
+        if 'custom_pythonpaths' in paths:
+            raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
+
+        if 'custom_python_executable_path' in paths:
+            warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+
+        python_executor = paths.get('custom_python_executable_path', 'python3')
+        is_python_script = paths.get('is_python_script', True)
+
+        if is_python_script:
+            run_script_as_module_main = paths.get('run_script_as_module_main', False)
+            setting_string = '\"' + str(current_setting) + '\"'
+            if run_script_as_module_main:
+                exec_cmd = f"{python_executor} -m {os.path.basename(paths['script_to_run'])} {setting_string}"
+            else:
+                base_exec_cmd = '{}'.format(python_executor) + ' {} {}'
+                exec_cmd = base_exec_cmd.format(paths['script_to_run'], setting_string)
+        else:
+          base_exec_cmd = '{} {}'
+          exec_cmd = base_exec_cmd.format(paths['script_to_run'], '\"' + str(current_setting) + '\"')
+
+        yield '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
+        generate_commands.id_number += 1
+
+  generate_commands.id_number = 0
+
+  cluster_type = get_cluster_type(requirements=submission_requirements, run_local=run_local)
+  if cluster_type is None:
+      raise OSError('Neither CONDOR nor SLURM was found. Not running locally')
+  submission = cluster_type(job_commands=generate_commands(),
+                                        submission_dir=paths['jobs_dir'],
+                                        requirements=submission_requirements,
+                                        name=submission_name,
+                                        remove_jobs_dir=remove_jobs_dir)
+
+  submission.register_submission_hook(ClusterSubmissionGitHook(git_params, paths))
+
+  print('Jobs created:', generate_commands.id_number)
+  return submission
+
+
+>>>>>>> origin/executable_submodules
+'''
 def update_best_job_datadirs(result_dir, model_dirs):
   datadir = os.path.join(result_dir, 'best_jobs')
   os.makedirs(datadir, exist_ok=True)
@@ -115,7 +196,14 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
   signal.signal(signal.SIGINT, signal_handler)
 
+#<<<<<<< HEAD
   return hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params
+#=======
+#    meta_opt.process_new_df(df)
+#    meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
+#    opt_procedure_name = os.path.dirname(os.path.join(base_paths_and_files['result_dir'], 'dummy.tmp'))
+#    pdf_output = os.path.join(base_paths_and_files['result_dir'], f'{opt_procedure_name}.pdf')
+#>>>>>>> origin/executable_submodules
 
 
 def post_opt(cluster_interface, hp_optimizer):

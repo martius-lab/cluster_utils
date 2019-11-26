@@ -1,0 +1,52 @@
+{
+  "optimization_procedure_name": "gs_test",
+  "results_dir": "/tmp/example_results",
+
+  "git_params": {
+    "branch": "executable_submodules",
+    "commit": null
+  },
+  "script_relative_path": "examples/example1/main.py",
+  "environment_setup": {
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 16000,
+    "bid": 800,
+    "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
+  },
+  "fixed_params": {
+    "fn_args.noisy": true
+  },
+  "restarts": 1,
+  "samples": null,
+  "hyperparam_list": [
+    {
+      "param": "fn_args.u",
+      "values": [-0.5, 0.0, 0.5]
+    },
+    {
+      "param": "fn_args.v",
+      "values": [10, 50, 100]
+    },
+    {
+      "param": "fn_args.w",
+      "values": [1, 2, 3]
+    },
+    {
+      "param": "fn_args.x",
+      "values": [3.0, 3.5, 4.0]
+    },
+    {
+      "param": "fn_args.y",
+      "values": [0.1, 1.0, 10.0]
+    },
+    {
+      "param": "fn_args.sharp_penalty",
+      "distribution": "Discrete",
+      "values": [false, true]
+    }
+  ]
+}

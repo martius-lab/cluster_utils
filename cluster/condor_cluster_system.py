@@ -105,6 +105,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
     self.gpus = requirements['request_gpus']
     self.bid = requirements['bid']
 
+    other_requirements = []
+
     if self.gpus > 0 and requirements['cuda_requirement'] is not None:
       self.cuda_line = 'Requirements=CUDACapability>={}'.format(requirements['cuda_requirement'])
       self.partition = 'gpu'
@@ -115,9 +117,27 @@ class Condor_ClusterSubmission(ClusterSubmission):
       self.constraint = ''
 
     if self.gpus > 0 and 'gpu_memory_mb' in requirements:
-      self.gpu_memory_line = 'Requirements=TARGET.CUDAGlobalMemoryMb>{}'.format(requirements['gpu_memory_mb'])
+      other_requirements.append('TARGET.CUDAGlobalMemoryMb>{}'.format(requirements['gpu_memory_mb']))
+
+
+    def hostnames_to_requirement(hostnames):
+      single_reqs = [f'UtsnameNodename =?= \"{hostname}\"' for hostname in hostnames]
+      return '(' + ' || '.join(single_reqs) + ')'
+
+    hostname_list = requirements.get('hostname_list', [])
+    if hostname_list:
+      other_requirements.append(hostnames_to_requirement(hostname_list))
+
+    forbidden_hostnames = requirements.get('forbidden_hostnames', [])
+    if forbidden_hostnames:
+      single_reqs = [f'UtsnameNodename =!= \"{hostname}\"' for hostname in forbidden_hostnames]
+      other_requirements.extend(single_reqs)
+                     
+    if other_requirements:
+      concat_requirements = ' && '.join(other_requirements)
+      self.requirements_line = f"requirements={concat_requirements}"
     else:
-      self.gpu_memory_line = ''
+      self.requirements_line = ''
 
   '''
   def submit_fn(self, job, idx):

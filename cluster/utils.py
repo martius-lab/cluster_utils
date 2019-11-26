@@ -9,6 +9,7 @@ from collections import defaultdict
 import tempfile
 from time import sleep
 from warnings import warn
+import git
 
 from .constants import *
 
@@ -81,19 +82,25 @@ def save_dict_as_one_line_csv(dct, filename):
     writer.writerow(dct)
 
 
-def get_sample_generator(num_samples, hyperparam_dict, optimizer=None):
-  if bool(hyperparam_dict) == bool(optimizer):
-    raise TypeError('Exactly one of hyperparam_dict and distribution list must be provided')
-  if optimizer and not num_samples:
+def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
+  if hyperparam_dict and distribution_list:
+    raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
+  if not hyperparam_dict and not distribution_list:
+    warn('No hyperparameters vary. Only running restarts')
+    return [{}]
+  if distribution_list and not samples:
     raise TypeError('Number of samples not specified')
-  if optimizer:
-    ans = optimizer_sampler(optimizer, num_samples)
-  elif num_samples:
+  if distribution_list:
+    ans = distribution_list_sampler(distribution_list, samples)
+  elif samples:
     assert hyperparam_dict
-    ans = hyperparam_dict_samples(hyperparam_dict, num_samples)
+    ans = hyperparam_dict_samples(hyperparam_dict, samples)
   else:
     ans = hyperparam_dict_product(hyperparam_dict)
-  return ans
+  if extra_settings is not None:
+    return itertools.chain(extra_settings, ans)
+  else:
+    return ans
 
 
 
@@ -102,8 +109,10 @@ def get_sample_generator(num_samples, hyperparam_dict, optimizer=None):
 def process_other_params(other_params, hyperparam_dict, distribution_list):
   if hyperparam_dict:
     name_list = hyperparam_dict.keys()
-  else:
+  elif distribution_list:
     name_list = [distr.param_name for distr in distribution_list]
+  else:
+    name_list = []
   for name, value in other_params.items():
     check_valid_name(name)
     if name in name_list:
@@ -166,6 +175,12 @@ def nested_to_dict(nested_items):
     ptr[nested_key[-1]] = value
   return default_to_regular(result)
 
+def distribution_list_sampler(distribution_list, num_samples):
+  for distr in distribution_list:
+    distr.prepare_samples(howmany=num_samples)
+  for i in range(num_samples):
+    nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
+    yield nested_to_dict(nested_items)
 
 
 
@@ -180,6 +195,19 @@ def mkdtemp(prefix='cluster_utils', suffix=''):
 def temp_directory(prefix='cluster_utils', suffix=''):
   new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
   return tempfile.TemporaryDirectory(prefix=new_prefix, dir=os.path.join(home, '.cache'))
+
+def get_git_url():
+  try:
+    repo = git.Repo(search_parent_directories=True)
+  except git.exc.InvalidGitRepositoryError:
+    return None
+
+  url_list = list(repo.remotes.origin.urls)
+  if url_list:
+    print(f"Auto-detected git repository with remote url: {url_list[0]}")
+    return url_list[0]
+
+  return None
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
