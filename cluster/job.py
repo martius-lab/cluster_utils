@@ -5,7 +5,7 @@ from .constants import *
 from subprocess import run, PIPE
 from copy import deepcopy
 from warnings import warn
-from .utils import dict_to_dirname
+from .utils import dict_to_dirname, flatten_nested_string_dict
 from .settings import update_recursive
 import pickle
 import pandas as pd
@@ -61,9 +61,10 @@ class Job():
   def get_results(self, remember=True):
     if remember:
       self.results_accessed = True
-    param_df = pd.DataFrame(self.final_settings, index=[0])
-    metric_df = pd.DataFrame(self.metrics, index=[0])
 
+    flattened_params = dict(flatten_nested_string_dict(self.final_settings))
+    param_df = pd.DataFrame([flattened_params])
+    metric_df = pd.DataFrame([self.metrics])
     resulting_df = pd.concat([param_df, metric_df], axis=1)
     return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
 

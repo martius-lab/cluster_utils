@@ -184,7 +184,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
                                    name=submission_name,
                                    remove_jobs_dir=remove_jobs_dir)
   cluster_interface.register_submission_hook(
-    ClusterSubmissionGitHook(git_params, base_paths_and_files['script_to_run']))
+    ClusterSubmissionGitHook(git_params, base_paths_and_files))
   cluster_interface.exec_pre_run_routines()
   error_handler = OneTimeExceptionHandler(ignore_errors=True)
   comm_server = CommunicationServer(cluster_interface)

@@ -16,14 +16,15 @@
     "memory_in_mb": 8000,
     "bid": 1000
   },
+  "optimizer_str": "cem_metaoptimizer",
+  "optimizer_settings": {"with_restarts": true,
+                         "best_fraction_to_use_for_update": 0.15},
   "optimization_setting": {
     "metric_to_optimize": "result",
     "minimize": true,
     "number_of_samples": 100,
-    "with_restarts": true,
     "fraction_that_need_to_finish": 0.85,
-    "total_rounds": 8,
-    "best_fraction_to_use_for_update":  0.15
+    "total_rounds": 8
   },
   "fixed_params": {
     "fn_args.noisy": true

@@ -51,6 +51,7 @@ def recursive_objectify(nested_dict, make_immutable=True):
   result = deepcopy(nested_dict)
   for k, v in result.items():
     if isinstance(v, collections.Mapping):
+      result = dict(result)
       result[k] = recursive_objectify(v, make_immutable)
   if make_immutable:
     returned_result = ParamDict(result)
@@ -177,7 +178,7 @@ def register_at_server(final_params):
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
-                               register_job=True, verbose=True, dynamic_json=True):
+                               verbose=True, dynamic_json=True):
   """ Updates default settings based on command line input.
 
   :param cmd_line: Expecting (same format as) sys.argv
@@ -189,25 +190,24 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   :return: Immutable nested dict with (deep) dot access. Priority: default_params < default_json < cmd_line
   """
 
-  if register_job:
-    pass
-    # make sure that port and ip are parsed
-
   if not cmd_line:
     cmd_line = sys.argv
 
   if default_params is None:
     default_params = {}
 
-  if register_job:
-    if len(cmd_line) < 2:
-      cmd_params = {}
-    print(cmd_line)
+  try:
     connection_details = ast.literal_eval(cmd_line[1])
     submission_state.communication_server_ip = connection_details['ip']
     submission_state.communication_server_port = connection_details['port']
     submission_state.job_id = connection_details['id']
     del cmd_line[1]
+    register_job = True
+  except:
+    print("Could not parse connection info, presuming the job to be run locally")
+    e = sys.exc_info()[0]
+    print(str(e))
+    register_job = False
 
   if len(cmd_line) < 2:
     cmd_params = {}

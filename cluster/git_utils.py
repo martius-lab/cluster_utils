@@ -270,7 +270,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
       except:
         pass
 
-  def pre_submission_routine(self):
+  def pre_run_routine(self):
     self.git_conn = GitConnector(**self.params)
     if 'url' in self.params and self.params.get('commit', None) is None:
       commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
@@ -285,7 +285,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         raise FileNotFoundError(f"File {self.paths['script_to_run']} does not exist.")
     return self.git_conn
 
-  def post_submission_routine(self):
+  def post_run_routine(self):
     super().post_submission_routine()
     if self.git_conn:
       self.git_conn.remove_local_copy()
@@ -295,3 +295,9 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
   def update_status(self):
     if self.git_conn:
       self.status = self.git_conn.formatted_meta_information
+
+  def pre_submission_routine(self):
+    pass
+
+  def post_submission_routine(self):
+    pass
