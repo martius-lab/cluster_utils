@@ -10,21 +10,21 @@ msg_types = {0: 'job_started',
              1: 'error_encountered',
              2: 'job_concluded'}
 
-class Job():
+class MinJob():
   def __init__(self, id, settings, status):
     self.id =  id
     self.settings = settings
     self.status = status
+    self.metrics = None
 
 class CommunicationServer():
 
-  def __init__(self):
+  def __init__(self, cluster_system):
     self.ip_adress = self.get_own_ip()
     self.port = None
     print("Running on IP: ", self.ip_adress)
     self.start_listening()
-
-    self.jobs = []
+    self.cluster_system = cluster_system
 
   @property
   def connection_info(self):
@@ -85,14 +85,16 @@ class CommunicationServer():
 
 
   def handle_job_started(self, message):
-    job_id, settings = message
-    print("Job Started ", job_id, ' at time ', time.time())
-    if not self.get_job(job_id) is None:
-      raise ValueError('Job was already in the list of jobs but claims to just have been started.')
-    self.jobs.append(Job(job_id, settings, 0))
+    job_id, = message
+    job = self.cluster_system.get_job(job_id)
+    if job is None:
+      raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
+    job.status = 0
+    #self.jobs.append(MinJob(job_id, settings, 0))
 
 
   def handle_error_encountered(self, message):
+    raise NotImplementedError()
     job_id, settings = message
     job = self.get_job(job_id)
     if job is None:
@@ -101,11 +103,11 @@ class CommunicationServer():
 
 
   def handle_job_concluded(self, message):
-    job_id, metrics, settings = message
-    job = self.get_job(job_id)
-    print("Job Concluded ", job_id, ' at time ', time.time())
+    job_id, metrics = message
+    job = self.cluster_system.get_job(job_id)
     if job is None:
-      raise ValueError('Job was not in the list of jobs but claims to just have concluded.')
+      raise ValueError('Received a end-message from a job that is not listed in the cluster interface system')
+    job.metrics = metrics
     job.status = 2
 
 
@@ -116,12 +118,7 @@ class CommunicationServer():
     print(msg_types[msg_type_idx], type(msg_types[msg_type_idx]))
     print(message, type(message))
 
-  def get_job(self, id):
-    for job in self.jobs:
-      if job.id == id:
-        return job
-    return None
-
+  '''
   @property
   def running_jobs(self):
     return [job for job in self.jobs if job.status == 0]
@@ -146,7 +143,8 @@ class CommunicationServer():
   def n_failed_jobs(self):
     return len(self.failed_jobs)
 
-
   def __repr__(self):
     return ('Communication Server Information \n'
             'Running: {.n_running_jobs}, Failed: {.n_failed_jobs}, Completed: {.n_concluded_jobs}').format(*(3 * [self]))
+
+  '''

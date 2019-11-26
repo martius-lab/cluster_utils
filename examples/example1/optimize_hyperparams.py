@@ -22,7 +22,7 @@ jobs_path = mkdtemp(suffix=opt_procedure_name + '-' + 'jobs')
 
 git_params = dict(url='git@gitlab.tuebingen.mpg.de:mrolinek/cluster_utils.git',
                   local_path=project_path,
-                  branch='looped_optimization',
+                  branch='socket_based_communication',
                   )
 
 base_paths_and_files = dict(script_to_run=os.path.join(project_path, 'examples/example1/main.py'),

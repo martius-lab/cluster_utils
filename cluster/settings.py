@@ -95,13 +95,13 @@ def save_settings_to_json(setting_dict, model_dir):
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
 
-def confirm_exit_at_server(metrics, params):
+def confirm_exit_at_server(metrics):
   print('Sending confirmation of exit to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((2, (submission_state.job_id, metrics, params))))
+               pickle.dumps((2, (submission_state.job_id, metrics))))
 
 
 def save_metrics_params(metrics, params, save_dir=None):
@@ -121,7 +121,7 @@ def save_metrics_params(metrics, params, save_dir=None):
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
-  confirm_exit_at_server(metrics, params.get_pickleable())
+  confirm_exit_at_server(metrics)
 
 
 def is_json_file(cmd_line):
@@ -147,7 +147,7 @@ def register_at_server(final_params):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((0, (submission_state.job_id, final_params))))
+               pickle.dumps((0, (submission_state.job_id,))))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,

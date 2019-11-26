@@ -52,7 +52,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
     return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
   def generate_job_spec_file(self, job):
-    job_file_name = '{}_{}.sh'.format(self.name, job.id_number)
+    job_file_name = '{}_{}.sh'.format(self.name, job.id)
     run_script_file_path = os.path.join(self.submission_dir, job_file_name)
     job_spec_file_path = os.path.join(self.submission_dir, job_file_name + '.sub')
     cmd = job.generate_execution_cmd(self.paths)

@@ -106,7 +106,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
     ClusterSubmissionGitHook(git_params, base_paths_and_files['script_to_run']))
   cluster_interface.exec_pre_run_routines()
   error_handler = OneTimeExceptionHandler(ignore_errors=True)
-  comm_server = CommunicationServer()
+  comm_server = CommunicationServer(cluster_interface)
 
   def signal_handler(sig, frame):
     cluster_interface.close()
@@ -192,7 +192,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
     while (n_queuing_or_running_jobs < min_n_jobs):  # or not cluster_interface.is_blocked():
       for new_candidate, new_settings in hp_optimizer.ask(1):
-        new_job = Job(id_number=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
+        new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                       other_params=processed_other_params, paths=base_paths_and_files,
                       iteration=hp_optimizer.iteration + 1)
         cluster_interface.add_jobs(new_job)
@@ -250,7 +250,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
     n_confirmed_successful_jobs = 0
     settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask(number_of_samples)]
-    jobs = [Job(id_number=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
+    jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
                 other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
                 connection_info=comm_server.connection_info)
             for candidate, setting in settings]
@@ -259,7 +259,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
     cluster_interface.submit_all()
     while n_confirmed_successful_jobs / number_of_samples < fraction_that_need_to_finish:
       n_confirmed_successful_jobs = cluster_interface.n_successful_jobs
-      n_ran_jobs = len(comm_server.concluded_jobs)
+      n_ran_jobs = cluster_interface.n_completed_jobs
       if (n_ran_jobs - n_confirmed_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
         if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 5:
           raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
@@ -270,7 +270,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                  'cause an collapse of the procedure.')
       if time_to_print():
         print(cluster_interface)
-        print(comm_server)
     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)

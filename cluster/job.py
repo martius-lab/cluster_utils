@@ -7,12 +7,13 @@ from copy import deepcopy
 from warnings import warn
 from .utils import dict_to_dirname
 from .settings import update_recursive
+import pickle
 import pandas as pd
 
 class Job():
-  def __init__(self, id_number, candidate, settings, other_params, paths, iteration, connection_info):
+  def __init__(self, id, candidate, settings, other_params, paths, iteration, connection_info):
     self.paths = paths
-    self.id_number = id_number
+    self.id = id
     self.candidate = candidate
     self.settings = settings
     self.other_params = other_params
@@ -21,15 +22,17 @@ class Job():
     self.results_accessed = False
     self.job_spec_file_path = False
     self.iteration = iteration
-    self.comm_server_info = {'id': id_number,
+    self.comm_server_info = {'id': id,
                              'ip': connection_info[0],
                              'port': connection_info[1]}
+    self.status = -1
+    self.metrics = None
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)
     update_recursive(current_setting, self.other_params)
-    current_setting['id'] = self.id_number
-    job_res_dir = dict_to_dirname(current_setting, self.id_number, smart_naming=False)
+    current_setting['id'] = self.id
+    job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
     current_setting['model_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
 
 
@@ -45,6 +48,8 @@ class Job():
     if 'custom_python_executable_path' in paths:
       warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
+    self.final_settings = current_setting
+
     base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {} {}'
     exec_cmd = base_exec_cmd.format(paths['script_to_run'],
                                     '\"' + str(self.comm_server_info) + '\"',
@@ -54,6 +59,15 @@ class Job():
     return res
 
   def get_results(self, remember=True):
+    if remember:
+      self.results_accessed = True
+    param_df = pd.DataFrame(self.final_settings, index=[0])
+    metric_df = pd.DataFrame(self.metrics, index=[0])
+
+    resulting_df = pd.concat([param_df, metric_df], axis=1)
+    return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
+
+  def get_results_from_fs(self, remember=True):
     base_path = self.paths['current_result_dir']
     job_output_files = (CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
     path = os.path.join(base_path, str(self.id_number))
