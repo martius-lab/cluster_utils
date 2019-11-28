@@ -20,7 +20,9 @@
   "fixed_params": {
     "fn_args.noisy": true
   },
-  "restarts": 1,
+  "optimizer_settings":{
+    "restarts": 1
+  },
   "samples": null,
   "hyperparam_list": [
     {
@@ -45,7 +47,6 @@
     },
     {
       "param": "fn_args.sharp_penalty",
-      "distribution": "Discrete",
       "values": [false, true]
     }
   ]

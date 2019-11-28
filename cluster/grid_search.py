@@ -5,10 +5,10 @@ import git
 from cluster.latex_utils import SectionFromJsonHook
 from pathlib2 import Path
 
-from cluster import cluster_run, execute_submission, update_params_from_cmdline
+from cluster import update_params_from_cmdline
 from cluster.report import produce_basic_report, init_plotting
 from cluster.utils import mkdtemp, get_git_url
-
+from . import grid_search
 
 if __name__ == '__main__':
 
@@ -44,8 +44,14 @@ if __name__ == '__main__':
         **params.environment_setup
     )
 
-    hyperparam_dict = {hyperparam["param"]: hyperparam["values"] for hyperparam in params.hyperparam_list}
+    class DummyDistribution():
+      def __init__(self, param, values):
+        self.param_name = param
+        self.values = values
 
+    hyperparam_dict = [DummyDistribution(hyperparam["param"], hyperparam["values"]) for hyperparam in params.hyperparam_list]
+
+    '''
     all_args = dict(
         submission_name=params.optimization_procedure_name,
         paths=base_paths_and_files,
@@ -57,7 +63,9 @@ if __name__ == '__main__':
         smart_naming=params.get('smart_naming', True),
         git_params=git_params,
     )
+    '''
 
+    '''
     submission = cluster_run(**all_args)
 
     df, all_params, metrics, submission_hook_stats = execute_submission(submission, base_paths_and_files["result_dir"])
@@ -82,4 +90,15 @@ if __name__ == '__main__':
         procedure_name=params.optimization_procedure_name,
         output_file=output_pdf,
         report_hooks=[json_hook]
+    )
+    '''
+
+    grid_search(
+      base_paths_and_files=base_paths_and_files,
+      submission_requirements=params.cluster_requirements,
+      optimized_params=hyperparam_dict,
+      other_params=params.fixed_params,
+      git_params=git_params,
+      report_hooks=[],#json_hook], TODO: Make this hook thing work again
+      optimizer_settings=params.optimizer_settings,
     )

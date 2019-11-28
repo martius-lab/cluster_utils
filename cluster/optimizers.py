@@ -10,7 +10,7 @@ from .constants import *
 from .data_analysis import *
 from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete, NGDiscrete, NGScalar
 from .latex_utils import LatexFile
-from .utils import nested_to_dict, shorten_string
+from .utils import nested_to_dict, shorten_string, get_sample_generator
 import nevergrad as ng
 
 
@@ -313,10 +313,6 @@ ng_optimizer_dict = {'twopointsde': ng.optimizers.TwoPointsDE,
 
 
 class NGOptimizer(Optimizer):
-  def _hash(self, dict):
-    trunc_dict = {k: float('%.8f' % (v)) for k, v in dict.items()}
-    return hash(frozenset(trunc_dict.items()))
-
   def __init__(self, *, opt_alg, n_jobs_per_iteration, iteration_mode=False, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
     assert opt_alg in ng_optimizer_dict.keys()
@@ -393,3 +389,51 @@ class NGOptimizer(Optimizer):
     latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
     # latex.add_section_from_figures('Distribution development', distr_plot_files)
     latex.add_section_from_python_script('Specification', calling_script)
+
+
+class GridSearchOptimizer(Optimizer):
+  def __init__(self, *, restarts, **kwargs):
+    super().__init__(iteration_mode=True, **kwargs)
+    self.parameter_dicts = {param.param_name: param.values for param in self.optimized_params}
+    self.set_setting_generator()
+    self.restarts = restarts
+    self.iteration = 0
+
+  def set_setting_generator(self):
+    self.setting_generator = get_sample_generator(None, self.parameter_dicts, None, None)
+
+  def ask(self, num_samples):
+    settings = next(self.setting_generator, None)
+    if settings is None:
+      if self.iteration == self.restarts:
+        return None, None
+      self.iteration += 1
+      self.set_setting_generator()
+      settings = next(self.setting_generator)
+      assert settings is not None
+      return (None, settings)
+    return (None, settings)
+
+  def ask_all(self):
+    _, settings = self.ask(1)
+    while not settings is None:
+      yield (None, settings)
+      _, settings = self.ask(1)
+    raise StopIteration()
+
+  def tell(self, df):
+    pass
+
+  def get_best(self, how_many=1):
+    raise NotImplementedError
+
+  def content_pdf_report(self, latex, file_gen, calling_script):
+    raise NotImplementedError
+
+  def min_fraction_to_finish(self):
+    raise NotImplementedError
+
+  @classmethod
+  def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
+                           **optimizer_settings):
+    return None

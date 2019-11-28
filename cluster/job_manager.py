@@ -23,16 +23,16 @@ import threading
 def ensure_empty_dir(dir_name, defensive=False):
   if os.path.exists(dir_name):
     if defensive:
-        print(f"Directory {dir_name} exists. Delete everything? (y/N)")
-        ans = input()
-        if ans.lower() == 'y':
-            shutil.rmtree(dir_name, ignore_errors=True)
-            os.makedirs(dir_name)
-    else:
+      print(f"Directory {dir_name} exists. Delete everything? (y/N)")
+      ans = input()
+      if ans.lower() == 'y':
         shutil.rmtree(dir_name, ignore_errors=True)
         os.makedirs(dir_name)
-  else:
+    else:
+      shutil.rmtree(dir_name, ignore_errors=True)
       os.makedirs(dir_name)
+  else:
+    os.makedirs(dir_name)
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -42,6 +42,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
   if len(res) < 35 and smart_naming:
     return res
   return str(id)
+
 
 '''
 <<<<<<< HEAD
@@ -116,6 +117,8 @@ def cluster_run(submission_name, paths, submission_requirements, other_params, h
 
 >>>>>>> origin/executable_submodules
 '''
+
+
 def update_best_job_datadirs(result_dir, model_dirs):
   datadir = os.path.join(result_dir, 'best_jobs')
   os.makedirs(datadir, exist_ok=True)
@@ -150,7 +153,7 @@ def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_
                                                  metric_to_optimize=metric_to_optimize,
                                                  minimize=minimize, number_of_samples=number_of_samples,
                                                  report_hooks=report_hooks,
-                                                 iteration_mode=True, **optimizer_settings)
+                                                 **optimizer_settings)
   print('Last iteration: ', hp_optimizer.iteration)
   return hp_optimizer
 
@@ -196,14 +199,16 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
   signal.signal(signal.SIGINT, signal_handler)
 
-#<<<<<<< HEAD
+  # <<<<<<< HEAD
   return hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params
-#=======
+
+
+# =======
 #    meta_opt.process_new_df(df)
 #    meta_opt.save_data_and_self(base_paths_and_files['result_dir'])
 #    opt_procedure_name = os.path.dirname(os.path.join(base_paths_and_files['result_dir'], 'dummy.tmp'))
 #    pdf_output = os.path.join(base_paths_and_files['result_dir'], f'{opt_procedure_name}.pdf')
-#>>>>>>> origin/executable_submodules
+# >>>>>>> origin/executable_submodules
 
 
 def post_opt(cluster_interface, hp_optimizer):
@@ -363,6 +368,36 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
   post_opt(cluster_interface, hp_optimizer)
 
 
-  #cluster = ClusterInterface()
-  #job = Job(, comm_server.connection_info)
-  #cluster.submit_job(job)
+def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
+                optimizer_settings, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
+
+  submission_name = 'iteration_{}'.format(1)
+  hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
+                                                                                                submission_requirements,
+                                                                                                optimized_params,
+                                                                                                other_params,
+                                                                                                None,
+                                                                                                None,
+                                                                                                False,
+                                                                                                'gridsearch',
+                                                                                                remove_jobs_dir,
+                                                                                                git_params,
+                                                                                                run_local,
+                                                                                                report_hooks,
+                                                                                                optimizer_settings,
+                                                                                                submission_name)
+  settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
+  jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
+              other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
+              connection_info=comm_server.connection_info)
+          for candidate, setting in settings]
+  cluster_interface.add_jobs(jobs)
+  cluster_interface.submit_all()
+
+  n_running_jobs = cluster_interface.n_running_jobs
+  while n_running_jobs > 0:
+    if time_to_print():
+      print(cluster_interface)
+    n_running_jobs = cluster_interface.n_running_jobs
+
+  post_opt(cluster_interface, hp_optimizer)

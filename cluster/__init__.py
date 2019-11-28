@@ -10,7 +10,7 @@ def custom_format_warning(msg, *args, **kwargs):
 
 warnings.formatwarning = custom_format_warning
 
-from .job_manager import hyperparameter_optimization, asynchronous_optimization
+from .job_manager import hyperparameter_optimization, asynchronous_optimization, grid_search
 from .submission import execute_iterated_submission
 from .report import init_plotting
 from .settings import save_metrics_params, update_params_from_cmdline

@@ -9,7 +9,7 @@ from warnings import warn
 import time
 import pyuv
 import pickle
-from .optimizers import Metaoptimizer, NGOptimizer
+from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
 # from .submission_state import *
@@ -256,4 +256,5 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 update_params_from_cmdline.start_time = None
 
 optimizer_dict = {'cem_metaoptimizer': Metaoptimizer,
-                  'ng': NGOptimizer}
+                  'ng': NGOptimizer,
+                  'gridsearch': GridSearchOptimizer}
