@@ -89,6 +89,14 @@ class ClusterSubmission(ABC):
       job.submission_name = self.name
     self.jobs = self.jobs + jobs
 
+  def set_metrics(self, id, metrics):
+    for i, job in enumerate(self.jobs):
+      if job.id == id:
+        self.jobs[i].metrics = metrics
+        return
+    raise ValueError("Wanted to set result metrics of a job that doenst exist")
+
+
   '''
   @property
   def submitted_jobs(self):
@@ -206,9 +214,10 @@ class ClusterSubmission(ABC):
         self.submit(job)
 
   def submit(self, job):
-    t = Thread(target=self._submit, args=(job,), daemon=True)
-    self.exec_pre_submission_routines()
-    t.start()
+    self._submit(job)
+    #t = Thread(target=self._submit, args=(job,), daemon=True)
+    #self.exec_pre_submission_routines()
+    #t.start()
 
   def _submit(self, job):
     if not job.cluster_id is None:

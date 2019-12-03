@@ -371,7 +371,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 optimizer_settings, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
 
-  submission_name = 'iteration_{}'.format(1)
+  submission_name = 'grid_search'
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -386,6 +386,10 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 report_hooks,
                                                                                                 optimizer_settings,
                                                                                                 submission_name)
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
+
+  pre_iteration_opt(base_paths_and_files)
+
   settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
   jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
               other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
@@ -394,10 +398,42 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
   cluster_interface.add_jobs(jobs)
   cluster_interface.submit_all()
 
-  n_running_jobs = cluster_interface.n_running_jobs
-  while n_running_jobs > 0:
+  while not cluster_interface.n_completed_jobs == len(jobs):
     if time_to_print():
       print(cluster_interface)
-    n_running_jobs = cluster_interface.n_running_jobs
 
+
+  '''
+  df, all_params, metrics, submission_hook_stats = execute_submission(submission, base_paths_and_files["result_dir"])
+  df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
+
+  relevant_params = list(hyperparam_dict.keys())
+  output_pdf = os.path.join(base_paths_and_files["result_dir"], f"{params.optimization_procedure_name}_report.pdf")
+
+
+  # noinspection PyUnusedLocal
+  def find_json(df, path_to_results, filename_generator):
+      return json_full_name
+
+
+  json_hook = SectionFromJsonHook(section_title="Optimization setting script", section_generator=find_json)
+  produce_basic_report(
+      df,
+      relevant_params,
+      metrics,
+      submission_hook_stats=submission_hook_stats,
+      procedure_name=params.optimization_procedure_name,
+      output_file=output_pdf,
+      report_hooks=[json_hook]
+  )
+  '''
   post_opt(cluster_interface, hp_optimizer)
+
+  df, all_params, metrics = None, None, None
+  for job in jobs:
+    job_df, job_all_params, job_metrics = job.get_results(False)
+    if df is None:
+      df, all_params, metrics = job_df, job_all_params, job_metrics
+    else:
+      df = pd.concat((df, job_df), 0)
+  return df, all_params, metrics, cluster_interface.collect_stats_from_hooks()

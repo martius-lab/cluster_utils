@@ -1,5 +1,5 @@
 {
-  "optimization_procedure_name": "test",
+  "optimization_procedure_name": "test_hpo",
   "results_dir": "/tmp/example_results",
   "git_params": {
     "branch": "executable_submodules",

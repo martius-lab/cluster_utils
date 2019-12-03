@@ -107,8 +107,9 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Received a end-message from a job that is not listed in the cluster interface system')
-    job.metrics = metrics
     job.status = 2
+    self.cluster_system.set_metrics(job_id, metrics)
+
 
 
   def handle_unidentified_message(self, data, msg_type_idx, message):

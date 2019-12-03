@@ -32,6 +32,7 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, noisy=True):
 if __name__ == '__main__':
     params = update_params_from_cmdline()
     time.sleep(np.random.randint(0, 10))
+    print(params)
     result = fn_to_optimize(**params.fn_args)
 
     noiseless_dict = dict(params.fn_args)

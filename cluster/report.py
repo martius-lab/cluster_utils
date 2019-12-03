@@ -23,7 +23,7 @@ def init_plotting():
 
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
                          submission_hook_stats=None, maximized_metrics=None, log_scale_list=None, report_hooks=None):
-
+  print("Producing basic report... ")
   log_scale_list = log_scale_list or []
   maximized_metrics = maximized_metrics or []
   report_hooks = report_hooks or []

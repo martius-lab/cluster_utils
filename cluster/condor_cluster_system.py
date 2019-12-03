@@ -37,14 +37,17 @@ class Condor_ClusterSubmission(ClusterSubmission):
   def submit_fn(self, job):
     self.generate_job_spec_file(job)
     submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
+    #print('Submitting Job ', submit_cmd)
     result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
     good_lines = [line for line in result.split('\n') if 'submitted' in line]
     bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
     if not good_lines or bad_lines:
+      print(bad_lines)
       self.close()
       raise RuntimeError('Cluster submission failed')
     assert len(good_lines) == 1
     new_cluster_id = good_lines[0].split(' ')[-1][:-1]
+    #print('Submitted Job ', new_cluster_id)
     return new_cluster_id
 
   def stop_fn(self, cluster_id):
@@ -164,7 +167,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
         self.condor_q_info_err = err
       else:
         print('Condor_q currently unavailable')
-      time.sleep(1)
+      time.sleep(5)
 
   '''
   def get_status(self):
