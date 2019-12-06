@@ -27,6 +27,7 @@ class Job():
                              'port': connection_info[1]}
     self.status = -1
     self.metrics = None
+    self.error_info = None
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)
@@ -58,15 +59,16 @@ class Job():
     res = '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
     return res
 
+  def set_results(self):
+    flattened_params = dict(flatten_nested_string_dict(self.final_settings))
+    self.param_df = pd.DataFrame([flattened_params])
+    self.metric_df = pd.DataFrame([self.metrics])
+    self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
+
   def get_results(self, remember=True):
     if remember:
       self.results_accessed = True
-
-    flattened_params = dict(flatten_nested_string_dict(self.final_settings))
-    param_df = pd.DataFrame([flattened_params])
-    metric_df = pd.DataFrame([self.metrics])
-    resulting_df = pd.concat([param_df, metric_df], axis=1)
-    return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
+    return self.resulting_df, tuple(sorted(self.param_df.columns)), tuple(sorted(self.metric_df.columns))
 
   def get_results_from_fs(self, remember=True):
     base_path = self.paths['current_result_dir']

@@ -1,11 +1,8 @@
 import os
 from .utils import rm_dir_full
 from abc import ABC, abstractmethod
-from subprocess import run, DEVNULL
 from warnings import warn
-from random import shuffle
-from subprocess import run, PIPE
-from threading import Thread
+from subprocess import run, DEVNULL
 
 
 class ClusterSubmission(ABC):
@@ -85,16 +82,17 @@ class ClusterSubmission(ABC):
   def add_jobs(self, jobs):
     if not isinstance(jobs, list):
       jobs = [jobs]
-    for job in self.jobs:
+    for job in jobs:
       job.submission_name = self.name
     self.jobs = self.jobs + jobs
 
-  def set_metrics(self, id, metrics):
-    for i, job in enumerate(self.jobs):
-      if job.id == id:
-        self.jobs[i].metrics = metrics
-        return
-    raise ValueError("Wanted to set result metrics of a job that doenst exist")
+  #def set_metrics(self, id, metrics):
+  #  for i, job in enumerate(self.jobs):
+  #    if job.id == id:
+  #      self.jobs[i].metrics = metrics
+  #      self.jobs[i].set_results()
+  #      return
+  #  raise ValueError("Wanted to set result metrics of a job that doenst exist")
 
 
   '''
@@ -187,9 +185,6 @@ class ClusterSubmission(ABC):
 
   @property
   def successful_jobs(self):
-    for job in self.jobs:
-      if job.status == 2 and job.get_results(False) is None:
-        raise ValueError('Job conlcluded without submitting metrics')
     return [job for job in self.current_jobs if job.status == 2 and not job.get_results(False) is None]
 
   @property
@@ -250,12 +245,14 @@ class ClusterSubmission(ABC):
         self.stop(job)
         # TODO: Add check all are gone
 
+  '''
   @abstractmethod
   def status(self, job):
     # 0: not submitted (could also mean its done)
     # 1: submitted
     # 2: running
     raise NotImplementedError
+  '''
 
   @abstractmethod
   def submit_fn(self, job_spec_file_path):
@@ -294,9 +291,11 @@ class ClusterSubmission(ABC):
   #def get_status(self):
   #  pass
 
-  @abstractmethod
+  #@abstractmethod
   def check_error_msgs(self):
-    pass
+    for job in self.failed_jobs:
+      print(job.error_info)
+      warn(job.error_info)
 
   def __repr__(self):
     return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '

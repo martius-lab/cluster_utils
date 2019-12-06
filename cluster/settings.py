@@ -12,10 +12,7 @@ import pickle
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
-# from .submission_state import *
 import cluster.submission_state as submission_state
-import inspect
-
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -176,6 +173,14 @@ def register_at_server(final_params):
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
                pickle.dumps((0, (submission_state.job_id,))))
 
+def report_error_at_server(exctype, value, tb):
+  print('Sending errors to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((1, (submission_state.job_id, exctype, value, tb))))
+
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
                                verbose=True, dynamic_json=True):
@@ -248,7 +253,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
   if register_job:
     register_at_server(final_params.get_pickleable())
-
+    sys.excepthook = report_error_at_server
   update_params_from_cmdline.start_time = time.time()
   return final_params
 

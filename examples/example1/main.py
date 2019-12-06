@@ -25,6 +25,8 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, noisy=True):
 
     if noisy:
         result += 0.5 * np.random.normal()
+    if np.random.rand()>0.02:
+        raise ValueError("2 percent of all jobs die here on purpose")
 
     return result
 

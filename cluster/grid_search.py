@@ -51,48 +51,6 @@ if __name__ == '__main__':
   hyperparam_dict = [DummyDistribution(hyperparam["param"], hyperparam["values"]) for hyperparam in
                      params.hyperparam_list]
 
-  '''
-  all_args = dict(
-      submission_name=params.optimization_procedure_name,
-      paths=base_paths_and_files,
-      submission_requirements=params.cluster_requirements,
-      hyperparam_dict=hyperparam_dict,
-      other_params=params.fixed_params,
-      samples=params.get('samples', None),
-      restarts_per_setting=params.restarts,
-      smart_naming=params.get('smart_naming', True),
-      git_params=git_params,
-  )
-  '''
-
-  '''
-  submission = cluster_run(**all_args)
-
-  df, all_params, metrics, submission_hook_stats = execute_submission(submission, base_paths_and_files["result_dir"])
-  df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
-
-  relevant_params = list(hyperparam_dict.keys())
-  output_pdf = os.path.join(base_paths_and_files["result_dir"], f"{params.optimization_procedure_name}_report.pdf")
-
-
-  # noinspection PyUnusedLocal
-  def find_json(df, path_to_results, filename_generator):
-      return json_full_name
-
-
-  json_hook = SectionFromJsonHook(section_title="Optimization setting script", section_generator=find_json)
-
-  produce_basic_report(
-      df,
-      relevant_params,
-      metrics,
-      submission_hook_stats=submission_hook_stats,
-      procedure_name=params.optimization_procedure_name,
-      output_file=output_pdf,
-      report_hooks=[json_hook]
-  )
-  '''
-
   df, all_params, metrics, submission_hook_stats = grid_search(
     base_paths_and_files=base_paths_and_files,
     submission_requirements=params.cluster_requirements,

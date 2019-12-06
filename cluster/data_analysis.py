@@ -201,17 +201,20 @@ def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
   df = df[:-len(df) // 4]
 
   ys_base = df[metric]
+  if df[params].shape[0] == 0:
+    for param in params:
+      yield 0
+  else:
+    ys = clf.predict(df[params])
+    forest_error = np.mean(np.abs(ys_base - ys))
 
-  ys = clf.predict(df[params])
-  forest_error = np.mean(np.abs(ys_base - ys))
-
-  for param in params:
-    copy_df = df.copy()
-    copy_df[param] = np.random.permutation(copy_df[param])
-    ys = clf.predict(copy_df[params])
-    diffs = ys - copy_df[metric]
-    error = np.mean(np.abs(diffs))
-    yield max(0, (error - forest_error) / np.sqrt(len(params)))
+    for param in params:
+      copy_df = df.copy()
+      copy_df[param] = np.random.permutation(copy_df[param])
+      ys = clf.predict(copy_df[params])
+      diffs = ys - copy_df[metric]
+      error = np.mean(np.abs(diffs))
+      yield max(0, (error - forest_error) / np.sqrt(len(params)))
 
 
 def compute_performance_gains(df, params, metric, minimum):

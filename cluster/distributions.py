@@ -35,17 +35,6 @@ class Distribution(ABC):
   def prepare_samples(self, howmany):
     self.iter = iter(self.samples)
 
-class NGScalar(Distribution):
-  def fit(self, data):
-    return None
-
-class NGDiscrete(Distribution):
-  def __init__(self, *, param, values, **kwargs):
-    self.values = values
-    super().__init__(param=param, **kwargs)
-  def fit(self, data):
-    return None
-
 
 class BoundedDistribution(Distribution):
   def __init__(self, *, bounds, **kwargs):

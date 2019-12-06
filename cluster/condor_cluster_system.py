@@ -37,7 +37,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
   def submit_fn(self, job):
     self.generate_job_spec_file(job)
     submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
-    #print('Submitting Job ', submit_cmd)
     result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
     good_lines = [line for line in result.split('\n') if 'submitted' in line]
     bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
@@ -47,7 +46,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
       raise RuntimeError('Cluster submission failed')
     assert len(good_lines) == 1
     new_cluster_id = good_lines[0].split(' ')[-1][:-1]
-    #print('Submitted Job ', new_cluster_id)
     return new_cluster_id
 
   def stop_fn(self, cluster_id):
@@ -72,26 +70,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
       spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
     job.job_spec_file_path = job_spec_file_path
-
-  def status(self, job):
-    if job.cluster_id is None:
-      return 0
-    parsed_info = self._parse_condor_info(job.cluster_id)
-    if parsed_info is None:
-      return 5
-    parsed_info = parsed_info[0]
-    status = parsed_info.status
-    if status == 'I':
-      return 1
-    if status == 'R':
-      return 2
-    if status == 'H':
-      return 4
-    if status == 'C':
-      return 3
-    print(parsed_info)
-    print('Weird status showed up!!')
-    return 1
 
   def is_blocked(self):
     for job in self.jobs:
@@ -142,21 +120,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
     else:
       self.requirements_line = ''
 
-  '''
-  def submit_fn(self, job, idx):
-    submit_cmd = self.get_submit_cmd(job.generate_job_spec_file(idx))
-    result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
-
-    good_lines = [line for line in result.split('\n') if 'submitted' in line]
-    bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
-    if not good_lines or bad_lines:
-      self.close()
-      raise RuntimeError('Cluster submission failed')
-    assert len(good_lines) == 1
-    job.cluster_id = good_lines[0].split(' ')[-1][:-1]
-  '''
-
-
   def update_condor_q_info(self):
     while(True):
       condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
@@ -168,18 +131,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
       else:
         print('Condor_q currently unavailable')
       time.sleep(5)
-
-  '''
-  def get_status(self):
-    parsed_condor = self._parse_condor_info()
-    if not parsed_condor:
-      return None
-    id_set = set(self.id_nums)
-    my_submissions = [sub for sub in parsed_condor if sub.ID.split('.')[0] in id_set]
-    self.id_nums = [sub.ID.split('.')[0] for sub in my_submissions]
-    nums = Counter([sub.status for sub in my_submissions])
-    return nums['R'], nums['I'], nums['H']
-  '''
 
   def _parse_condor_info(self, cluster_id=None):
     raw = self.condor_q_info_raw
@@ -211,28 +162,3 @@ class Condor_ClusterSubmission(ClusterSubmission):
       concat_last = job_concat_last
     fully_parsed = [CondorRecord(*line) for line in concat_last]
     return fully_parsed
-
-  def check_error_msgs(self):
-    found_err = False
-    log_files = [filename for filename in os.listdir(self.submission_dir) if filename[-3:] == 'log']
-    with suppress(FileNotFoundError):  # Cluster file system is unreliable. Unavailability should NOT kill the whole run
-      for log_file in log_files:
-        content = ''  # Default value if file open (silently!) fails
-        with open(os.path.join(self.submission_dir, log_file)) as f:
-          content = f.read()
-        _, __, after = content.rpartition('return value ')
-        if after and after[0] == '1':
-          err_filename = log_file[:-3] + 'err'
-          all_err = ''  # Default value if file open (silently!) fails
-          with open(os.path.join(self.submission_dir, err_filename)) as f_err:
-            all_err = f_err.read()
-          _, tb, error_log = all_err.rpartition('Traceback')
-          exception = '{}{}'.format(tb, error_log)
-          if exception and exception not in self.exceptions_seen:
-            warn('Exception encountered -- see file {}!'.format(err_filename))
-            warn(exception)
-            self.exceptions_seen.add(exception)
-            found_err = True
-      return found_err
-
-

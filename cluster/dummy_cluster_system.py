@@ -91,19 +91,6 @@ class Dummy_ClusterSubmission(ClusterSubmission):
       self.concurrent_jobs = self.available_cpus
     assert self.concurrent_jobs > 0
 
-  '''
-  def get_status(self):
-    running = min(sum([future.running() for _, future in self.futures_tuple]),
-                  self.concurrent_jobs)
-    done = sum([future.done() for _, future in self.futures_tuple])
-    idle = self.total_jobs - (done + running)
-    failed = len(
-      [future for _, future in self.futures_tuple if future.done() and future.result().__dict__['returncode'] == 1])
-    held = failed
-
-    return min(running, self.concurrent_jobs), idle, held
-    '''
-
   def check_error_msgs(self):
     failed = [future for _, future in self.futures_tuple if
               future.done() and future.result().__dict__['returncode'] == 1]

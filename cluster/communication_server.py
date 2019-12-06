@@ -2,9 +2,7 @@ import socket
 import pyuv
 import signal
 import pickle
-import collections
 import threading
-import time
 
 msg_types = {0: 'job_started',
              1: 'error_encountered',
@@ -95,11 +93,12 @@ class CommunicationServer():
 
   def handle_error_encountered(self, message):
     raise NotImplementedError()
-    job_id, settings = message
+    job_id, exctype, value, tb = message
     job = self.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
     job.status = 1
+    job.error_info = exctype, value, tb
 
 
   def handle_job_concluded(self, message):
@@ -107,8 +106,12 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Received a end-message from a job that is not listed in the cluster interface system')
+    #self.cluster_system.set_metrics(job_id, metrics)
+    job.metrics = metrics
+    job.set_results()
     job.status = 2
-    self.cluster_system.set_metrics(job_id, metrics)
+    if job.get_results(False) is None:
+      raise ValueError('Job concluded without submitting metrics')
 
 
 

@@ -4,11 +4,9 @@ import cloudpickle as pickle
 from itertools import count
 from tempfile import TemporaryDirectory
 from abc import ABC, abstractmethod
-import pandas as pd
 import itertools
-from .constants import *
 from .data_analysis import *
-from .distributions import TruncatedLogNormal, smart_round, NumericalDistribution, Discrete, NGDiscrete, NGScalar
+from .distributions import *
 from .latex_utils import LatexFile
 from .utils import nested_to_dict, shorten_string, get_sample_generator
 import nevergrad as ng
@@ -23,6 +21,7 @@ class Optimizer(ABC):
     self.report_hooks = report_hooks or []
     self.number_of_samples = number_of_samples
     self.iteration_mode = iteration_mode
+    #TODO check if obsolete
     if self.iteration_mode:
       self.iteration = 0
     self.full_df = pd.DataFrame()
@@ -313,20 +312,36 @@ ng_optimizer_dict = {'twopointsde': ng.optimizers.TwoPointsDE,
 
 
 class NGOptimizer(Optimizer):
-  def __init__(self, *, opt_alg, n_jobs_per_iteration, iteration_mode=False, **kwargs):
+  def __init__(self, *, opt_alg, iteration_mode=True, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
     assert opt_alg in ng_optimizer_dict.keys()
     # TODO: Adjust for arbitrary types
-    self.instrumentation = {param.param_name: (ng.var.Scalar() if type(param) == NGScalar else ng.var.OrderedDiscrete(param.values)) for
+    self.instrumentation = {param.param_name: self.get_ng_instrumentation(param) for
                             param in self.optimized_params}
     self.instrumentation = ng.Instrumentation(**self.instrumentation)
     self.optimizer = ng_optimizer_dict[opt_alg](instrumentation=self.instrumentation)
     self.with_restarts = False
 
+  def get_ng_instrumentation(self, param):
+    if type(param) == TruncatedLogNormal:
+      return ng.var.Scalar()
+    if type(param) == TruncatedNormal:
+      return ng.var.Scalar()
+    if type(param) == IntLogNormal:
+      return ng.var.Scalar(int)
+    if type(param) == IntNormal:
+      return ng.var.Scalar(int)
+    if type(param) == NumericalDistribution:
+      return ng.var.Scalar()
+    if type(param) == Discrete:
+      return ng.var.OrderedDiscrete(param.option_list)
+    raise ValueError('Invalid Distribution')
+
   def ask(self, num_samples):
     for _ in range(num_samples):
       candidate = self.optimizer.ask()
-      yield candidate, candidate.kwargs
+      nested_items = [(param_name.split(OBJECT_SEPARATOR), value) for param_name, value in candidate.kwargs.items()]
+      yield candidate, nested_to_dict(nested_items)
 
   def tell(self, jobs):
     for job in jobs:
