@@ -13,6 +13,7 @@ from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
 import cluster.submission_state as submission_state
+import traceback
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -179,7 +180,7 @@ def report_error_at_server(exctype, value, tb):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((1, (submission_state.job_id, exctype, value, tb))))
+               pickle.dumps((1, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,

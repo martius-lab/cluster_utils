@@ -10,9 +10,6 @@ import git
 
 def get_distribution(distribution, **kwargs):
   distr_dict = {
-    "NGFloat": NGFloat,
-    "NGInt": NGInt,
-    "NGDiscrete": NGDiscrete,
     "TruncatedNormal": TruncatedNormal,
     "TruncatedLogNormal": TruncatedLogNormal,
     "IntNormal": IntNormal,

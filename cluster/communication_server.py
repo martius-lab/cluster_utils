@@ -92,13 +92,12 @@ class CommunicationServer():
 
 
   def handle_error_encountered(self, message):
-    raise NotImplementedError()
-    job_id, exctype, value, tb = message
-    job = self.get_job(job_id)
+    job_id, strings = message
+    job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
     job.status = 1
-    job.error_info = exctype, value, tb
+    job.error_info = strings
 
 
   def handle_job_concluded(self, message):

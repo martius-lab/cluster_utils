@@ -324,13 +324,13 @@ class NGOptimizer(Optimizer):
 
   def get_ng_instrumentation(self, param):
     if type(param) == TruncatedLogNormal:
-      return ng.var.Scalar()
+      return ng.var.Log(param.lower, param.upper)
     if type(param) == TruncatedNormal:
-      return ng.var.Scalar()
+      return ng.var.Scalar().bounded(param.lower, param.upper)
     if type(param) == IntLogNormal:
-      return ng.var.Scalar(int)
+      return ng.var.Log(param.lower, param.upper, dtype=int)
     if type(param) == IntNormal:
-      return ng.var.Scalar(int)
+      return ng.var.Scalar(int).bounded(param.lower, param.upper)
     if type(param) == NumericalDistribution:
       return ng.var.Scalar()
     if type(param) == Discrete:

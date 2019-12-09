@@ -193,7 +193,7 @@ class ClusterSubmission(ABC):
 
   @property
   def failed_jobs(self):
-    return [job for job in self.completed_jobs if job.get_results(False) is None or job.status == 1]
+    return [job for job in self.completed_jobs if job.status == 1 or job.get_results(False) is None]
 
   @property
   def n_failed_jobs(self):

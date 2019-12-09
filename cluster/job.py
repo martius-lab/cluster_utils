@@ -43,20 +43,40 @@ class Job():
     else:
       virtual_env_activate = ''
 
+    if 'conda_env_path' in paths:
+      conda_env_activate = f"pushd && cd && exec conda activate {paths['conda_env_path']} && popd"
+    else:
+      conda_env_activate = ''
+
     if 'custom_pythonpaths' in paths:
       raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
 
     if 'custom_python_executable_path' in paths:
       warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
+    python_executor = paths.get('custom_python_executable_path', 'python3')
+    is_python_script = paths.get('is_python_script', True)
+
     self.final_settings = current_setting
 
-    base_exec_cmd = '{}'.format(paths.get('custom_python_executable_path', 'python3')) + ' {} {} {}'
-    exec_cmd = base_exec_cmd.format(paths['script_to_run'],
-                                    '\"' + str(self.comm_server_info) + '\"',
-                                    '\"' + str(current_setting) + '\"')
+    if is_python_script:
+      run_script_as_module_main = paths.get('run_script_as_module_main', False)
+      setting_string = '\"' + str(current_setting) + '\"'
+      comm_info_string = '\"' + str(self.comm_server_info) + '\"'
+      if run_script_as_module_main:
+        exec_cmd = f"{python_executor} -m {os.path.basename(paths['script_to_run'])} {comm_info_string} {setting_string}"
+      else:
+        base_exec_cmd = '{}'.format(python_executor) + ' {} {} {}'
+        exec_cmd = base_exec_cmd.format(paths['script_to_run'],
+                                        comm_info_string,
+                                        setting_string)
+    else:
+      base_exec_cmd = '{} {} {}'
+      exec_cmd = base_exec_cmd.format(paths['script_to_run'],
+                                      '\"' + str(self.comm_server_info) + '\"',
+                                      '\"' + str(current_setting) + '\"')
 
-    res = '\n'.join([setting_cwd, virtual_env_activate, exec_cmd])
+    res = '\n'.join([setting_cwd, virtual_env_activate, conda_env_activate, exec_cmd])
     return res
 
   def set_results(self):
