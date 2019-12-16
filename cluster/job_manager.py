@@ -268,6 +268,9 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                  'cause an collapse of the procedure.')
       if time_to_print():
         print(cluster_interface)
+        any_errors = cluster_interface.check_error_msgs()
+        if any_errors:
+          error_handler.maybe_raise('Some jobs had errors!')
     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
@@ -305,6 +308,9 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
   while not cluster_interface.n_completed_jobs == len(jobs):
     if time_to_print():
       print(cluster_interface)
+      any_errors = cluster_interface.check_error_msgs()
+      if any_errors:
+        error_handler.maybe_raise('Some jobs had errors!')
     time.sleep(0.2)
 
   post_opt(cluster_interface, hp_optimizer)

@@ -236,7 +236,7 @@ class ClusterSubmission(ABC):
   def stop(self, job):
     if job.cluster_id is None:
       raise RuntimeError('Can not close a job unless its cluster_id got specified')
-    self.stop_fn(job)
+    self.stop_fn(job.cluster_id)
 
   def stop_all(self):
     print('Killing remaining jobs...')
@@ -294,8 +294,8 @@ class ClusterSubmission(ABC):
   #@abstractmethod
   def check_error_msgs(self):
     for job in self.failed_jobs:
-      print(job.error_info)
-      warn(job.error_info)
+      print(''.join(job.error_info))
+      warn(''.join(job.error_info))
 
   def __repr__(self):
     return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '

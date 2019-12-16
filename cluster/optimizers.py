@@ -420,9 +420,9 @@ class GridSearchOptimizer(Optimizer):
   def ask(self, num_samples):
     settings = next(self.setting_generator, None)
     if settings is None:
+      self.iteration += 1
       if self.iteration == self.restarts:
         return None, None
-      self.iteration += 1
       self.set_setting_generator()
       settings = next(self.setting_generator)
       assert settings is not None

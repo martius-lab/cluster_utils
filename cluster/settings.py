@@ -179,6 +179,7 @@ def report_error_at_server(exctype, value, tb):
         (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
+  traceback.print_exception(exctype, value, tb)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
                pickle.dumps((1, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
 
