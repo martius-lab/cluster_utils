@@ -146,7 +146,8 @@ def save_metrics_params(metrics, params, save_dir=None):
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
-  confirm_exit_at_server(metrics)
+  if submission_state.connection_active:
+    confirm_exit_at_server(metrics)
 
 
 def is_json_file(cmd_line):
@@ -209,12 +210,10 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     submission_state.communication_server_port = connection_details['port']
     submission_state.job_id = connection_details['id']
     del cmd_line[1]
-    register_job = True
+    submission_state.connection_active = True
   except:
-    print("Could not parse connection info, presuming the job to be run locally")
-    e = sys.exc_info()[0]
-    print(str(e))
-    register_job = False
+    print("Could not parse connection info, presuming the job to be run locally")    
+
 
   if len(cmd_line) < 2:
     cmd_params = {}
@@ -253,7 +252,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if verbose:
     print(json.dumps(final_params, indent=4, sort_keys=True))
 
-  if register_job:
+  if submission_state.connection_active:
     register_at_server(final_params.get_pickleable())
     sys.excepthook = report_error_at_server
   update_params_from_cmdline.start_time = time.time()
