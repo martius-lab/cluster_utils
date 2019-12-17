@@ -145,6 +145,11 @@ def save_metrics_params(metrics, params, save_dir=None):
   else:
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
+
+  for key, value in metrics.items():
+    if str(type(value)) == "<class 'torch.Tensor'>": # Hacky check for torch tensors withou importing torch
+      metrics[key] = value.item()
+
   save_dict_as_one_line_csv(metrics, metric_file)
   if submission_state.connection_active:
     confirm_exit_at_server(metrics)
