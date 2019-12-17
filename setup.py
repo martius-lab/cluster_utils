@@ -9,5 +9,5 @@ setup(name='cluster',
       license='MIT',
       packages=['cluster'],
       install_requires=['gitpython', 'pathlib2', 'seaborn', 'pandas', 'matplotlib', 'sklearn', 'numpy', 'nevergrad',
-                        'pyuv'],
+                        'pyuv', 'cloudpickle'],
       zip_safe=False)
