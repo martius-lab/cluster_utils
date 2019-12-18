@@ -31,7 +31,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
     self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
     self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
     t = Thread(target=self.update_condor_q_info, args=(), daemon=True)
-    self.exec_pre_submission_routines()
     t.start()
 
   def submit_fn(self, job):

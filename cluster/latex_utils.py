@@ -16,8 +16,8 @@ def add_subsection_from_figures(section_name, file_list, common_scale=0.7):
   return subsection(section_name, content)
 
 
-def include_figure(filename, scale=1.0):
-  return '\\includegraphics[scale={}]{{\detokenize{{{}}}}}\n'.format(scale, filename)
+def include_figure(filename, scale_linewidth=1.0):
+  return '\\includegraphics[width={}\linewidth]{{\detokenize{{{}}}}}\n'.format(scale_linewidth, filename)
 
 
 def section(section_name, content):
