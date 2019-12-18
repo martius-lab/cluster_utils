@@ -12,8 +12,10 @@ import pickle
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .constants import *
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
+from .communication_server import MessageTypes
 import cluster.submission_state as submission_state
 import traceback
+import atexit
 
 class ParamDict(dict):
   """ An immutable dict where elements can be accessed with a dot"""
@@ -120,13 +122,13 @@ def save_settings_to_json(setting_dict, model_dir):
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
 
-def confirm_exit_at_server(metrics):
-  print('Sending confirmation of exit to: ',
+def send_results_to_server(metrics):
+  print('Sending results to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((2, (submission_state.job_id, metrics))))
+               pickle.dumps((MessageTypes.JOB_SENT_RESULTS, (submission_state.job_id, metrics))))
 
 
 def save_metrics_params(metrics, params, save_dir=None):
@@ -146,7 +148,7 @@ def save_metrics_params(metrics, params, save_dir=None):
     warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
   save_dict_as_one_line_csv(metrics, metric_file)
-  confirm_exit_at_server(metrics)
+  send_results_to_server(metrics)
 
 
 def is_json_file(cmd_line):
@@ -172,7 +174,7 @@ def register_at_server(final_params):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((0, (submission_state.job_id,))))
+               pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id,))))
 
 def report_error_at_server(exctype, value, tb):
   print('Sending errors to: ',
@@ -181,7 +183,15 @@ def report_error_at_server(exctype, value, tb):
   udp = pyuv.UDP(loop)
   traceback.print_exception(exctype, value, tb)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((1, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
+               pickle.dumps((MessageTypes.ERROR_ENCOUNTERED, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
+
+def report_exit_at_server():
+  print('Sending confirmation of exit to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((MessageTypes.JOB_CONLUDED, (submission_state.job_id, ))))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
@@ -212,8 +222,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     register_job = True
   except:
     print("Could not parse connection info, presuming the job to be run locally")
-    e = sys.exc_info()[0]
-    print(str(e))
     register_job = False
 
   if len(cmd_line) < 2:
@@ -256,6 +264,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if register_job:
     register_at_server(final_params.get_pickleable())
     sys.excepthook = report_error_at_server
+    atexit.register(report_exit_at_server)
   update_params_from_cmdline.start_time = time.time()
   return final_params
 

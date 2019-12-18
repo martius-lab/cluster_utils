@@ -3,6 +3,7 @@ from .utils import rm_dir_full
 from abc import ABC, abstractmethod
 from warnings import warn
 from subprocess import run, DEVNULL
+from .job import JobStatus
 
 
 class ClusterSubmission(ABC):
@@ -86,67 +87,6 @@ class ClusterSubmission(ABC):
       job.submission_name = self.name
     self.jobs = self.jobs + jobs
 
-  #def set_metrics(self, id, metrics):
-  #  for i, job in enumerate(self.jobs):
-  #    if job.id == id:
-  #      self.jobs[i].metrics = metrics
-  #      self.jobs[i].set_results()
-  #      return
-  #  raise ValueError("Wanted to set result metrics of a job that doenst exist")
-
-
-  '''
-  @property
-  def submitted_jobs(self):
-    return [job for job in self.current_jobs if self.check_submitted(job)]
-
-  @property
-  def n_submitted_jobs(self):
-    return len(self.submitted_jobs)
-
-  @property
-  def running_jobs(self):
-    running_jobs = [job for job in self.current_jobs if self.check_runs(job)]
-    return running_jobs
-
-  @property
-  def n_running_jobs(self):
-    return len(self.running_jobs)
-
-  @property
-  def completed_jobs(self):
-    completed_jobs = [job for job in self.current_jobs if self.check_done(job)]
-    return completed_jobs
-
-  @property
-  def n_completed_jobs(self):
-    return len(self.completed_jobs)
-
-  @property
-  def idle_jobs(self):
-    idle_jobs = [job for job in self.current_jobs if self.status(job) == 1]
-    return idle_jobs
-
-  @property
-  def n_idle_jobs(self):
-    return len(self.idle_jobs)
-
-  @property
-  def successful_jobs(self):
-    return [job for job in self.current_jobs if not job.get_results(False) is None]
-
-  @property
-  def n_successful_jobs(self):
-    return len(self.successful_jobs)
-
-  @property
-  def failed_jobs(self):
-    return [job for job in self.completed_jobs if job.get_results(False) is None]
-
-  @property
-  def n_failed_jobs(self):
-    return len(self.failed_jobs)
-  '''
 
   @property
   def submitted_jobs(self):
@@ -158,7 +98,7 @@ class ClusterSubmission(ABC):
 
   @property
   def running_jobs(self):
-    running_jobs = [job for job in self.current_jobs if job.status == 0]
+    running_jobs = [job for job in self.current_jobs if job.status == JobStatus.RUNNING]
     return running_jobs
 
   @property
@@ -167,7 +107,8 @@ class ClusterSubmission(ABC):
 
   @property
   def completed_jobs(self):
-    completed_jobs = [job for job in self.current_jobs if job.status == 2 or job.status == 1]
+    completed_jobs = [job for job in self.current_jobs if
+                      job.status == JobStatus.CONCLUDED or job.status == JobStatus.FAILED]
     return completed_jobs
 
   @property
@@ -176,7 +117,7 @@ class ClusterSubmission(ABC):
 
   @property
   def idle_jobs(self):
-    idle_jobs = [job for job in self.current_jobs if job.status == -1]
+    idle_jobs = [job for job in self.current_jobs if job.status in [JobStatus.SUBMITTED, JobStatus.INITIAL_STATUS] ]
     return idle_jobs
 
   @property
@@ -185,7 +126,7 @@ class ClusterSubmission(ABC):
 
   @property
   def successful_jobs(self):
-    return [job for job in self.current_jobs if job.status == 2 and not job.get_results(False) is None]
+    return [job for job in self.current_jobs if job.status == JobStatus.CONCLUDED and not job.get_results() is None]
 
   @property
   def n_successful_jobs(self):
@@ -193,7 +134,7 @@ class ClusterSubmission(ABC):
 
   @property
   def failed_jobs(self):
-    return [job for job in self.completed_jobs if job.status == 1 or job.get_results(False) is None]
+    return [job for job in self.completed_jobs if job.status == JobStatus.FAILED or job.get_results() is None]
 
   @property
   def n_failed_jobs(self):
@@ -210,9 +151,9 @@ class ClusterSubmission(ABC):
 
   def submit(self, job):
     self._submit(job)
-    #t = Thread(target=self._submit, args=(job,), daemon=True)
-    #self.exec_pre_submission_routines()
-    #t.start()
+    # t = Thread(target=self._submit, args=(job,), daemon=True)
+    # self.exec_pre_submission_routines()
+    # t.start()
 
   def _submit(self, job):
     if not job.cluster_id is None:
@@ -220,18 +161,11 @@ class ClusterSubmission(ABC):
     if not job in self.jobs:
       warn('Submitting job that was not yet added to the cluster system interface, will add it now')
       self.add_jobs(job)
-
     cluster_id = self.submit_fn(job)
     job.cluster_id = cluster_id
+    job.status = JobStatus.SUBMITTED
     self.exec_post_submission_routines()
     # print('Jobs submitted successfully.')
-
-  def check_runs(self, job):
-    return self.status(job) == 2
-
-  def check_done(self, job):
-    status = self.status(job)
-    return status > 2
 
   def stop(self, job):
     if job.cluster_id is None:
@@ -287,11 +221,11 @@ class ClusterSubmission(ABC):
       rm_dir_full(self.submission_dir)
       print('Done')
 
-  #@abstractmethod
-  #def get_status(self):
+  # @abstractmethod
+  # def get_status(self):
   #  pass
 
-  #@abstractmethod
+  # @abstractmethod
   def check_error_msgs(self):
     for job in self.failed_jobs:
       print(''.join(job.error_info))

@@ -3,10 +3,14 @@ import pyuv
 import signal
 import pickle
 import threading
+from .job import JobStatus
 
-msg_types = {0: 'job_started',
-             1: 'error_encountered',
-             2: 'job_concluded'}
+
+class MessageTypes():
+  JOB_STARTED = 0
+  ERROR_ENCOUNTERED = 1
+  JOB_SENT_RESULTS = 2
+  JOB_CONLUDED = 3
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -28,7 +32,7 @@ class CommunicationServer():
   def connection_info(self):
     if self.ip_adress is None or self.port is None:
       raise ValueError('Either IP adress or port are not known yet.')
-    return self.ip_adress, self.port
+    return {'ip': self.ip_adress, 'port': self.port}
 
   def get_own_ip(self):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -47,11 +51,13 @@ class CommunicationServer():
       if data is not None:
         #handle.send(ip_port, data) This would be a way to ensure messaging worked well
         msg_type_idx, message = pickle.loads(data)
-        if msg_types[msg_type_idx] == 'job_started':
+        if msg_type_idx == MessageTypes.JOB_STARTED:
           self.handle_job_started(message)
-        elif msg_types[msg_type_idx] == 'error_encountered':
+        elif msg_type_idx == MessageTypes.ERROR_ENCOUNTERED:
           self.handle_error_encountered(message)
-        elif msg_types[msg_type_idx] == 'job_concluded':
+        elif msg_type_idx == MessageTypes.JOB_SENT_RESULTS:
+          self.handle_job_sent_results(message)
+        elif msg_type_idx == MessageTypes.JOB_CONLUDED:
           self.handle_job_concluded(message)
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)
@@ -87,7 +93,7 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
-    job.status = 0
+    job.status = JobStatus.RUNNING
     #self.jobs.append(MinJob(job_id, settings, 0))
 
 
@@ -96,58 +102,32 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
-    job.status = 1
+    job.status = JobStatus.FAILED
     job.error_info = strings
 
 
-  def handle_job_concluded(self, message):
+  def handle_job_sent_results(self, message):
     job_id, metrics = message
     job = self.cluster_system.get_job(job_id)
     if job is None:
-      raise ValueError('Received a end-message from a job that is not listed in the cluster interface system')
-    #self.cluster_system.set_metrics(job_id, metrics)
+      raise ValueError('Received a results-message from a job that is not listed in the cluster interface system')
     job.metrics = metrics
     job.set_results()
-    job.status = 2
-    if job.get_results(False) is None:
-      raise ValueError('Job concluded without submitting metrics')
+    job.status = JobStatus.SENT_RESULTS
+    if job.get_results() is None:
+      raise ValueError('Job sent metrics but something went wrong')
 
-
+  def handle_job_concluded(self, message):
+    job_id, = message
+    job = self.cluster_system.get_job(job_id)
+    if job is None:
+      raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
+    job.status = JobStatus.CONCLUDED
+    if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
+      raise ValueError('Job concluded without submitting metrics or metrics where not received properly')
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")
     print(data)
     print(msg_type_idx, type(msg_type_idx))
-    print(msg_types[msg_type_idx], type(msg_types[msg_type_idx]))
     print(message, type(message))
-
-  '''
-  @property
-  def running_jobs(self):
-    return [job for job in self.jobs if job.status == 0]
-
-  @property
-  def n_running_jobs(self):
-      return len(self.running_jobs)
-
-  @property
-  def concluded_jobs(self):
-    return [job for job in self.jobs if job.status == 2]
-
-  @property
-  def n_concluded_jobs(self):
-    return len(self.concluded_jobs)
-
-  @property
-  def failed_jobs(self):
-    return [job for job in self.jobs if job.status == 1]
-
-  @property
-  def n_failed_jobs(self):
-    return len(self.failed_jobs)
-
-  def __repr__(self):
-    return ('Communication Server Information \n'
-            'Running: {.n_running_jobs}, Failed: {.n_failed_jobs}, Completed: {.n_concluded_jobs}').format(*(3 * [self]))
-
-  '''
