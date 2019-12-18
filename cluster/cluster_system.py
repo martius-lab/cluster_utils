@@ -214,7 +214,7 @@ class ClusterSubmission(ABC):
       self.add_jobs(job)
 
     cluster_id = self.submit_fn(job)
-    job.cluster_id = cluster_id        
+    job.cluster_id = cluster_id
 
   def check_runs(self, job):
     return self.status(job) == 2
