@@ -50,14 +50,6 @@ class ClusterSubmission(ABC):
     else:
       raise HookNotFoundException('Hook not found. Can not unregister')
 
-  def exec_pre_submission_routines(self):
-    for hook in self.submission_hooks.values():
-      hook.pre_submission_routine()
-
-  def exec_post_submission_routines(self):
-    for hook in self.submission_hooks.values():
-      hook.post_submission_routine()
-
   def exec_pre_run_routines(self):
     for hook in self.submission_hooks.values():
       hook.pre_run_routine()
@@ -222,9 +214,7 @@ class ClusterSubmission(ABC):
       self.add_jobs(job)
 
     cluster_id = self.submit_fn(job)
-    job.cluster_id = cluster_id
-    self.exec_post_submission_routines()
-    # print('Jobs submitted successfully.')
+    job.cluster_id = cluster_id        
 
   def check_runs(self, job):
     return self.status(job) == 2
