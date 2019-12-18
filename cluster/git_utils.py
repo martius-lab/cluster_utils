@@ -227,7 +227,6 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         return self.git_conn
 
     def post_run_routine(self):
-        super().post_submission_routine()
         if self.git_conn:
             self.git_conn.remove_local_copy()
             del self.git_conn
