@@ -351,7 +351,10 @@ class NGOptimizer(Optimizer):
       else:
         return
       super().tell(df)
-      self.optimizer.tell(job.candidate, df.iloc[0][self.metric_to_optimize])
+      if self.minimize:
+        self.optimizer.tell(job.candidate, df.iloc[0][self.metric_to_optimize])
+      else:
+        self.optimizer.tell(job.candidate, -df.iloc[0][self.metric_to_optimize])
 
   def provide_recommendation_settings(self, how_many=1):
     if self.iteration > 0:
