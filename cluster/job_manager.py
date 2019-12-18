@@ -196,7 +196,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   pre_iteration_opt(base_paths_and_files)
   while n_successful_jobs <= number_of_samples:
     successful_jobs = cluster_interface.successful_jobs
-    jobs_to_tell = [job for job in successful_jobs if not job.results_accessed]
+    jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
     status = [job.status for job in cluster_interface.jobs]

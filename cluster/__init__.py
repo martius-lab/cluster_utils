@@ -16,6 +16,7 @@ from .settings import save_metrics_params, update_params_from_cmdline
 from .parallel_executor import execute_parallel_shell_scripts
 
 from . import job_manager
+from . import job
 from . import distributions
 from . import optimizers
 from . import utils

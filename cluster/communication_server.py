@@ -122,9 +122,9 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
-    job.status = JobStatus.CONCLUDED
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
       raise ValueError('Job concluded without submitting metrics or metrics where not received properly')
+    job.status = JobStatus.CONCLUDED
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")

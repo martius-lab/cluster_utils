@@ -175,7 +175,7 @@ class ClusterSubmission(ABC):
   def stop_all(self):
     print('Killing remaining jobs...')
     for job in self.jobs:
-      if job.cluster_id is not None:
+      if job.cluster_id is not None and not job.status==JobStatus.CONCLUDED:
         self.stop(job)
         # TODO: Add check all are gone
 

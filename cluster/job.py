@@ -1,13 +1,8 @@
-from concurrent.futures import Future
 import os
-from copy import copy
-from .constants import *
-from subprocess import run, PIPE
 from copy import deepcopy
 from warnings import warn
 from .utils import dict_to_dirname, flatten_nested_string_dict
-from .settings import update_recursive
-import pickle
+from cluster.utils import update_recursive
 import pandas as pd
 
 class JobStatus():
