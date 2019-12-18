@@ -6,7 +6,7 @@ from .constants import *
 from .settings import optimizer_dict
 from .utils import process_other_params, get_caller_file, rm_dir_full
 from .git_utils import ClusterSubmissionGitHook
-from .job import Job
+from .job import Job, JobStatus
 from .errors import OneTimeExceptionHandler
 import time
 import pandas as pd
@@ -141,7 +141,10 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
   submission_hook_stats = cluster_interface.collect_stats_from_hooks()
 
-  hp_optimizer.tell([job for job in cluster_interface.successful_jobs if not job.results_accessed])
+  jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
+  hp_optimizer.tell(jobs_to_tell)
+  for job in jobs_to_tell:
+    job.results_used_for_update=True
 
   print(hp_optimizer.full_df[:10])
 
@@ -193,11 +196,11 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   pre_iteration_opt(base_paths_and_files)
   while n_successful_jobs <= number_of_samples:
     successful_jobs = cluster_interface.successful_jobs
-    jobs_to_tell = [job for job in successful_jobs if not job.results_accessed]
+    jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
     status = [job.status for job in cluster_interface.jobs]
-    if(n_queuing_or_running_jobs < min_n_jobs or status == [2]*len(status)):
+    if(n_queuing_or_running_jobs < min_n_jobs or status == [JobStatus.CONCLUDED]*len(status)):
       new_candidate, new_settings = next(hp_optimizer.ask(1))
       new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                     other_params=processed_other_params, paths=base_paths_and_files,
@@ -317,7 +320,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
 
   df, all_params, metrics = None, None, None
   for job in jobs:
-    job_df, job_all_params, job_metrics = job.get_results(False)
+    job_df, job_all_params, job_metrics = job.get_results()
     if df is None:
       df, all_params, metrics = job_df, job_all_params, job_metrics
     else:

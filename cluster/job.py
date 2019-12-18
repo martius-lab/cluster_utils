@@ -1,14 +1,17 @@
-from concurrent.futures import Future
 import os
-from copy import copy
-from .constants import *
-from subprocess import run, PIPE
 from copy import deepcopy
 from warnings import warn
 from .utils import dict_to_dirname, flatten_nested_string_dict
-from .settings import update_recursive
-import pickle
+from cluster.utils import update_recursive
 import pandas as pd
+
+class JobStatus():
+  INITIAL_STATUS = -1
+  SUBMITTED = 0
+  RUNNING = 1
+  FAILED = 2
+  SENT_RESULTS = 3
+  CONCLUDED = 4
 
 class Job():
   def __init__(self, id, candidate, settings, other_params, paths, iteration, connection_info):
@@ -19,13 +22,13 @@ class Job():
     self.other_params = other_params
     self.submission_name = None
     self.cluster_id = None
-    self.results_accessed = False
+    self.results_used_for_update = False
     self.job_spec_file_path = False
     self.iteration = iteration
     self.comm_server_info = {'id': id,
-                             'ip': connection_info[0],
-                             'port': connection_info[1]}
-    self.status = -1
+                             'ip': connection_info['ip'],
+                             'port': connection_info['port']}
+    self.status = JobStatus.INITIAL_STATUS
     self.metrics = None
     self.error_info = None
 
@@ -85,22 +88,5 @@ class Job():
     self.metric_df = pd.DataFrame([self.metrics])
     self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
 
-  def get_results(self, remember=True):
-    if remember:
-      self.results_accessed = True
+  def get_results(self):
     return self.resulting_df, tuple(sorted(self.param_df.columns)), tuple(sorted(self.metric_df.columns))
-
-  def get_results_from_fs(self, remember=True):
-    base_path = self.paths['current_result_dir']
-    job_output_files = (CLUSTER_PARAM_FILE, CLUSTER_METRIC_FILE)
-    path = os.path.join(base_path, str(self.id_number))
-    if os.path.isdir(path) and all([filename in os.listdir(path) for filename in job_output_files]):
-      try:
-        param_df, metric_df = (pd.read_csv(os.path.join(path, filename)) for filename in job_output_files)
-        resulting_df = pd.concat([param_df, metric_df], axis=1)
-        if remember:
-          self.results_accessed = True
-        return resulting_df, tuple(sorted(param_df.columns)), tuple(sorted(metric_df.columns))
-      except pd.errors.EmptyDataError:
-        return None
-    return None

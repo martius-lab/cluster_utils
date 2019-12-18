@@ -1,117 +1,22 @@
 import ast
-import collections
-from datetime import datetime
+import atexit
 import json
 import os
-import sys
-from copy import deepcopy
-from warnings import warn
-import time
-import pyuv
 import pickle
-from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
-from .constants import *
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
-import cluster.submission_state as submission_state
+import sys
+import time
 import traceback
+from datetime import datetime
+from warnings import warn
 
-class ParamDict(dict):
-  """ An immutable dict where elements can be accessed with a dot"""
+import pyuv
 
-  def __getattr__(self, *args, **kwargs):
-    try:
-      return self.__getitem__(*args, **kwargs)
-    except KeyError as e:
-      raise AttributeError(e)
-
-  def __delattr__(self, item):
-    raise TypeError("Setting object not mutable after settings are fixed!")
-
-  def __setattr__(self, key, value):
-    raise TypeError("Setting object not mutable after settings are fixed!")
-
-  def __setitem__(self, key, value):
-    raise TypeError("Setting object not mutable after settings are fixed!")
-
-  def __deepcopy__(self, memo):
-    """ In order to support deepcopy"""
-    return ParamDict([(deepcopy(k, memo), deepcopy(v, memo)) for k, v in self.items()])
-
-  def __repr__(self):
-    return json.dumps(self, indent=4, sort_keys=True)
-
-  def get_pickleable(self):
-    return recursive_objectify(self, make_immutable=False)
-
-
-def recursive_objectify(nested_dict, make_immutable=True):
-  "Turns a nested_dict into a nested ParamDict"
-  result = deepcopy(nested_dict)
-  for k, v in result.items():
-    if isinstance(v, collections.Mapping):
-      result = dict(result)
-      result[k] = recursive_objectify(v, make_immutable)
-  if make_immutable:
-    returned_result = ParamDict(result)
-  else:
-    returned_result = dict(result)
-  return returned_result
-
-
-def fstring_in_json(format_string, namespace):
-  if type(format_string) != str:
-    return format_string
-  try:
-    formatted = eval('f\"' + format_string + '\"', namespace)
-  except:
-    return format_string
-
-  if formatted == format_string:
-    return format_string
-
-  try:
-    return eval(formatted, dict(__builtins__=None))
-  except:
-    return formatted
-
-
-def recursive_dynamic_json(nested_dict, namespace):
-  "Evaluates each key in nested dict as an f-string within a given namespace"
-  for k, v in nested_dict.items():
-    if isinstance(v, collections.Mapping):
-      recursive_dynamic_json(v, namespace)
-    else:
-      nested_dict[k] = fstring_in_json(v, namespace)
-
-
-class SafeDict(dict):
-  """ A dict with prohibiting init from a list of pairs containing duplicates"""
-
-  def __init__(self, *args, **kwargs):
-    if args and args[0] and not isinstance(args[0], dict):
-      keys, _ = zip(*args[0])
-      duplicates = [item for item, count in collections.Counter(keys).items() if count > 1]
-      if duplicates:
-        raise TypeError("Keys {} repeated in json parsing".format(duplicates))
-    super().__init__(*args, **kwargs)
-
-
-def load_json(file):
-  """ Safe load of a json file (doubled entries raise exception)"""
-  with open(file, 'r') as f:
-    data = json.load(f, object_pairs_hook=SafeDict)
-  return data
-
-
-def update_recursive(d, u, defensive=False):
-  for k, v in u.items():
-    if defensive and k not in d:
-      raise KeyError("Updating a non-existing key")
-    if isinstance(v, collections.Mapping):
-      d[k] = update_recursive(d.get(k, {}), v)
-    else:
-      d[k] = v
-  return d
+import cluster.submission_state as submission_state
+from cluster.utils import recursive_objectify, recursive_dynamic_json, load_json, update_recursive
+from .communication_server import MessageTypes
+from .constants import *
+from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
 
 
 def save_settings_to_json(setting_dict, model_dir):
@@ -120,13 +25,13 @@ def save_settings_to_json(setting_dict, model_dir):
     file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
 
-def confirm_exit_at_server(metrics):
-  print('Sending confirmation of exit to: ',
+def send_results_to_server(metrics):
+  print('Sending results to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((2, (submission_state.job_id, metrics))))
+               pickle.dumps((MessageTypes.JOB_SENT_RESULTS, (submission_state.job_id, metrics))))
 
 
 def save_metrics_params(metrics, params, save_dir=None):
@@ -152,7 +57,7 @@ def save_metrics_params(metrics, params, save_dir=None):
 
   save_dict_as_one_line_csv(metrics, metric_file)
   if submission_state.connection_active:
-    confirm_exit_at_server(metrics)
+    send_results_to_server(metrics)
 
 
 def is_json_file(cmd_line):
@@ -178,7 +83,7 @@ def register_at_server(final_params):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((0, (submission_state.job_id,))))
+               pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id,))))
 
 def report_error_at_server(exctype, value, tb):
   print('Sending errors to: ',
@@ -187,7 +92,15 @@ def report_error_at_server(exctype, value, tb):
   udp = pyuv.UDP(loop)
   traceback.print_exception(exctype, value, tb)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((1, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
+               pickle.dumps((MessageTypes.ERROR_ENCOUNTERED, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
+
+def report_exit_at_server():
+  print('Sending confirmation of exit to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((MessageTypes.JOB_CONLUDED, (submission_state.job_id, ))))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
@@ -218,7 +131,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     submission_state.connection_active = True
   except:
     print("Could not parse connection info, presuming the job to be run locally")    
-
 
   if len(cmd_line) < 2:
     cmd_params = {}
@@ -260,6 +172,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if submission_state.connection_active:
     register_at_server(final_params.get_pickleable())
     sys.excepthook = report_error_at_server
+    atexit.register(report_exit_at_server)
   update_params_from_cmdline.start_time = time.time()
   return final_params
 
