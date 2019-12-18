@@ -217,7 +217,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             except:
                 pass
 
-    def pre_submission_routine(self):
+    def pre_run_routine(self):
         self.git_conn = GitConnector(**self.params)
         if 'url' in self.params and self.params.get('commit', None) is None:
             commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
@@ -226,7 +226,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             self.params['commit'] = commit_hexsha_short
         return self.git_conn
 
-    def post_submission_routine(self):
+    def post_run_routine(self):
         super().post_submission_routine()
         if self.git_conn:
             self.git_conn.remove_local_copy()

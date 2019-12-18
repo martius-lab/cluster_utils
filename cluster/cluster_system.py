@@ -362,14 +362,6 @@ class ClusterSubmissionHook(ABC):
     pass
 
   @abstractmethod
-  def pre_submission_routine(self):
-    pass
-
-  @abstractmethod
-  def post_submission_routine(self):
-    pass
-
-  @abstractmethod
   def pre_run_routine(self):
     pass
 
