@@ -33,7 +33,9 @@ class Optimizer(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def tell(self, df):
+  def tell(self, df, jobs):
+    for job in jobs:
+      job.results_used_for_update = True
     df['iteration'] = self.iteration + 1
 
     self.full_df = pd.concat([self.full_df, df], ignore_index=True)
@@ -212,7 +214,7 @@ class Metaoptimizer(Optimizer):
         iteration_df = df
     if iteration_df is None:
       return
-    super().tell(iteration_df)
+    super().tell(iteration_df, jobs)
     current_best_params = self.get_best_params()
     for distr in self.optimized_params:
       distr.fit(current_best_params[distr.param_name])
@@ -350,7 +352,7 @@ class NGOptimizer(Optimizer):
         df, params, metrics = results
       else:
         return
-      super().tell(df)
+      super().tell(df, jobs)
       if self.minimize:
         self.optimizer.tell(job.candidate, df.iloc[0][self.metric_to_optimize])
       else:
