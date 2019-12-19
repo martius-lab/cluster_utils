@@ -16,7 +16,7 @@
     "memory_in_mb": 8000,
     "bid": 1000
   },
-  "optimizer_str": "ng",
+  "optimizer_str": "nevergrad",
   "optimizer_settings": {"opt_alg": "cma"
   },
   "optimization_setting": {
