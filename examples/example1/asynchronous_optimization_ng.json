@@ -23,7 +23,6 @@
     "metric_to_optimize": "result",
     "minimize": true,
     "number_of_samples": 1000,
-    "min_n_jobs": 100,
     "n_jobs_per_iteration": 100
   },
   "fixed_params": {
