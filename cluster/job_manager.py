@@ -170,9 +170,11 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                               number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration,
                               optimizer_str='cem_metaoptimizer',
                               remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                              report_hooks=None, optimizer_settings={}, min_n_jobs=5):
+                              report_hooks=None, optimizer_settings=None):
   base_paths_and_files['result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'asynch_opt')
   base_paths_and_files['current_result_dir'] = base_paths_and_files['result_dir']
+
+  optimizer_settings = optimizer_settings or {}
 
   # todo: check where other_params went
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
@@ -197,8 +199,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
     jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-    status = [job.status for job in cluster_interface.jobs]
-    if(n_queuing_or_running_jobs < min_n_jobs or status == [JobStatus.CONCLUDED]*len(status)):
+    if n_queuing_or_running_jobs < n_jobs_per_iteration and len(successful_jobs) < number_of_samples:
       new_candidate, new_settings = next(hp_optimizer.ask(1))
       new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                     other_params=processed_other_params, paths=base_paths_and_files,

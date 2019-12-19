@@ -348,7 +348,7 @@ class NGOptimizer(Optimizer):
   def tell(self, jobs):
     for job in jobs:
       results = job.get_results()
-      if not results is None:
+      if results is not None:
         df, params, metrics = results
       else:
         return
