@@ -199,7 +199,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
     jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-    if n_queuing_or_running_jobs < n_jobs_per_iteration and len(successful_jobs) < number_of_samples:
+    if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
       new_candidate, new_settings = next(hp_optimizer.ask(1))
       new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                     other_params=processed_other_params, paths=base_paths_and_files,
