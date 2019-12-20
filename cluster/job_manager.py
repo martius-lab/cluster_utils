@@ -193,7 +193,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   n_successful_jobs = 0
   iteration_offset = hp_optimizer.iteration
   pre_iteration_opt(base_paths_and_files)
-  while n_successful_jobs <= number_of_samples:
+  while n_successful_jobs < number_of_samples:
     successful_jobs = cluster_interface.successful_jobs
     jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
