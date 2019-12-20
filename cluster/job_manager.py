@@ -137,7 +137,6 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
                        num_best_jobs_whose_data_is_kept):
   pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
   current_result_path = os.path.join(base_paths_and_files['result_dir'], cluster_interface.name)
-  calling_script = get_caller_file(depth=3)
 
   submission_hook_stats = cluster_interface.collect_stats_from_hooks()
 
@@ -146,7 +145,7 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
   print(hp_optimizer.full_df[:10])
 
-  hp_optimizer.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
+  hp_optimizer.save_pdf_report(pdf_output, submission_hook_stats, current_result_path)
 
   hp_optimizer.iteration += 1
 
