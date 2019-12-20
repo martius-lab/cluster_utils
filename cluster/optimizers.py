@@ -81,9 +81,27 @@ class Optimizer(ABC):
       latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
       latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
       latex.add_section_from_figures('Distribution development', distr_plot_files)
+
       for hook in self.report_hooks:
         hook.write_section(latex, file_gen, hook_args)
       latex.produce_pdf(output_file)
+
+  def distribution_plots(self, filename_generator):
+    for distr in self.optimized_params:
+      filename = next(filename_generator)
+      if isinstance(distr, NumericalDistribution):
+        log_scale = isinstance(distr, TruncatedLogNormal)
+        res = distribution(self.full_df, 'iteration', distr.param_name,
+                           filename=filename, metric_logscale=log_scale,
+                           transition_colors=True, x_bounds=(distr.lower, distr.upper))
+        if res:
+          yield filename
+      elif isinstance(distr, Discrete):
+        count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
+        yield filename
+      else:
+        assert False
+
 
   @abstractmethod
   def min_fraction_to_finish(self):
@@ -259,22 +277,6 @@ class Metaoptimizer(Optimizer):
       return 1 + (self.iteration // 4)
     else:
       return 1
-
-  def distribution_plots(self, filename_generator):
-    for distr in self.optimized_params:
-      filename = next(filename_generator)
-      if isinstance(distr, NumericalDistribution):
-        log_scale = isinstance(distr, TruncatedLogNormal)
-        res = distribution(self.full_df, 'iteration', distr.param_name,
-                           filename=filename, metric_logscale=log_scale,
-                           transition_colors=True, x_bounds=(distr.lower, distr.upper))
-        if res:
-          yield filename
-      elif isinstance(distr, Discrete):
-        count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
-        yield filename
-      else:
-        assert False
 
   def distribution_list_sampler(self, num_samples):
     for distr in self.optimized_params:
