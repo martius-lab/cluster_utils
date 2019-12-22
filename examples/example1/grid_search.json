@@ -19,7 +19,6 @@
     "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
   },
   "fixed_params": {
-    "fn_args.noisy": true
   },
   "optimizer_settings":{
     "restarts": 1
