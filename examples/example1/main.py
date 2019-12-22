@@ -40,6 +40,7 @@ if __name__ == '__main__':
     time.sleep(np.random.randint(0, 10))
 
     result_file = os.path.join(params.model_dir, "result.npy")
+    os.makedirs(params.model_dir)
     if os.path.isfile(result_file):
         noiseless_result = np.load(result_file)
     else:
