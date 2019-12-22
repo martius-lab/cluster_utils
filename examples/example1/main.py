@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import time
 from cluster import save_metrics_params, update_params_from_cmdline, exit_for_resume
@@ -25,8 +27,8 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty):
     if sharp_penalty and x > 3.20:
         result += 1
 
-    if np.random.rand()>0.05:
-        raise ValueError("5 percent of all jobs die here on purpose")
+    if np.random.rand() < 0.1:
+        raise ValueError("10 percent of all jobs die here on purpose")
 
     return result
 
@@ -37,13 +39,15 @@ if __name__ == '__main__':
     # simulate that the jobs take some time
     time.sleep(np.random.randint(0, 10))
 
-    noiseless_result = fn_to_optimize(**params.fn_args)
-    noisy_result = noiseless_result + 0.5 * np.random.normal()
-
-    if np.random.rand() > 0.50:
-        # Half of the jobs exit here just to be resubmitted (to be used with checkpointing)
+    result_file = os.path.join(params.model_dir, "result.npy")
+    if os.path.isfile(result_file):
+        noiseless_result = np.load(result_file)
+    else:
+        noiseless_result = fn_to_optimize(**params.fn_args)
+        np.save(result_file, noiseless_result)
         exit_for_resume(only_on_cluster_submissions=True)
 
+    noisy_result = noiseless_result + 0.5 * np.random.normal()
     metrics = {'result': noisy_result, 'noiseless_result': noiseless_result}
     save_metrics_params(metrics, params)
     print(noiseless_result)
