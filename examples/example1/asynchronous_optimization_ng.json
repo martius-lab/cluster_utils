@@ -2,7 +2,7 @@
   "optimization_procedure_name": "test_asynch_opt_ng",
   "results_dir": "/tmp/example_results",
   "git_params": {
-    "branch": "executable_submodules",
+    "branch": "merge_sbo_esm",
     "commit": null
   },
   "script_relative_path": "examples/example1/main.py",
