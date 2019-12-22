@@ -34,6 +34,11 @@ def send_results_to_server(metrics):
                pickle.dumps((MessageTypes.JOB_SENT_RESULTS, (submission_state.job_id, metrics))))
 
 
+def exit_for_resume(only_on_cluster_submissions=True):
+  if only_on_cluster_submissions and not submission_state.connection_active:
+    return
+  exit(3)  # Exit code for resume
+
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
     save_dir = params.model_dir
