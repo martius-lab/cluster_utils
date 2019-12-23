@@ -103,7 +103,7 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
     job.status = JobStatus.FAILED
-    job.error_info = strings
+    job.error_info = ''.join(strings)
 
 
   def handle_job_sent_results(self, message):
