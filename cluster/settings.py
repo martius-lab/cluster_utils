@@ -59,8 +59,8 @@ def save_metrics_params(metrics, params, save_dir=None):
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
 
   for key, value in metrics.items():
-    if str(type(value)) == "<class 'torch.Tensor'>": # Hacky check for torch tensors without importing torch
-      metrics[key] = value.item()
+    if str(type(value)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
+      metrics[key] = value.item()  # silently convert to float
 
   save_dict_as_one_line_csv(metrics, metric_file)
   if submission_state.connection_active:

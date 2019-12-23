@@ -3,6 +3,8 @@ import pyuv
 import signal
 import pickle
 import threading
+from warnings import warn
+
 from .job import JobStatus
 
 
@@ -123,7 +125,8 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
-      raise ValueError('Job concluded without submitting metrics or metrics where not received properly')
+      job.status = JobStatus.FAILED
+      warn('Job concluded without submitting metrics or metrics where not received properly')
     job.status = JobStatus.CONCLUDED
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
