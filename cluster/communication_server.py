@@ -94,7 +94,6 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
     job.status = JobStatus.RUNNING
-    #self.jobs.append(MinJob(job_id, settings, 0))
 
 
   def handle_error_encountered(self, message):
@@ -104,7 +103,6 @@ class CommunicationServer():
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
     job.status = JobStatus.FAILED
     job.error_info = strings
-
 
   def handle_job_sent_results(self, message):
     job_id, metrics = message
@@ -123,8 +121,9 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
-      raise ValueError('Job concluded without submitting metrics or metrics where not received properly')
-    job.status = JobStatus.CONCLUDED
+      job.status == JobStatus.FAILED
+    else:
+      job.status = JobStatus.CONCLUDED
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")

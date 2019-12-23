@@ -20,7 +20,6 @@ class Job():
     self.candidate = candidate
     self.settings = settings
     self.other_params = other_params
-    self.submission_name = None
     self.cluster_id = None
     self.results_used_for_update = False
     self.job_spec_file_path = False
