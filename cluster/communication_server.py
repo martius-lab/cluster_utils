@@ -3,6 +3,8 @@ import pyuv
 import signal
 import pickle
 import threading
+from warnings import warn
+
 from .job import JobStatus
 
 
@@ -10,7 +12,7 @@ class MessageTypes():
   JOB_STARTED = 0
   ERROR_ENCOUNTERED = 1
   JOB_SENT_RESULTS = 2
-  JOB_CONLUDED = 3
+  JOB_CONCLUDED = 3
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -57,7 +59,7 @@ class CommunicationServer():
           self.handle_error_encountered(message)
         elif msg_type_idx == MessageTypes.JOB_SENT_RESULTS:
           self.handle_job_sent_results(message)
-        elif msg_type_idx == MessageTypes.JOB_CONLUDED:
+        elif msg_type_idx == MessageTypes.JOB_CONCLUDED:
           self.handle_job_concluded(message)
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)
@@ -102,7 +104,7 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
     job.status = JobStatus.FAILED
-    job.error_info = strings
+    job.error_info = ''.join(strings)
 
   def handle_job_sent_results(self, message):
     job_id, metrics = message
@@ -121,7 +123,8 @@ class CommunicationServer():
     if job is None:
       raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
-      job.status == JobStatus.FAILED
+      job.status = JobStatus.FAILED
+      warn('Job concluded without submitting metrics or metrics where not received properly')
     else:
       job.status = JobStatus.CONCLUDED
 

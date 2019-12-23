@@ -16,6 +16,7 @@ class ClusterSubmission(ABC):
     self.submission_hooks = dict()
     self._inc_job_id = -1
     self.iteration_mode = iteration_mode
+    self.error_msgs = set()
 
   @property
   def current_jobs(self):
@@ -216,8 +217,9 @@ class ClusterSubmission(ABC):
   # @abstractmethod
   def check_error_msgs(self):
     for job in self.failed_jobs:
-      print(''.join(job.error_info))
-      warn(''.join(job.error_info))
+      if job.error_info not in self.error_msgs:
+        warn(''.join(job.error_info))
+        self.error_msgs.add(job.error_info)
 
   def __repr__(self):
     return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '

@@ -46,17 +46,13 @@ class Optimizer(ABC):
 
   @abstractmethod
   def get_best(self, how_many=1):
-    raise NotImplementedError
+    pass
 
   @abstractmethod
   def try_load_from_pickle(cls):
-    raise NotImplementedError
+    pass
 
-  @abstractmethod
-  def content_pdf_report(self, latex, file_gen, calling_script):
-    raise NotImplementedError
-
-  def save_pdf_report(self, output_file, calling_script, submission_hook_stats, current_result_path):
+  def save_pdf_report(self, output_file, submission_hook_stats, current_result_path):
     today = datetime.datetime.now().strftime("%B %d, %Y")
     latex_title = 'Results of optimization procedure from ({})'.format(today)
     latex = LatexFile(latex_title)
@@ -70,24 +66,51 @@ class Optimizer(ABC):
 
     with TemporaryDirectory() as tmpdir:
       file_gen = filename_gen(tmpdir)
-
-      self.content_pdf_report(latex, file_gen, calling_script)
-
       hook_args = dict(df=self.full_df,
                        path_to_results=current_result_path)
+      overall_progress_file = next(file_gen)
+      plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
+
+      sensitivity_file = next(file_gen)
+      importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
+                                   sensitivity_file)
+
+      distr_plot_files = self.distribution_plots(file_gen)
+
+      latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
+      latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
+      latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
+      latex.add_section_from_figures('Distribution development', distr_plot_files)
 
       for hook in self.report_hooks:
         hook.write_section(latex, file_gen, hook_args)
       latex.produce_pdf(output_file)
 
+  def distribution_plots(self, filename_generator):
+    for distr in self.optimized_params:
+      filename = next(filename_generator)
+      if isinstance(distr, NumericalDistribution):
+        log_scale = isinstance(distr, TruncatedLogNormal)
+        res = distribution(self.full_df, 'iteration', distr.param_name,
+                           filename=filename, metric_logscale=log_scale,
+                           transition_colors=True, x_bounds=(distr.lower, distr.upper))
+        if res:
+          yield filename
+      elif isinstance(distr, Discrete):
+        count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
+        yield filename
+      else:
+        assert False
+
+
   @abstractmethod
   def min_fraction_to_finish(self):
-    raise NotImplementedError
+    pass
 
   @abstractmethod
   def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
                            **optimizer_settings):
-    raise NotImplementedError
+    pass
 
   def best_jobs_model_dirs(self, how_many):
     df_to_use = self.full_df
@@ -206,9 +229,9 @@ class Metaoptimizer(Optimizer):
       jobs = [jobs]
     for job in jobs:
       result = job.get_results()
-      if not result is None:
+      if result is not None:
         df, _, _ = result
-      if not iteration_df is None:
+      if iteration_df is not None:
         iteration_df = pd.concat((iteration_df, df), axis=0)
       else:
         iteration_df = df
@@ -254,38 +277,6 @@ class Metaoptimizer(Optimizer):
       return 1 + (self.iteration // 4)
     else:
       return 1
-
-  def content_pdf_report(self, latex, file_gen, calling_script):
-    overall_progress_file = next(file_gen)
-    plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
-
-    sensitivity_file = next(file_gen)
-    importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
-                                 sensitivity_file)
-
-    distr_plot_files = self.distribution_plots(file_gen)
-
-    latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
-    latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
-    latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
-    latex.add_section_from_figures('Distribution development', distr_plot_files)
-    latex.add_section_from_python_script('Specification', calling_script)
-
-  def distribution_plots(self, filename_generator):
-    for distr in self.optimized_params:
-      filename = next(filename_generator)
-      if isinstance(distr, NumericalDistribution):
-        log_scale = isinstance(distr, TruncatedLogNormal)
-        res = distribution(self.full_df, 'iteration', distr.param_name,
-                           filename=filename, metric_logscale=log_scale,
-                           transition_colors=True, x_bounds=(distr.lower, distr.upper))
-        if res:
-          yield filename
-      elif isinstance(distr, Discrete):
-        count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
-        yield filename
-      else:
-        assert False
 
   def distribution_list_sampler(self, num_samples):
     for distr in self.optimized_params:
@@ -348,7 +339,7 @@ class NGOptimizer(Optimizer):
   def tell(self, jobs):
     for job in jobs:
       results = job.get_results()
-      if not results is None:
+      if results is not None:
         df, params, metrics = results
       else:
         return
@@ -362,8 +353,6 @@ class NGOptimizer(Optimizer):
     if self.iteration > 0:
       for _ in range(how_many):
         yield self.optimizer.provide_recommendation().kwargs
-    else:
-      return ''
 
   @classmethod
   def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
@@ -393,22 +382,6 @@ class NGOptimizer(Optimizer):
     self_file = os.path.join(directory, STATUS_PICKLE_FILE)
     with open(self_file, 'wb') as f:
       pickle.dump(self, f)
-
-  def content_pdf_report(self, latex, file_gen, calling_script):
-    overall_progress_file = next(file_gen)
-    plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
-
-    sensitivity_file = next(file_gen)
-    importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
-                                 sensitivity_file)
-
-    # distr_plot_files = self.distribution_plots(file_gen)
-
-    latex.add_section_from_figures('Overall progress', [overall_progress_file], common_scale=1.2)
-    latex.add_section_from_dataframe('Top 5 recommendations', self.provide_recommendations(5))
-    latex.add_section_from_figures('Hyperparameter importance', [sensitivity_file])
-    # latex.add_section_from_figures('Distribution development', distr_plot_files)
-    latex.add_section_from_python_script('Specification', calling_script)
 
 
 class GridSearchOptimizer(Optimizer):
@@ -445,9 +418,6 @@ class GridSearchOptimizer(Optimizer):
     pass
 
   def get_best(self, how_many=1):
-    raise NotImplementedError
-
-  def content_pdf_report(self, latex, file_gen, calling_script):
     raise NotImplementedError
 
   def min_fraction_to_finish(self):

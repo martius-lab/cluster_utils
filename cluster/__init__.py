@@ -12,7 +12,7 @@ warnings.formatwarning = custom_format_warning
 
 from .job_manager import hyperparameter_optimization, asynchronous_optimization, grid_search
 from .report import init_plotting
-from .settings import save_metrics_params, update_params_from_cmdline
+from .settings import save_metrics_params, update_params_from_cmdline, exit_for_resume
 from .parallel_executor import execute_parallel_shell_scripts
 
 from . import job_manager

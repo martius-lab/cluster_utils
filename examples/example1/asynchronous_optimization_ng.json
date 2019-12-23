@@ -1,8 +1,8 @@
 {
   "optimization_procedure_name": "test_asynch_opt_ng",
-  "results_dir": "/tmp/example_results",
+  "results_dir": "/is/rg/al/Projects/tmp",
   "git_params": {
-    "branch": "executable_submodules",
+    "branch": "merge_sbo_esm",
     "commit": null
   },
   "script_relative_path": "examples/example1/main.py",
@@ -23,11 +23,9 @@
     "metric_to_optimize": "result",
     "minimize": true,
     "number_of_samples": 1000,
-    "min_n_jobs": 100,
     "n_jobs_per_iteration": 100
   },
   "fixed_params": {
-    "fn_args.noisy": true
   },
   "optimized_params": [
   {

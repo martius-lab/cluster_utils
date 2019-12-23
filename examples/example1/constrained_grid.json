@@ -3,7 +3,7 @@
   "results_dir": "/tmp/example_results",
 
   "git_params": {
-    "branch": "executable_submodules",
+    "branch": "merge_sbo_esm",
     "commit": null
   },
   "script_relative_path": "examples/example1/main.py",
@@ -18,7 +18,6 @@
     "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
   },
   "fixed_params": {
-    "fn_args.noisy": false,
     "fn_args.v": 20,
     "fn_args.sharp_penalty": "{fn_args.u < 0.2}",
     "fn_args.x": "{fn_args.y/3}"

@@ -137,7 +137,6 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
                        num_best_jobs_whose_data_is_kept):
   pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
   current_result_path = base_paths_and_files['current_result_dir']
-  calling_script = get_caller_file(depth=3)
 
   submission_hook_stats = cluster_interface.collect_stats_from_hooks()
 
@@ -146,7 +145,7 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
   print(hp_optimizer.full_df[:10])
 
-  hp_optimizer.save_pdf_report(pdf_output, calling_script, submission_hook_stats, current_result_path)
+  hp_optimizer.save_pdf_report(pdf_output, submission_hook_stats, current_result_path)
 
   hp_optimizer.iteration += 1
 
@@ -170,7 +169,9 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                               number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration,
                               optimizer_str='cem_metaoptimizer',
                               remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                              report_hooks=None, optimizer_settings={}, min_n_jobs=5):
+                              report_hooks=None, optimizer_settings=None):
+
+  optimizer_settings = optimizer_settings or {}
 
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
@@ -188,13 +189,12 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   n_successful_jobs = 0
   iteration_offset = hp_optimizer.iteration
   base_paths_and_files['current_result_dir'] = pre_iteration_opt(base_paths_and_files, hp_optimizer)
-  while n_successful_jobs <= number_of_samples:
+  while n_successful_jobs < number_of_samples:
     successful_jobs = cluster_interface.successful_jobs
     jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-    status = [job.status for job in cluster_interface.jobs]
-    if(n_queuing_or_running_jobs < min_n_jobs or status == [JobStatus.CONCLUDED]*len(status)):
+    if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
       new_candidate, new_settings = next(hp_optimizer.ask(1))
       new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                     other_params=processed_other_params, paths=base_paths_and_files,
@@ -258,7 +258,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
           if time_when_severe_warning_happened is None:
             time_when_severe_warning_happened = time.time()
             warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
-                 'cause an collapse of the procedure.')
+                 'cause a termination of the procedure.')
       if time_to_print():
         print(cluster_interface)
         any_errors = cluster_interface.check_error_msgs()
