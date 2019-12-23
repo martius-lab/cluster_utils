@@ -126,7 +126,6 @@ class CommunicationServer():
       raise ValueError('Received a job-concluded-message from a job that is not listed in the cluster interface system')
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
       job.status = JobStatus.FAILED
-      warn('Job concluded without submitting metrics or metrics where not received properly')
     else:
       job.status = JobStatus.CONCLUDED
 
