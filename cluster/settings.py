@@ -37,7 +37,7 @@ def send_results_to_server(metrics):
 def exit_for_resume(only_on_cluster_submissions=True):
   if only_on_cluster_submissions and not submission_state.connection_active:
     return
-  exit(3)  # Exit code for resume
+  os._exit(3)  # Hard exit (not detectable by the hook) with exit code 3 for resume
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
