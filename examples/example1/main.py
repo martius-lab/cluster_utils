@@ -42,8 +42,10 @@ if __name__ == '__main__':
     result_file = os.path.join(params.model_dir, "result.npy")
     os.makedirs(params.model_dir)
     if os.path.isfile(result_file):
+        # If there is a result to resume
         noiseless_result = np.load(result_file)
     else:
+        # Otherwise compute result, checkpoint it and exit
         noiseless_result = fn_to_optimize(**params.fn_args)
         np.save(result_file, noiseless_result)
         exit_for_resume(only_on_cluster_submissions=True)

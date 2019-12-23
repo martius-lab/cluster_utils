@@ -10,7 +10,7 @@ class MessageTypes():
   JOB_STARTED = 0
   ERROR_ENCOUNTERED = 1
   JOB_SENT_RESULTS = 2
-  JOB_CONLUDED = 3
+  JOB_CONCLUDED = 3
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -57,7 +57,7 @@ class CommunicationServer():
           self.handle_error_encountered(message)
         elif msg_type_idx == MessageTypes.JOB_SENT_RESULTS:
           self.handle_job_sent_results(message)
-        elif msg_type_idx == MessageTypes.JOB_CONLUDED:
+        elif msg_type_idx == MessageTypes.JOB_CONCLUDED:
           self.handle_job_concluded(message)
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)

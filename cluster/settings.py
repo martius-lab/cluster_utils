@@ -37,7 +37,9 @@ def send_results_to_server(metrics):
 def exit_for_resume(only_on_cluster_submissions=True):
   if only_on_cluster_submissions and not submission_state.connection_active:
     return
-  os._exit(3)  # Hard exit (not detectable by the hook) with exit code 3 for resume
+  atexit.unregister(report_exit_at_server)  # Disable exit reporting
+  sys.exit(3)  # With exit code 3 for resume
+
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
@@ -57,7 +59,7 @@ def save_metrics_params(metrics, params, save_dir=None):
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
 
   for key, value in metrics.items():
-    if str(type(value)) == "<class 'torch.Tensor'>": # Hacky check for torch tensors withou importing torch
+    if str(type(value)) == "<class 'torch.Tensor'>": # Hacky check for torch tensors without importing torch
       metrics[key] = value.item()
 
   save_dict_as_one_line_csv(metrics, metric_file)
@@ -90,6 +92,7 @@ def register_at_server(final_params):
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
                pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id,))))
 
+
 def report_error_at_server(exctype, value, tb):
   print('Sending errors to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
@@ -99,13 +102,14 @@ def report_error_at_server(exctype, value, tb):
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
                pickle.dumps((MessageTypes.ERROR_ENCOUNTERED, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
 
+
 def report_exit_at_server():
   print('Sending confirmation of exit to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.JOB_CONLUDED, (submission_state.job_id, ))))
+               pickle.dumps((MessageTypes.JOB_CONCLUDED, (submission_state.job_id,))))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,

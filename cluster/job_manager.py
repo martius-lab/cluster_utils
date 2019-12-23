@@ -266,7 +266,7 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
           if time_when_severe_warning_happened is None:
             time_when_severe_warning_happened = time.time()
             warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
-                 'cause an collapse of the procedure.')
+                 'cause a termination of the procedure.')
       if time_to_print():
         print(cluster_interface)
         any_errors = cluster_interface.check_error_msgs()
