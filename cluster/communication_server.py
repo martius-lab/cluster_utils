@@ -127,7 +127,8 @@ class CommunicationServer():
     if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
       job.status = JobStatus.FAILED
       warn('Job concluded without submitting metrics or metrics where not received properly')
-    job.status = JobStatus.CONCLUDED
+    else:
+      job.status = JobStatus.CONCLUDED
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")
