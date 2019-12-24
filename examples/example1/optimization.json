@@ -27,7 +27,6 @@
     "total_rounds": 8
   },
   "fixed_params": {
-    "fn_args.noisy": true
   },
   "optimized_params": [
     {

@@ -7,9 +7,8 @@ from .job import JobStatus
 
 
 class ClusterSubmission(ABC):
-  def __init__(self, name, paths, remove_jobs_dir=True, iteration_mode=True):
+  def __init__(self, paths, remove_jobs_dir=True, iteration_mode=True):
     self.jobs = []
-    self.name = name
     self.remove_jobs_dir = remove_jobs_dir
     self.paths = paths
     self.submitted = False
@@ -76,8 +75,6 @@ class ClusterSubmission(ABC):
   def add_jobs(self, jobs):
     if not isinstance(jobs, list):
       jobs = [jobs]
-    for job in jobs:
-      job.submission_name = self.name
     self.jobs = self.jobs + jobs
 
 
@@ -231,23 +228,12 @@ class ClusterSubmission(ABC):
 
 from .dummy_cluster_system import Dummy_ClusterSubmission
 from .condor_cluster_system import Condor_ClusterSubmission
-from .slurm_cluster_system import Slurm_ClusterSubmission
-from .slurm_parallel_cluster_system import Slurm_ClusterSubmissionParallel
 
 
 def get_cluster_type(requirements, run_local=None):
   if is_command_available('condor_q'):
     print('CONDOR detected, running CONDOR job submission')
     return Condor_ClusterSubmission
-  elif is_command_available('squeue'):
-    print('SLURM detected, running SLURM job submission')
-    gpus = requirements['request_gpus']
-    if gpus > 0:
-      print('GPU requested, on-node parallelisation impossible')
-      return Slurm_ClusterSubmission
-    else:
-      print('No GPU requested, on-node parallelisation used')
-      return Slurm_ClusterSubmissionParallel
   else:
     if run_local is None:
       answer = input('No cluster detected. Do you want to run locally? [Y/n]: ')

@@ -93,7 +93,7 @@ def time_to_print():
 
 def pre_opt(base_paths_and_files, submission_requirements, optimized_params, other_params, number_of_samples,
             metric_to_optimize, minimize, optimizer_str, remove_jobs_dir, git_params, run_local, report_hooks,
-            optimizer_settings, submission_name):
+            optimizer_settings):
   processed_other_params = process_other_params(other_params, None, optimized_params)
 
   hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
@@ -104,7 +104,6 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
   cluster_interface = cluster_type(paths=base_paths_and_files,
                                    requirements=submission_requirements,
-                                   name=submission_name,
                                    remove_jobs_dir=remove_jobs_dir)
   cluster_interface.register_submission_hook(
     ClusterSubmissionGitHook(git_params, base_paths_and_files))
@@ -128,15 +127,15 @@ def post_opt(cluster_interface, hp_optimizer):
 
 
 def pre_iteration_opt(base_paths_and_files):
-  print('ensuring empty dir: ', base_paths_and_files['current_result_dir'])
-  ensure_empty_dir(base_paths_and_files['current_result_dir'])
-  # TODO: Check if this is necessary, somehow cant delete cache dirs ensure_empty_dir(base_paths_and_files['jobs_dir'])
+  current_result_dir = base_paths_and_files['current_result_dir']
+  print('ensuring empty dir: ', current_result_dir)
+  ensure_empty_dir(current_result_dir)
 
 
 def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept):
   pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
-  current_result_path = os.path.join(base_paths_and_files['result_dir'], cluster_interface.name)
+  current_result_path = base_paths_and_files['current_result_dir']
 
   submission_hook_stats = cluster_interface.collect_stats_from_hooks()
 
@@ -170,12 +169,9 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                               optimizer_str='cem_metaoptimizer',
                               remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
                               report_hooks=None, optimizer_settings=None):
-  base_paths_and_files['result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'asynch_opt')
-  base_paths_and_files['current_result_dir'] = base_paths_and_files['result_dir']
 
   optimizer_settings = optimizer_settings or {}
 
-  # todo: check where other_params went
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -186,15 +182,14 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                                                                                                 remove_jobs_dir,
                                                                                                 git_params, run_local,
                                                                                                 report_hooks,
-                                                                                                optimizer_settings,
-                                                                                                'asynch_opt')
+                                                                                                optimizer_settings)
   hp_optimizer.iteration_mode = False
   cluster_interface.iteration_mode = False
   iteration_offset = hp_optimizer.iteration
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
   pre_iteration_opt(base_paths_and_files)
   while cluster_interface.n_completed_jobs < number_of_samples:
-    successful_jobs = cluster_interface.successful_jobs
-    jobs_to_tell = [job for job in successful_jobs if not job.results_used_for_update]
+    jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
     n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
     if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
@@ -208,6 +203,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
       post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                          num_best_jobs_whose_data_is_kept)
       print('starting new iteration:', hp_optimizer.iteration)
+      pre_iteration_opt(base_paths_and_files)
 
     if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs:
         raise RuntimeError("Too many jobs failed. Ending procedure.")
@@ -230,7 +226,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                 optimizer_str='cem_metaoptimizer', remove_jobs_dir=True, git_params=None,
                                 run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
                                 optimizer_settings={}):
-  submission_name = 'iteration_{}'.format(1)
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -243,13 +238,10 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                                                                                 git_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
-                                                                                                optimizer_settings,
-                                                                                                submission_name)
+                                                                                                optimizer_settings)
   for i in range(total_rounds):
     time_when_severe_warning_happened = None
-    submission_name = 'iteration_{}'.format(hp_optimizer.iteration + 1)
-    cluster_interface.name = submission_name
-    base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
+    base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'iteration_{0}'.format(hp_optimizer.iteration))
     pre_iteration_opt(base_paths_and_files)
     print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
     n_confirmed_successful_jobs = 0
@@ -284,7 +276,6 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 optimizer_settings, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
-  submission_name = 'grid_search'
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -297,10 +288,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 git_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
-                                                                                                optimizer_settings,
-                                                                                                submission_name)
-  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], submission_name)
-
+                                                                                                optimizer_settings)
+  base_paths_and_files['current_result_dir'] = 'working_directories'
   pre_iteration_opt(base_paths_and_files)
 
   settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]

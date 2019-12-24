@@ -137,7 +137,8 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     submission_state.communication_server_port = connection_details['port']
     submission_state.job_id = connection_details['id']
     del cmd_line[1]
-    submission_state.connection_active = True
+    submission_state.connection_details_available = True
+    submission_state.connection_active = False
   except:
     print("Could not parse connection info, presuming the job to be run locally")    
 
@@ -178,10 +179,11 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
   if verbose:
     print(json.dumps(final_params, indent=4, sort_keys=True))
 
-  if submission_state.connection_active:
+  if submission_state.connection_details_available and not submission_state.connection_active:
     register_at_server(final_params.get_pickleable())
     sys.excepthook = report_error_at_server
     atexit.register(report_exit_at_server)
+    submission_state.connection_active = True
   update_params_from_cmdline.start_time = time.time()
   return final_params
 

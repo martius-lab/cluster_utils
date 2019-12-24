@@ -17,12 +17,11 @@ CondorRecord = namedtuple('CondorRecord',
 
 
 class Condor_ClusterSubmission(ClusterSubmission):
-  def __init__(self, requirements, paths, name, remove_jobs_dir=True, iteration_mode=True):
-    super().__init__(name, paths, remove_jobs_dir, iteration_mode)
+  def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
+    super().__init__(paths, remove_jobs_dir, iteration_mode)
 
     os.environ["MPLBACKEND"] = 'agg'
     self._process_requirements(requirements)
-    self.name = name
     self.exceptions_seen = set({})
     user_name = run('whoami', shell=True, stdout=PIPE, stderr=PIPE).stdout.decode('utf-8').rstrip('\n')
     self.condor_q_cmd = 'condor_q {}\n'.format(user_name)
@@ -53,7 +52,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
     return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
   def generate_job_spec_file(self, job):
-    job_file_name = '{}_{}.sh'.format(self.name, job.id)
+    job_file_name = 'iteration_{}_{}.sh'.format(job.iteration, job.id)
     run_script_file_path = os.path.join(self.submission_dir, job_file_name)
     job_spec_file_path = os.path.join(self.submission_dir, job_file_name + '.sub')
     cmd = job.generate_execution_cmd(self.paths)
