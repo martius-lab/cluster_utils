@@ -214,6 +214,9 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
       error_handler.maybe_raise('Some jobs had errors!')
     if time_to_print():
       print(cluster_interface)
+
+  post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
+                     num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
 
 
