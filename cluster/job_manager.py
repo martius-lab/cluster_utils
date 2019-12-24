@@ -126,11 +126,10 @@ def post_opt(cluster_interface, hp_optimizer):
   print('Procedure successfully finished')
 
 
-def pre_iteration_opt(base_paths_and_files, hp_optimizer):
-  current_result_dir = os.path.join(base_paths_and_files['result_dir'], 'iteration_{0}'.format(hp_optimizer.iteration))
+def pre_iteration_opt(base_paths_and_files):
+  current_result_dir = base_paths_and_files['current_result_dir']
   print('ensuring empty dir: ', current_result_dir)
   ensure_empty_dir(current_result_dir)
-  return current_result_dir
 
 
 def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
@@ -187,7 +186,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   hp_optimizer.iteration_mode = False
   cluster_interface.iteration_mode = False
   iteration_offset = hp_optimizer.iteration
-  base_paths_and_files['current_result_dir'] = pre_iteration_opt(base_paths_and_files, hp_optimizer)
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
+  pre_iteration_opt(base_paths_and_files)
   while cluster_interface.n_completed_jobs < number_of_samples:
     jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
@@ -203,7 +203,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
       post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                          num_best_jobs_whose_data_is_kept)
       print('starting new iteration:', hp_optimizer.iteration)
-      base_paths_and_files['current_result_dir'] = pre_iteration_opt(base_paths_and_files, hp_optimizer)
+      pre_iteration_opt(base_paths_and_files)
 
     if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs:
         raise RuntimeError("Too many jobs failed. Ending procedure.")
@@ -238,7 +238,8 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                                                                                 optimizer_settings)
   for i in range(total_rounds):
     time_when_severe_warning_happened = None
-    base_paths_and_files['current_result_dir'] = pre_iteration_opt(base_paths_and_files, hp_optimizer)
+    base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'iteration_{0}'.format(hp_optimizer.iteration))
+    pre_iteration_opt(base_paths_and_files)
     print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
     n_confirmed_successful_jobs = 0
     settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask(number_of_samples)]
@@ -285,7 +286,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
                                                                                                 optimizer_settings)
-  base_paths_and_files['current_result_dir'] = pre_iteration_opt(base_paths_and_files, hp_optimizer)
+  base_paths_and_files['current_result_dir'] = 'working_directories'
+  pre_iteration_opt(base_paths_and_files)
 
   settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
   jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
