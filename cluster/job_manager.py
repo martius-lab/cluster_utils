@@ -289,12 +289,12 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
                                                                                                 optimizer_settings)
-  base_paths_and_files['current_result_dir'] = 'working_directories'
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
   pre_iteration_opt(base_paths_and_files)
 
   settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
   jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
-              other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
+              other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration,
               connection_info=comm_server.connection_info)
           for candidate, setting in settings]
   cluster_interface.add_jobs(jobs)
@@ -312,7 +312,10 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
 
   df, all_params, metrics = None, None, None
   for job in jobs:
-    job_df, job_all_params, job_metrics = job.get_results()
+    results = job.get_results()
+    if results is None:
+      continue
+    job_df, job_all_params, job_metrics = results
     if df is None:
       df, all_params, metrics = job_df, job_all_params, job_metrics
     else:

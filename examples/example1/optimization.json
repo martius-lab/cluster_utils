@@ -1,6 +1,6 @@
 {
   "optimization_procedure_name": "test_hpo",
-  "results_dir": "/tmp/example_results",
+  "results_dir": "/is/rg/al/Projects/tmp/example_results",
   "git_params": {
     "branch": "merge_sbo_esm",
     "commit": null

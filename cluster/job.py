@@ -30,6 +30,9 @@ class Job():
     self.status = JobStatus.INITIAL_STATUS
     self.metrics = None
     self.error_info = None
+    self.resulting_df = None 
+    self.param_df = None 
+    self.metric_df = None
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)
@@ -88,4 +91,6 @@ class Job():
     self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
 
   def get_results(self):
+    if self.resulting_df is None or self.param_df is None or self.metric_df is None:
+      return None
     return self.resulting_df, tuple(sorted(self.param_df.columns)), tuple(sorted(self.metric_df.columns))
