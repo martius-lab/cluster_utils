@@ -9,6 +9,6 @@ setup(name='cluster',
       license='MIT',
       packages=['cluster'],
       install_requires=['gitpython>=3.0.5', 'pathlib2', 'seaborn', 'pandas', 'matplotlib', 'sklearn', 'numpy',
-                        'nevergrad @ git+https://github.com/facebookresearch/nevergrad.git', 'tqdm',
+                        'nevergrad @ git+https://github.com/facebookresearch/nevergrad.git', 'tqdm', 'colorama',
                         'pyuv', 'cloudpickle'],
       zip_safe=False)
