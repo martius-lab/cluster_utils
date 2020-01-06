@@ -239,7 +239,9 @@ def hyperparameter_optimization(base_paths_and_files, submission_requirements, o
                                 fraction_that_need_to_finish,
                                 optimizer_str='cem_metaoptimizer', remove_jobs_dir=True, git_params=None,
                                 run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
-                                optimizer_settings={}):
+                                optimizer_settings=None):
+
+  optimizer_settings = optimizer_settings or {}
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
