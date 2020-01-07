@@ -213,13 +213,12 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
           print('starting new iteration:', hp_optimizer.iteration)
           pre_iteration_opt(base_paths_and_files)
 
-        if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs:
-            raise RuntimeError("Too many jobs failed. Ending procedure.")
-
-
         any_errors = cluster_interface.check_error_msgs()
         if any_errors:
           error_handler.maybe_raise('Some jobs had errors!')
+
+        if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs:
+            raise RuntimeError("Too many jobs failed. Ending procedure.")
 
         submitted_bar.update(cluster_interface.n_submitted_jobs)
         running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
