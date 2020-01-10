@@ -102,6 +102,7 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
+    howmany = min(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
     mean_to_use = self.mean if self.last_mean is None else 2*self.mean - self.last_mean
     self.last_mean = self.mean
     if not (self.lower <= mean_to_use <= self.upper):
@@ -135,6 +136,7 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
+    howmany = min(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
     log_mean_to_use = self.log_mean if self.last_log_mean is None else 2 * self.log_mean - self.last_log_mean
     if not (self.lower <= log_mean_to_use <= self.upper):
       log_mean_to_use = self.log_mean
@@ -187,6 +189,7 @@ class Discrete(Distribution):
       self.probs = list(np.array(self.probs) / sum)
 
   def prepare_samples(self, howmany):
+    howmany = min(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
     self.samples = np.random.choice(self.option_list, p=self.probs, size=howmany)
     super().prepare_samples(howmany)
 

@@ -161,8 +161,8 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
     best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
     update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
 
-  rm_dir_full(current_result_path)
-  print('Intermediate results deleted...')
+  #rm_dir_full(current_result_path)
+  #print('Intermediate results deleted...')
 
 
 def asynchronous_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,

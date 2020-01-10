@@ -201,11 +201,11 @@ class Metaoptimizer(Optimizer):
       best_jobs_to_take = int(self.full_df.shape[0] * self.best_fraction_to_use_for_update)
     else:
       best_jobs_to_take = int(self.number_of_samples * self.best_fraction_to_use_for_update)
-    if best_jobs_to_take < 10:
-      warn('Less than 10 jobs would be taken for distribution update. '
-           'Resorting to taking exactly 10 best jobs. '
-           'Perhaps choose higher \'best_fraction_to_use_for_update\' ')
-      best_jobs_to_take = 10
+      if best_jobs_to_take < 5:
+        warn('Less than 5 jobs would be taken for distribution update. '
+             'Resorting to taking exactly 10 best jobs. '
+             'Perhaps choose higher \'best_fraction_to_use_for_update\' ')
+        best_jobs_to_take = 5
     self.best_jobs_to_take = best_jobs_to_take
 
   def ask(self, num_samples):
@@ -239,8 +239,9 @@ class Metaoptimizer(Optimizer):
       return
     super().tell(iteration_df, jobs)
     current_best_params = self.get_best_params()
-    for distr in self.optimized_params:
-      distr.fit(current_best_params[distr.param_name])
+    if len(current_best_params) >= 5:  # At least five finished jobs needed to refit
+      for distr in self.optimized_params:
+        distr.fit(current_best_params[distr.param_name])
 
   def get_best_params(self):
     self.update_best_jobs_to_take()
