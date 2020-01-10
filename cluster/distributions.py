@@ -97,14 +97,19 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
     self.last_mean = None
 
   def fit(self, data_points):
-    self.mean, self.std = scipy.stats.norm.fit(np.array(data_points))
+    if len(data_points) < 5:
+      return  # Do not refit based on too few samples
+    new_mean, self.std = scipy.stats.norm.fit(np.array(data_points))
+    if abs(new_mean - self.mean) > 1e-3:
+      self.last_mean = self.mean
+    self.mean = new_mean
+
     if not (self.lower <= self.mean <= self.upper):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
     howmany = min(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
     mean_to_use = self.mean if self.last_mean is None else 2*self.mean - self.last_mean
-    self.last_mean = self.mean
     if not (self.lower <= mean_to_use <= self.upper):
       mean_to_use = self.mean
     self.samples = np.random.normal(size=howmany) * self.std + mean_to_use
@@ -130,14 +135,21 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
     self.last_log_mean = None
 
   def fit(self, data_points):
-    self.last_log_mean = self.log_mean
-    self.log_mean, self.log_std = scipy.stats.norm.fit(np.log(np.array(data_points)))
+    if len(data_points) < 5:
+      return  # Do not refit based on too few samples
+
+    new_log_mean, self.log_std = scipy.stats.norm.fit(np.log(np.array(data_points)))
+    if abs(new_log_mean - self.log_mean) > 1e-3:
+      self.last_log_mean = self.log_mean
+
+    self.log_mean = new_log_mean
+
     if not (self.log_lower <= self.log_mean <= self.log_upper):
       warn('Mean of {} is out of bounds'.format(self.param_name))
 
   def prepare_samples(self, howmany):
     howmany = min(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
-    log_mean_to_use = self.log_mean if self.last_log_mean is None else 2 * self.log_mean - self.last_log_mean
+    log_mean_to_use = self.log_mean if self.last_log_mean is None else 4 * self.log_mean - 3 * self.last_log_mean
     if not (self.lower <= log_mean_to_use <= self.upper):
       log_mean_to_use = self.log_mean
     self.samples = np.exp(np.random.normal(size=howmany) * self.log_std + log_mean_to_use)
