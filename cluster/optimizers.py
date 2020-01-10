@@ -163,10 +163,9 @@ class Optimizer(ABC):
 
 
 class Metaoptimizer(Optimizer):
-  def __init__(self, *, best_fraction_to_use_for_update, with_restarts, iteration_mode=True, **kwargs):
+  def __init__(self, *, num_jobs_in_elite, with_restarts, iteration_mode=True, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
-    self.best_fraction_to_use_for_update = best_fraction_to_use_for_update
-    self.update_best_jobs_to_take()
+    self.num_jobs_in_elite = max(5, num_jobs_in_elite) # Force a minimum of 5 jobs in an elite
     self.with_restarts = with_restarts
     self.best_param_values = {}
 
@@ -196,23 +195,11 @@ class Metaoptimizer(Optimizer):
       print('Loaded HP optimizer from pickle!')
     return metaopt
 
-  def update_best_jobs_to_take(self):
-    if not self.iteration_mode:
-      best_jobs_to_take = int(self.full_df.shape[0] * self.best_fraction_to_use_for_update)
-    else:
-      best_jobs_to_take = int(self.number_of_samples * self.best_fraction_to_use_for_update)
-    if best_jobs_to_take < 5:
-      warn('Less than 5 jobs would be taken for distribution update. '
-           'Resorting to taking exactly 10 best jobs. '
-           'Perhaps choose higher \'best_fraction_to_use_for_update\' ')
-      best_jobs_to_take = 5
-    self.best_jobs_to_take = best_jobs_to_take
-
   def ask(self, num_samples):
     if self.iteration_mode:
       extra_settings = self.settings_to_restart
       if extra_settings is not None:
-        num_samples = num_samples - self.best_jobs_to_take
+        num_samples = num_samples - self.num_jobs_in_elite
         sampled_settings = self.distribution_list_sampler(num_samples)
         return_settings = itertools.chain(extra_settings, sampled_settings)
       else:
@@ -243,9 +230,8 @@ class Metaoptimizer(Optimizer):
       distr.fit(current_best_params[distr.param_name])
 
   def get_best_params(self):
-    self.update_best_jobs_to_take()
     return best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
-                       minimum=self.minimize, how_many=self.best_jobs_to_take)
+                       minimum=self.minimize, how_many=self.num_jobs_in_elite)
 
   @property
   def settings_to_restart(self):
@@ -259,7 +245,7 @@ class Metaoptimizer(Optimizer):
 
     def restart_setting_generator():
       length = min(len(val) for val in best_ones.values())
-      job_budget = self.best_jobs_to_take
+      job_budget = self.num_jobs_in_elite
       for i in range(length):
         nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
         for j in range(repeats):
@@ -284,9 +270,6 @@ class Metaoptimizer(Optimizer):
     for i in range(num_samples):
       nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in self.optimized_params]
       yield nested_to_dict(nested_items)
-
-  def min_fraction_to_finish(self):
-    return self.best_fraction_to_use_for_update
 
   def save_data_and_self(self, directory):
     self.full_df.to_csv(os.path.join(directory, FULL_DF_FILE))

@@ -18,7 +18,7 @@
   },
   "optimizer_str": "cem_metaoptimizer",
   "optimizer_settings": {"with_restarts": true,
-                         "best_fraction_to_use_for_update": 0.15
+                         "num_jobs_in_elite": 10
   },
   "optimization_setting": {
     "metric_to_optimize": "result",
