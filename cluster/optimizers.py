@@ -160,7 +160,7 @@ class Optimizer(ABC):
 class Metaoptimizer(Optimizer):
   def __init__(self, *, num_jobs_in_elite, with_restarts, iteration_mode=True, **kwargs):
     super().__init__(iteration_mode=iteration_mode, **kwargs)
-    self.num_jobs_in_elite = max(5, num_jobs_in_elite) # Force a minimum of 5 jobs in an elite
+    self.num_jobs_in_elite = max(5, num_jobs_in_elite)  # Force a minimum of 5 jobs in an elite
     self.with_restarts = with_restarts
     self.best_param_values = {}
 
@@ -171,7 +171,7 @@ class Metaoptimizer(Optimizer):
     if not os.path.exists(file):
       return None
 
-    best_fraction_to_use_for_update, with_restarts = optimizer_settings
+    _, with_restarts = optimizer_settings
 
     metaopt = pickle.load(open(file, 'rb'))
     if (metric_to_optimize, minimize) != (metaopt.metric_to_optimize, metaopt.minimize):
