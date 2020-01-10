@@ -226,7 +226,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
         running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
         successful_jobs_bar.update(cluster_interface.n_successful_jobs)
 
-        if cluster_interface.n_successful_jobs > 0:
+        if len(hp_optimizer.full_df) > 0:
             best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
             successful_jobs_bar.update_best_val(best_value)
 
