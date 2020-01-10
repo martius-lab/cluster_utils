@@ -102,11 +102,6 @@ class Optimizer(ABC):
       else:
         assert False
 
-
-  @abstractmethod
-  def min_fraction_to_finish(self):
-    pass
-
   @abstractmethod
   def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
                            **optimizer_settings):
