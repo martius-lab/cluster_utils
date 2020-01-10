@@ -181,7 +181,6 @@ class Metaoptimizer(Optimizer):
       if distr.param_name in metaopt.params:
         distr.fit(current_best_params[distr.param_name])
 
-    metaopt.update_best_jobs_to_take()
     metaopt.optimized_params = optimized_params
     setattr(metaopt, 'with_restarts', with_restarts)
     metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
