@@ -221,7 +221,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
         if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
             cluster_interface.close()
-            raise RuntimeError("Too many jobs failed. Ending procedure.")
+            raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
 
         submitted_bar.update(cluster_interface.n_submitted_jobs)
         running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
