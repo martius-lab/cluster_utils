@@ -40,8 +40,9 @@ class ProgressBar(ABC):
         ...
 
     def update(self, new_value):
-        self.tqdm.update(new_value - self.value)
-        self.value = new_value
+        real_new_value = max(new_value, self.value)  # Negative updates may occur due to instability. This silences the error
+        self.tqdm.update(real_new_value - self.value)
+        self.value = real_new_value
 
     def close(self):
         self.tqdm.close()
