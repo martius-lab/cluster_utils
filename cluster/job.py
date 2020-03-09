@@ -42,7 +42,7 @@ class Job():
     current_setting['model_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
 
 
-    setting_cwd = 'cd {}'.format(os.path.dirname(paths['script_to_run']))
+    setting_cwd = 'cd {}'.format(paths['main_path'])
     if 'virtual_env_path' in paths:
       virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
     else:
