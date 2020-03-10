@@ -61,6 +61,8 @@ def save_metrics_params(metrics, params, save_dir=None):
   for key, value in metrics.items():
     if str(type(value)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
       metrics[key] = value.item()  # silently convert to float
+    if str(type(value)) == "<class 'numpy.ndarray'>":
+      metrics[key] = float(value)
 
   save_dict_as_one_line_csv(metrics, metric_file)
   if submission_state.connection_active:
