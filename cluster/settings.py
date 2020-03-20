@@ -71,10 +71,11 @@ def save_metrics_params(metrics, params, save_dir=None):
 
 
 def is_json_file(cmd_line):
-  try:
-    return os.path.isfile(cmd_line)
-  except Exception as e:
-    warn('JSON parsing suppressed exception: ', e)
+  if cmd_line.endswith('.json'):
+    if not os.path.isfile(cmd_line):
+      raise FileNotFoundError(f"{cmd_line}: No such JSON script found")
+    return True
+  else:
     return False
 
 
