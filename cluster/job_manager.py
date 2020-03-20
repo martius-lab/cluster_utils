@@ -51,7 +51,8 @@ def update_best_job_datadirs(result_dir, model_dirs):
     if os.path.exists(model_dir):
       new_dir_name = model_dir.split('_')[-1].replace('/', '_')
       new_dir_full = os.path.join(datadir, new_dir_name)
-      shutil.copytree(model_dir, new_dir_full)
+      if not os.path.exists((new_dir_full)):
+        shutil.copytree(model_dir, new_dir_full)
       rm_dir_full(model_dir)
 
   # Delete old best directories if outdated
