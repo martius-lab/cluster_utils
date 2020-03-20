@@ -216,7 +216,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
           print('starting new iteration:', hp_optimizer.iteration)
           pre_iteration_opt(base_paths_and_files)
 
-        for job in cluster_interface.submitted:
+        for job in cluster_interface.submitted_jobs:
             if job.status == JobStatus.SUBMITTED:
                 job.check_filesystem_for_errors()
         any_errors = cluster_interface.check_error_msgs()
