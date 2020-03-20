@@ -210,15 +210,11 @@ class ClusterSubmission(ABC):
       rm_dir_full(self.submission_dir)
       print('Done')
 
-  # @abstractmethod
-  # def get_status(self):
-  #  pass
-
-  # @abstractmethod
   def check_error_msgs(self):
     for job in self.failed_jobs:
       if job.error_info not in self.error_msgs:
-        warn(''.join(job.error_info))
+        warn_string = f'\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with error:\x1b[0m\n'
+        warn(f"{warn_string}{''.join(job.error_info)}")
         self.error_msgs.add(job.error_info)
 
   def __repr__(self):

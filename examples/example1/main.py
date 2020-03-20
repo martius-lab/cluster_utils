@@ -35,8 +35,10 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty):
 
 if __name__ == '__main__':
 
-    if np.random.rand() < 0.1:
-        raise AssertionError
+    # Error before update_params (has separate handling)
+    if np.random.rand() < 0.05:
+        raise ValueError("5 percent of all jobs die early for testing")
+
     params = update_params_from_cmdline()
 
     # simulate that the jobs take some time

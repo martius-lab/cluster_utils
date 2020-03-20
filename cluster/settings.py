@@ -6,6 +6,7 @@ import pickle
 import sys
 import time
 import traceback
+import socket
 from datetime import datetime
 from warnings import warn
 
@@ -92,7 +93,7 @@ def register_at_server(final_params):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id,))))
+               pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id, socket.gethostname()))))
 
 
 def report_error_at_server(exctype, value, tb):

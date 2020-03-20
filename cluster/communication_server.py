@@ -91,11 +91,12 @@ class CommunicationServer():
 
 
   def handle_job_started(self, message):
-    job_id, = message
+    job_id, hostname = message
     job = self.cluster_system.get_job(job_id)
     if job is None:
       raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
     job.status = JobStatus.RUNNING
+    job.hostname = hostname
 
 
   def handle_error_encountered(self, message):

@@ -25,6 +25,7 @@ class Job():
     self.results_used_for_update = False
     self.job_spec_file_path = False
     self.run_script_path = None
+    self.hostname = None
     self.iteration = iteration
     self.comm_server_info = {'id': id,
                              'ip': connection_info['ip'],
