@@ -34,6 +34,9 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty):
 
 
 if __name__ == '__main__':
+
+    if np.random.rand() < 0.1:
+        raise AssertionError
     params = update_params_from_cmdline()
 
     # simulate that the jobs take some time

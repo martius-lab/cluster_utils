@@ -199,6 +199,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
       successful_jobs_bar = CompletedJobsBar(total_jobs=number_of_samples, minimize=minimize)
 
       while cluster_interface.n_completed_jobs < number_of_samples:
+        time.sleep(0.2)
         jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
         hp_optimizer.tell(jobs_to_tell)
         n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
@@ -215,6 +216,9 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
           print('starting new iteration:', hp_optimizer.iteration)
           pre_iteration_opt(base_paths_and_files)
 
+        for job in cluster_interface.submitted:
+            if job.status == JobStatus.SUBMITTED:
+                job.check_filesystem_for_errors()
         any_errors = cluster_interface.check_error_msgs()
         if any_errors:
           error_handler.maybe_raise('Some jobs had errors!')

@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 from copy import deepcopy
 from warnings import warn
 from .utils import dict_to_dirname, flatten_nested_string_dict
@@ -23,6 +24,7 @@ class Job():
     self.cluster_id = None
     self.results_used_for_update = False
     self.job_spec_file_path = False
+    self.run_script_path = None
     self.iteration = iteration
     self.comm_server_info = {'id': id,
                              'ip': connection_info['ip'],
@@ -94,3 +96,21 @@ class Job():
     if self.resulting_df is None or self.param_df is None or self.metric_df is None:
       return None
     return self.resulting_df, tuple(sorted(self.param_df.columns)), tuple(sorted(self.metric_df.columns))
+
+  def check_filesystem_for_errors(self):
+    assert self.run_script_path is not None
+    assert self.status == JobStatus.SUBMITTED
+    log_file = f"{self.run_script_path}.log"
+    with suppress(FileNotFoundError):
+      with open(log_file) as f:
+        content = f.read()
+      _, __, after = content.rpartition('return value ')
+      if after and after[0] != '1':
+        return
+      err_file = f"{self.run_script_path}.err"
+      with open(err_file) as f_err:
+        exception = f_err.read()
+      self.status = JobStatus.FAILED
+      self.error_info = exception
+
+

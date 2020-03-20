@@ -69,6 +69,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
       spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
     job.job_spec_file_path = job_spec_file_path
+    job.run_script_path = run_script_file_path
 
   def is_blocked(self):
     for job in self.jobs:
