@@ -111,7 +111,7 @@ class Job():
         return
 
       _, __, hostname = content.rpartition('Job executing on host: <172.22.2.')
-      hostname = f"g0{hostname.split(':')[0]}"
+      hostname = f"?0{hostname.split(':')[0]}"
       self.hostname = hostname
       err_file = f"{self.run_script_path}.err"
       with open(err_file) as f_err:

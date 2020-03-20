@@ -25,7 +25,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
     self.exceptions_seen = set({})
     user_name = run('whoami', shell=True, stdout=PIPE, stderr=PIPE).stdout.decode('utf-8').rstrip('\n')
     self.condor_q_cmd = 'condor_q {}\n'.format(user_name)
-    print('condor_q_cmd: ', self.condor_q_cmd)
     condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
     self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
     self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
