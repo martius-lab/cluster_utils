@@ -11,8 +11,8 @@ cluster/__pycache__/
 
 cluster_play\.ipynb
 
-examples/example1/metrics\.csv
+examples/basic/metrics\.csv
 
-examples/example1/param_choice\.csv
+examples/basic/param_choice\.csv
 
-examples/example1/settings\.json
+examples/basic/settings\.json

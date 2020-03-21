@@ -5,7 +5,7 @@
     "branch": "merge_sbo_esm",
     "commit": null
   },
-  "script_relative_path": "examples/example1/main.py",
+  "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
   "environment_setup": {
   },

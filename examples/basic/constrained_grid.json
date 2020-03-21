@@ -1,12 +1,12 @@
 {
-  "optimization_procedure_name": "gs_test",
+  "optimization_procedure_name": "constrained_grid",
   "results_dir": "/is/rg/al/Projects/tmp/example_results",
+
   "git_params": {
     "branch": "merge_sbo_esm",
     "commit": null
   },
-  "script_relative_path": "examples/example1/main.py",
-  "remove_jobs_dir": false,
+  "script_relative_path": "examples/basic/main.py",
   "environment_setup": {
   },
   "cluster_requirements": {
@@ -18,33 +18,25 @@
     "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
   },
   "fixed_params": {
+    "fn_args.v": 20,
+    "fn_args.sharp_penalty": "{fn_args.u < 0.2}",
+    "fn_args.x": "{fn_args.y/3}"
   },
   "restarts": 1,
   "samples": null,
+  "remove_jobs_dir": false,
   "hyperparam_list": [
     {
       "param": "fn_args.u",
       "values": [-0.5, 0.0, 0.5]
     },
     {
-      "param": "fn_args.v",
-      "values": [10, 50, 100]
-    },
-    {
       "param": "fn_args.w",
       "values": [1, 2, 3]
     },
     {
-      "param": "fn_args.x",
-      "values": [3.0, 3.5, 4.0]
-    },
-    {
       "param": "fn_args.y",
       "values": [0.1, 1.0, 10.0]
-    },
-    {
-      "param": "fn_args.sharp_penalty",
-      "values": [false, true]
     }
   ]
 }
