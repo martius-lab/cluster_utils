@@ -26,6 +26,7 @@ class Job():
     self.job_spec_file_path = False
     self.run_script_path = None
     self.hostname = None
+    self.waiting_for_resume = False
     self.iteration = iteration
     self.comm_server_info = {'id': id,
                              'ip': connection_info['ip'],
@@ -100,7 +101,7 @@ class Job():
 
   def check_filesystem_for_errors(self):
     assert self.run_script_path is not None
-    assert self.status == JobStatus.SUBMITTED
+    assert self.status == JobStatus.SUBMITTED or self.waiting_for_resume
     log_file = f"{self.run_script_path}.log"
     with suppress(FileNotFoundError):
       with open(log_file) as f:
@@ -110,8 +111,8 @@ class Job():
       if after and after[0] != '1':
         return
 
-      _, __, hostname = content.rpartition('Job executing on host: <172.22.2.')
-      hostname = f"?0{hostname.split(':')[0]}"
+      _, __, hostname = content.rpartition('Job executing on host: <172.22.')
+      hostname = f"?0{hostname[2:].split(':')[0]}"
       self.hostname = hostname
       err_file = f"{self.run_script_path}.err"
       with open(err_file) as f_err:

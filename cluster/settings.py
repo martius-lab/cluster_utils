@@ -39,6 +39,10 @@ def exit_for_resume(only_on_cluster_submissions=True):
   if only_on_cluster_submissions and not submission_state.connection_active:
     return
   atexit.unregister(report_exit_at_server)  # Disable exit reporting
+  loop = pyuv.Loop.default_loop()
+  udp = pyuv.UDP(loop)
+  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
+               pickle.dumps((MessageTypes.EXIT_FOR_RESUME, (submission_state.job_id,))))
   sys.exit(3)  # With exit code 3 for resume
 
 

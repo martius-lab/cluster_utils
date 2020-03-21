@@ -13,6 +13,7 @@ class MessageTypes():
   ERROR_ENCOUNTERED = 1
   JOB_SENT_RESULTS = 2
   JOB_CONCLUDED = 3
+  EXIT_FOR_RESUME = 4
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -61,6 +62,8 @@ class CommunicationServer():
           self.handle_job_sent_results(message)
         elif msg_type_idx == MessageTypes.JOB_CONCLUDED:
           self.handle_job_concluded(message)
+        elif msg_type_idx == MessageTypes.EXIT_FOR_RESUME:
+          self.handle_job_exit_for_resume(message)
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)
 
@@ -97,6 +100,7 @@ class CommunicationServer():
       raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
     job.status = JobStatus.RUNNING
     job.hostname = hostname
+    job.waiting_for_resume = False
 
 
   def handle_error_encountered(self, message):
@@ -127,6 +131,11 @@ class CommunicationServer():
       job.status = JobStatus.FAILED
     else:
       job.status = JobStatus.CONCLUDED
+
+  def handle_exit_for_resume(self, message):
+    job_id, = message
+    job = self.cluster_system.get_job(job_id)
+    job.waiting_for_resume = True
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")

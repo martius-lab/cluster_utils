@@ -218,7 +218,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
           pre_iteration_opt(base_paths_and_files)
 
         for job in cluster_interface.submitted_jobs:
-            if job.status == JobStatus.SUBMITTED:
+            if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
                 job.check_filesystem_for_errors()
         any_errors = cluster_interface.check_error_msgs()
         if any_errors:
