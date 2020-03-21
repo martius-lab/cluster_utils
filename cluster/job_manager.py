@@ -242,7 +242,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)
-  post_opt(cluster_interface, hp_optimizer)
+  post_opt(cluster_interface)
   rm_dir_full(base_paths_and_files['current_result_dir'])
 
 
@@ -297,7 +297,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
 
           time.sleep(0.2)
 
-  post_opt(cluster_interface, hp_optimizer)
+  post_opt(cluster_interface)
 
   df, all_params, metrics = None, None, None
   for job in jobs:
