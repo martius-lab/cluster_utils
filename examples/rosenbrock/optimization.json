@@ -39,6 +39,6 @@
     "param": "optimizer_params.lr",
     "distribution": "TruncatedLogNormal",
     "bounds": [1e-5, 1.0]
-  },
+  }
   ]
 }
