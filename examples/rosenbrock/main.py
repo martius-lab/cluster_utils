@@ -25,7 +25,7 @@ x, y = torch.nn.Parameter(x_0), torch.nn.Parameter(y_0)
 
 params = update_params_from_cmdline()
 
-opt = get_optimizer([x,y], params.optimizer, **params.optimizer_params)
+opt = get_optimizer([x,y], params.optimizer, params.optimizer_params)
 loss = rosenbrock(x, y)
 
 for i in range(params.iterations):
