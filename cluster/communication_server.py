@@ -63,7 +63,7 @@ class CommunicationServer():
         elif msg_type_idx == MessageTypes.JOB_CONCLUDED:
           self.handle_job_concluded(message)
         elif msg_type_idx == MessageTypes.EXIT_FOR_RESUME:
-          self.handle_job_exit_for_resume(message)
+          self.handle_exit_for_resume(message)
         else:
           self.handle_unidentified_message(data, msg_type_idx, message)
 
