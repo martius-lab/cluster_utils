@@ -272,7 +272,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
       successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
       while not cluster_interface.n_completed_jobs == len(jobs):
-          to_submit = [job for job in jobs if job not in cluster_interface.submitted]
+          to_submit = [job for job in jobs if job.status == JobStatus.INITIAL_STATUS]
           for job in to_submit[:5]:
               cluster_interface.submit(job)
 
