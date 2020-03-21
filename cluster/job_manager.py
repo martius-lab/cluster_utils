@@ -124,7 +124,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
   return hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params
 
-def post_opt(cluster_interface, hp_optimizer):
+def post_opt(cluster_interface):
   cluster_interface.exec_post_run_routines()
   cluster_interface.close()
   print('Procedure successfully finished')
@@ -243,6 +243,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
+  rm_dir_full(base_paths_and_files['current_result_dir'])
 
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
