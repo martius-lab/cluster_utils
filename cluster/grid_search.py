@@ -59,7 +59,7 @@ if __name__ == '__main__':
     other_params=params.fixed_params,
     git_params=git_params,
     report_hooks=[],  # json_hook], TODO: Make this hook thing work again
-    restarts=restarts,
+    restarts=params.restarts,
     remove_jobs_dir=params.remove_jobs_dir,
   )
 
