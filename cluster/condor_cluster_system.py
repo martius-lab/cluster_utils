@@ -47,7 +47,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
   def stop_fn(self, cluster_id):
     cmd = 'condor_rm {}'.format(cluster_id)
-    print(cmd)
     return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
   def generate_job_spec_file(self, job):
