@@ -12,7 +12,7 @@ def rosenbrock(x, y):
 dct = {'Adam': torch.optim.Adam,
        'SGD': torch.optim.SGD,
        'Adagrad': torch.optim.Adagrad,
-       'RMSProp': torch.optim.RMSprop}
+       'RMSprop': torch.optim.RMSprop}
 
 
 def get_optimizer(parameters, name, opt_params):
