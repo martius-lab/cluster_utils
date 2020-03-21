@@ -5,7 +5,7 @@ from cluster.progress_bars import redirect_stdout_to_tqdm, SubmittedJobsBar, Run
 from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import optimizer_dict
-from .utils import process_other_params, get_caller_file, rm_dir_full
+from .utils import process_other_params, get_caller_file, rm_dir_full, make_red
 from .git_utils import ClusterSubmissionGitHook
 from .job import Job, JobStatus
 from .errors import OneTimeExceptionHandler
@@ -19,7 +19,7 @@ from .communication_server import CommunicationServer
 def ensure_empty_dir(dir_name, defensive=False):
   if os.path.exists(dir_name):
     if defensive:
-      print(f"Directory {dir_name} exists. Delete everything? (y/N)")
+      print(make_red(f"Directory {dir_name} exists. Delete everything? (y/N)"))
       ans = input()
       if ans.lower() == 'y':
         shutil.rmtree(dir_name, ignore_errors=True)

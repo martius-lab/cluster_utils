@@ -190,6 +190,11 @@ def distribution_list_sampler(distribution_list, num_samples):
 from pathlib2 import Path
 home = str(Path.home())
 
+
+def make_red(text):
+  return f"\x1b[1;31m{text}\x1b[0m"
+
+
 def mkdtemp(prefix='cluster_utils', suffix=''):
   new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
   return tempfile.mkdtemp(prefix=new_prefix, dir=os.path.join(home, '.cache'))
