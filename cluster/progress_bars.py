@@ -72,8 +72,11 @@ class RunningJobsBar(ProgressBar):
 
 class CompletedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs, minimize):
-        new_rbar = ('| {n_fmt}/{total_fmt} [{elapsed}<{remaining}'
-                    '{postfix}]')
+        if minimize is not None:
+            new_rbar = ('| {n_fmt}/{total_fmt} [{elapsed}<{remaining}'
+                         '{postfix}]')
+        else:
+            new_rbar = '| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar, dynamic_ncols=True, position=0)

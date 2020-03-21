@@ -220,9 +220,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
         for job in cluster_interface.submitted_jobs:
             if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
                 job.check_filesystem_for_errors()
-        any_errors = cluster_interface.check_error_msgs()
-        if any_errors:
-          error_handler.maybe_raise('Some jobs had errors!')
+        cluster_interface.check_error_msgs()
+
 
         if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
             cluster_interface.close()
@@ -239,62 +238,6 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)
-  post_opt(cluster_interface, hp_optimizer)
-
-
-def hyperparameter_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                                number_of_samples, metric_to_optimize, minimize, total_rounds,
-                                fraction_that_need_to_finish,
-                                optimizer_str='cem_metaoptimizer', remove_jobs_dir=True, git_params=None,
-                                run_local=None, num_best_jobs_whose_data_is_kept=0, report_hooks=None,
-                                optimizer_settings=None):
-
-  optimizer_settings = optimizer_settings or {}
-  hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                                submission_requirements,
-                                                                                                optimized_params,
-                                                                                                other_params,
-                                                                                                number_of_samples,
-                                                                                                metric_to_optimize,
-                                                                                                minimize,
-                                                                                                optimizer_str,
-                                                                                                remove_jobs_dir,
-                                                                                                git_params,
-                                                                                                run_local,
-                                                                                                report_hooks,
-                                                                                                optimizer_settings)
-  for i in range(total_rounds):
-    time_when_severe_warning_happened = None
-    base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'iteration_{0}'.format(hp_optimizer.iteration))
-    pre_iteration_opt(base_paths_and_files)
-    print('Iteration {} started.'.format(hp_optimizer.iteration + 1))
-    n_confirmed_successful_jobs = 0
-    settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask(number_of_samples)]
-    jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
-                other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration + 1,
-                connection_info=comm_server.connection_info)
-            for candidate, setting in settings]
-
-    cluster_interface.add_jobs(jobs)
-    cluster_interface.submit_all()
-    while n_confirmed_successful_jobs / number_of_samples < fraction_that_need_to_finish:
-      n_confirmed_successful_jobs = cluster_interface.n_successful_jobs
-      n_ran_jobs = cluster_interface.n_completed_jobs
-      if (n_ran_jobs - n_confirmed_successful_jobs) > number_of_samples * fraction_that_need_to_finish:
-        if not time_when_severe_warning_happened is None and time.time() - time_when_severe_warning_happened > 5:
-          raise ValueError('Less then fraction_that_need_to_finish jobs can be successful')
-        else:
-          if time_when_severe_warning_happened is None:
-            time_when_severe_warning_happened = time.time()
-            warn('Less then fraction_that_need_to_finish jobs can be successful \n if this repeats in 5 seconds it will'
-                 'cause a termination of the procedure.')
-      if time_to_print():
-        print(cluster_interface)
-        any_errors = cluster_interface.check_error_msgs()
-        if any_errors:
-          error_handler.maybe_raise('Some jobs had errors!')
-    post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                       num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface, hp_optimizer)
 
 
@@ -324,13 +267,28 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
   cluster_interface.add_jobs(jobs)
   cluster_interface.submit_all()
 
-  while not cluster_interface.n_completed_jobs == len(jobs):
-    if time_to_print():
-      print(cluster_interface)
-      any_errors = cluster_interface.check_error_msgs()
-      if any_errors:
-        error_handler.maybe_raise('Some jobs had errors!')
-    time.sleep(0.2)
+  with redirect_stdout_to_tqdm():
+      submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
+      running_bar = RunningJobsBar(total_jobs=len(jobs))
+      successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+
+      while not cluster_interface.n_completed_jobs == len(jobs):
+
+          for job in cluster_interface.submitted_jobs:
+              if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                  job.check_filesystem_for_errors()
+          cluster_interface.check_error_msgs()
+
+          submitted_bar.update(cluster_interface.n_submitted_jobs)
+          running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
+          running_bar.update(cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs)
+          successful_jobs_bar.update(cluster_interface.n_successful_jobs)
+
+          if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
+              cluster_interface.close()
+              raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
+
+          time.sleep(0.2)
 
   post_opt(cluster_interface, hp_optimizer)
 
