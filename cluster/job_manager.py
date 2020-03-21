@@ -98,6 +98,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
             optimizer_settings):
   processed_other_params = process_other_params(other_params, None, optimized_params)
   ensure_empty_dir(base_paths_and_files['result_dir'], defensive=True)
+  os.makedirs(base_paths_and_files['current_result_dir'])
 
 
   hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
@@ -131,10 +132,7 @@ def post_opt(cluster_interface):
 
 
 def pre_iteration_opt(base_paths_and_files):
-  current_result_dir = base_paths_and_files['current_result_dir']
-  print('ensuring empty dir: ', current_result_dir)
-  ensure_empty_dir(current_result_dir)
-
+  pass
 
 def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept):
@@ -179,6 +177,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                               report_hooks=None, optimizer_settings=None):
 
   optimizer_settings = optimizer_settings or {}
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
 
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
@@ -194,9 +193,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   hp_optimizer.iteration_mode = False
   cluster_interface.iteration_mode = False
   iteration_offset = hp_optimizer.iteration
-  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
   pre_iteration_opt(base_paths_and_files)
-
 
   with redirect_stdout_to_tqdm():
       submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
@@ -248,6 +245,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
+
+  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -261,7 +260,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
                                                                                                 dict(restarts=restarts))
-  base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
+
   pre_iteration_opt(base_paths_and_files)
 
   settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
