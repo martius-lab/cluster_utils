@@ -265,7 +265,6 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
               connection_info=comm_server.connection_info)
           for candidate, setting in settings]
   cluster_interface.add_jobs(jobs)
-  cluster_interface.submit_all()
 
   with redirect_stdout_to_tqdm():
       submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
@@ -273,6 +272,9 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
       successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
       while not cluster_interface.n_completed_jobs == len(jobs):
+          to_submit = [job in jobs if job not in cluster_interface.submitted]
+          for job in to_submit[:5]:
+              cluster_interface.submit(job)
 
           for job in cluster_interface.submitted_jobs:
               if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
