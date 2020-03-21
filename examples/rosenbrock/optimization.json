@@ -27,7 +27,7 @@
     "n_jobs_per_iteration": 30
   },
   "fixed_params": {
-    "default_json": "params.json"
+    "default_json": "examples/rosenbrock/params.json"
   },
   "optimized_params": [
   {
