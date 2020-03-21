@@ -242,7 +242,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
 
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                optimizer_settings, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
+                restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
   hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
                                                                                                 submission_requirements,
                                                                                                 optimized_params,
@@ -255,7 +255,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                                 git_params,
                                                                                                 run_local,
                                                                                                 report_hooks,
-                                                                                                optimizer_settings)
+                                                                                                dict(restarts=restarts))
   base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
   pre_iteration_opt(base_paths_and_files)
 

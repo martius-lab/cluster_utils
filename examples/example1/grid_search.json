@@ -19,9 +19,7 @@
   },
   "fixed_params": {
   },
-  "optimizer_settings":{
-    "restarts": 1
-  },
+  "restarts": 1,
   "samples": null,
   "hyperparam_list": [
     {
