@@ -97,6 +97,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
             metric_to_optimize, minimize, optimizer_str, remove_jobs_dir, git_params, run_local, report_hooks,
             optimizer_settings):
   processed_other_params = process_other_params(other_params, None, optimized_params)
+  ensure_empty_dir(base_paths_and_files['result_dir'], defensive=True)
 
 
   hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
@@ -132,7 +133,7 @@ def post_opt(cluster_interface, hp_optimizer):
 def pre_iteration_opt(base_paths_and_files):
   current_result_dir = base_paths_and_files['current_result_dir']
   print('ensuring empty dir: ', current_result_dir)
-  ensure_empty_dir(current_result_dir, defensive=True)
+  ensure_empty_dir(current_result_dir)
 
 
 def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
