@@ -1,0 +1,44 @@
+{
+  "optimization_procedure_name": "rosenbrock_opt",
+  "results_dir": "/is/rg/al/Projects/tmp",
+  "git_params": {
+    "branch": "merge_sbo_esm",
+    "commit": null
+  },
+  "script_relative_path": "examples/rosenbrock/main.py",
+  "num_best_jobs_whose_data_is_kept": 5,
+  "environment_setup": {
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 8000,
+    "bid": 1000
+  },
+  "optimizer_str": "cem_metaoptimizer",
+  "optimizer_settings": {"with_restarts": true,
+                         "num_jobs_in_elite": 10
+  },
+  "optimization_setting": {
+    "metric_to_optimize": "final_value",
+    "minimize": true,
+    "number_of_samples": 120,
+    "n_jobs_per_iteration": 30
+  },
+  "fixed_params": {
+    "default_json": "params.json"
+  },
+  "optimized_params": [
+  {
+    "param": "optimizer",
+    "distribution": "Discrete",
+    "options": ["Adam", "SGD", "Adagrad", "RMSprop"]
+  },
+  {
+    "param": "optimizer_params.lr",
+    "distribution": "TruncatedLogNormal",
+    "bounds": [1e-5, 1.0]
+  },
+  ]
+}
