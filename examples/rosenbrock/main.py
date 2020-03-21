@@ -34,6 +34,10 @@ for i in range(params.iterations):
     opt.step()
     time.sleep(0.1)
 
+if torch.isnan(loss) or loss > 1e5:
+    raise ValueError("Optimization failed")
+
+
 metrics = {'final_value': loss}
 save_metrics_params(metrics, params)
 
