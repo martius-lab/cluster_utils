@@ -228,6 +228,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
 
     def post_run_routine(self):
         if self.git_conn:
+            self.update_status()
             self.git_conn.remove_local_copy()
             del self.git_conn
             self.git_conn = None
