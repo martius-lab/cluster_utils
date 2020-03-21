@@ -24,6 +24,7 @@
   },
   "restarts": 1,
   "samples": null,
+  "remove_jobs_dir": false,
   "hyperparam_list": [
     {
       "param": "fn_args.u",
