@@ -53,7 +53,7 @@ if __name__ == '__main__':
         # Otherwise compute result, checkpoint it and exit
         noiseless_result = fn_to_optimize(**params.fn_args)
         np.save(result_file, noiseless_result)
-        exit_for_resume(only_on_cluster_submissions=True)
+        exit_for_resume()
 
     noisy_result = noiseless_result + 0.5 * np.random.normal()
     metrics = {'result': noisy_result, 'noiseless_result': noiseless_result}
