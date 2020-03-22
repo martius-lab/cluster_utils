@@ -224,7 +224,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         self.update_status()
 
         if not os.path.isfile(self.paths['script_to_run']):
-            raise FileNotFoundError("{self.paths['script_to_run']} does not exist. Wrong script name?")
+            raise FileNotFoundError(f"{self.paths['script_to_run']} does not exist. Wrong script name?")
         return self.git_conn
 
     def post_run_routine(self):
