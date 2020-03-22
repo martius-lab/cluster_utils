@@ -145,7 +145,7 @@ class CommunicationServer():
     job_id, percentage_done = message
     job = self.cluster_system.get_job(job_id)
     if 0 < percentage_done <= 1:
-      job.estimated_finish = job.start_time + (time.time() - job.start_time) / percentage_done
+      job.estimated_end = job.start_time + (time.time() - job.start_time) / percentage_done
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")

@@ -53,14 +53,10 @@ class ProgressBar(ABC):
 
 class SubmittedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
-        new_rbar = '| {n_fmt}/{total_fmt}{postfix}'
+        new_rbar = '| {n_fmt}/{total_fmt}'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar,dynamic_ncols=True, position=2)
-
-    def update_median_time_left(self, time_left):
-        if time_left:
-            self.tqdm.set_postfix(MedianETA=time_left)
 
 
 class RunningJobsBar(ProgressBar):
@@ -77,8 +73,7 @@ class RunningJobsBar(ProgressBar):
 class CompletedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs, minimize):
         if minimize is not None:
-            new_rbar = ('| {n_fmt}/{total_fmt} [{elapsed}<{remaining}'
-                         '{postfix}]')
+            new_rbar = ('| {n_fmt}/{total_fmt} [{postfix}]')
         else:
             new_rbar = '| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
@@ -86,6 +81,16 @@ class CompletedJobsBar(ProgressBar):
         self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar, dynamic_ncols=True, position=0)
         self.bestval = None
         self.minimize = minimize
+        self.postfix_dict = {"MedianETA": None,
+                             "best_value": None}
+
+    def update_median_time_left(self, time_left):
+        if time_left:
+            self.postfix_dict["MedianETA"] = time_left
+            dict_to_use = {key: value for key, value in self.postfix_dict.items() if value is not None}
+
+            self.tqdm.set_postfix(**dict_to_use)
+
 
     def update_best_val(self, new_val):
         self.bestval = self.bestval or new_val
@@ -94,7 +99,10 @@ class CompletedJobsBar(ProgressBar):
         else:
             self.bestval = max(self.bestval, new_val)
 
-        self.tqdm.set_postfix(best_value=self.bestval)
+        self.postfix_dict["best_value"] = self.bestval
+        dict_to_use = {key:value for key, value in self.postfix_dict.items() if value is not None}
+
+        self.tqdm.set_postfix(**dict_to_use)
 
 
 if __name__ == "__main__":
