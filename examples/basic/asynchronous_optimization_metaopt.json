@@ -32,7 +32,7 @@
   {
     "param": "fn_args.u",
     "distribution": "TruncatedNormal",
-    "bounds": [-3.0, 3.0]
+    "options": [-3.0, 3.0]
   },
   {
     "param": "fn_args.v",
@@ -57,7 +57,7 @@
   {
     "param": "fn_args.sharp_penalty",
     "distribution": "Discrete",
-    "options": [false, true]
+    "bounds": [false, true]
   }
   ]
 }
