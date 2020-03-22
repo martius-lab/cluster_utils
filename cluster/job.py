@@ -1,4 +1,5 @@
 import os
+import time
 from contextlib import suppress
 from copy import deepcopy
 from warnings import warn
@@ -27,6 +28,8 @@ class Job():
     self.run_script_path = None
     self.hostname = None
     self.waiting_for_resume = False
+    self.start_time = None
+    self.estimated_end = None
     self.iteration = iteration
     self.comm_server_info = {'id': id,
                              'ip': connection_info['ip'],
@@ -120,4 +123,13 @@ class Job():
       self.status = JobStatus.FAILED
       self.error_info = exception
 
+  @property
+  def time_left(self):
+    if self.estimated_end is not None:
+      return self.estimated_end - time.time()
+    return None
+
+  @staticmethod
+  def time_left_to_str(time_left):
+    return f"{time_left // 3600}h, {time_left // 60}m"
 

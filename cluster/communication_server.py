@@ -1,4 +1,6 @@
 import socket
+import time
+
 import pyuv
 import signal
 import pickle
@@ -14,6 +16,7 @@ class MessageTypes():
   JOB_SENT_RESULTS = 2
   JOB_CONCLUDED = 3
   EXIT_FOR_RESUME = 4
+  JOB_PROGRESS_PERCENTAGE = 5
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -30,6 +33,13 @@ class CommunicationServer():
     print("Running on IP: ", self.ip_adress)
     self.start_listening()
     self.cluster_system = cluster_system
+
+    self.handlers = {MessageTypes.JOB_STARTED: self.handle_job_started,
+                     MessageTypes.ERROR_ENCOUNTERED: self.handle_error_encountered,
+                     MessageTypes.JOB_SENT_RESULTS: self.handle_job_sent_results,
+                     MessageTypes.JOB_CONCLUDED: self.handle_job_concluded,
+                     MessageTypes.EXIT_FOR_RESUME: self.handle_exit_for_resume,
+                     MessageTypes.JOB_PROGRESS_PERCENTAGE: self.handle_job_progress}
 
   @property
   def connection_info(self):
@@ -54,18 +64,10 @@ class CommunicationServer():
       if data is not None:
         #handle.send(ip_port, data) This would be a way to ensure messaging worked well
         msg_type_idx, message = pickle.loads(data)
-        if msg_type_idx == MessageTypes.JOB_STARTED:
-          self.handle_job_started(message)
-        elif msg_type_idx == MessageTypes.ERROR_ENCOUNTERED:
-          self.handle_error_encountered(message)
-        elif msg_type_idx == MessageTypes.JOB_SENT_RESULTS:
-          self.handle_job_sent_results(message)
-        elif msg_type_idx == MessageTypes.JOB_CONCLUDED:
-          self.handle_job_concluded(message)
-        elif msg_type_idx == MessageTypes.EXIT_FOR_RESUME:
-          self.handle_exit_for_resume(message)
-        else:
+        if msg_type_idx not in self.handlers:
           self.handle_unidentified_message(data, msg_type_idx, message)
+        else:
+          self.handlers[msg_type_idx](message)
 
     def async_exit(async):
       async.close()
@@ -100,6 +102,8 @@ class CommunicationServer():
       raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
     job.status = JobStatus.RUNNING
     job.hostname = hostname
+    if not job.waiting_for_resume:
+      job.start_time = time.time()
     job.waiting_for_resume = False
 
 
@@ -136,6 +140,12 @@ class CommunicationServer():
     job_id, = message
     job = self.cluster_system.get_job(job_id)
     job.waiting_for_resume = True
+
+  def handle_job_progress(self, message):
+    job_id, percentage_done = message
+    job = self.cluster_system.get_job(job_id)
+    if 0 < percentage_done <= 1:
+      job.estimated_finish = job.start_time + (time.time() - job.start_time) / percentage_done
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")

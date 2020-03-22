@@ -29,20 +29,29 @@ def save_settings_to_json(setting_dict, model_dir):
 def send_results_to_server(metrics):
   print('Sending results to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
+  send_message(MessageTypes.JOB_SENT_RESULTS, message=(submission_state.job_id, metrics))
+
+
+def send_message(message_type, message):
   loop = pyuv.Loop.default_loop()
   udp = pyuv.UDP(loop)
   udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.JOB_SENT_RESULTS, (submission_state.job_id, metrics))))
+               pickle.dumps((message_type, message)))
+
+def announce_fraction_finished(fraction_finished):
+  if not submission_state.connection_active:
+    return
+
+  print('Sending time estimate to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
+  send_message(MessageTypes.JOB_PROGRESS_PERCENTAGE, message=(submission_state.job_id, fraction_finished))
 
 
-def exit_for_resume(only_on_cluster_submissions=True):
-  if only_on_cluster_submissions and not submission_state.connection_active:
+def exit_for_resume():
+  if not submission_state.connection_active:
     return
   atexit.unregister(report_exit_at_server)  # Disable exit reporting
-  loop = pyuv.Loop.default_loop()
-  udp = pyuv.UDP(loop)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.EXIT_FOR_RESUME, (submission_state.job_id,))))
+  send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
   sys.exit(3)  # With exit code 3 for resume
 
 
@@ -95,29 +104,19 @@ def is_parseable_dict(cmd_line):
 def register_at_server(final_params):
   print('Sending registration to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
-  loop = pyuv.Loop.default_loop()
-  udp = pyuv.UDP(loop)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.JOB_STARTED, (submission_state.job_id, socket.gethostname()))))
+  send_message(MessageTypes.JOB_STARTED, message=(submission_state.job_id, socket.gethostname()))
 
 
 def report_error_at_server(exctype, value, tb):
   print('Sending errors to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
-  loop = pyuv.Loop.default_loop()
-  udp = pyuv.UDP(loop)
-  traceback.print_exception(exctype, value, tb)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.ERROR_ENCOUNTERED, (submission_state.job_id, traceback.format_exception(exctype, value, tb)))))
+  send_message(MessageTypes.ERROR_ENCOUNTERED, message=(submission_state.job_id, traceback.format_exception(exctype, value, tb)))
 
 
 def report_exit_at_server():
   print('Sending confirmation of exit to: ',
         (submission_state.communication_server_ip, submission_state.communication_server_port))
-  loop = pyuv.Loop.default_loop()
-  udp = pyuv.UDP(loop)
-  udp.try_send((submission_state.communication_server_ip, submission_state.communication_server_port),
-               pickle.dumps((MessageTypes.JOB_CONCLUDED, (submission_state.job_id,))))
+  send_message(MessageTypes.JOB_CONCLUDED, message=(submission_state.job_id,))
 
 
 def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,

@@ -3,7 +3,7 @@ from .utils import rm_dir_full
 from abc import ABC, abstractmethod
 from warnings import warn
 from subprocess import run, DEVNULL
-from .job import JobStatus
+from .job import JobStatus, Job
 
 
 class ClusterSubmission(ABC):
@@ -168,6 +168,15 @@ class ClusterSubmission(ABC):
         self.stop(job)
         # TODO: Add check all are gone
 
+  @property
+  def median_time_left(self):
+    times_left = [job.time_left for job in self.running_jobs]
+    times_left_known = [x for x in times_left if x is not None]
+    if not times_left_known:
+      return ""
+
+    median = sorted(times_left_known)[len(times_left_known) // 2]
+    return Job.time_left_to_str(median)
   '''
   @abstractmethod
   def status(self, job):

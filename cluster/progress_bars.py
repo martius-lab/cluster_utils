@@ -53,10 +53,14 @@ class ProgressBar(ABC):
 
 class SubmittedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
-        new_rbar = '| {n_fmt}/{total_fmt}'
+        new_rbar = '| {n_fmt}/{total_fmt}{postfix}'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar,dynamic_ncols=True, position=2)
+
+    def update_median_time_left(self, time_left):
+        if time_left:
+            self.tqdm.set_postfix(MedianETA=time_left)
 
 
 class RunningJobsBar(ProgressBar):
