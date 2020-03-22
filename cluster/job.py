@@ -131,5 +131,5 @@ class Job():
 
   @staticmethod
   def time_left_to_str(time_left):
-    return f"{time_left // 3600}h, {time_left // 60}m"
+    return f"{int(time_left // 3600)}h,{int(time_left // 60)}m"
 
