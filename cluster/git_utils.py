@@ -186,13 +186,10 @@ class GitConnector(object):
         return self._get_latex_template().format(**self.meta_information)
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
-    def __init__(self, params=None, paths=None):
-        self.params = params or {}
-
-        if 'local_path' not in self.params and 'script_to_run' in paths:
-            self.params['local_path'] = os.path.dirname(paths['script_to_run'])
-
+    def __init__(self, params, paths):
+        self.params = params
         self.git_conn = None
+        self.paths = paths
 
         super().__init__(identifier='GitConnector')
 
@@ -225,6 +222,9 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             print('Using commit {} in each iteration'.format(commit_hexsha_short))
             self.params['commit'] = commit_hexsha_short
         self.update_status()
+
+        if not os.path.isfile(self.paths['script_to_run']):
+            raise FileNotFoundError("{self.paths['script_to_run']} does not exist. Wrong script name?")
         return self.git_conn
 
     def post_run_routine(self):
