@@ -171,11 +171,11 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
   #print('Intermediate results deleted...')
 
 
-def asynchronous_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                              number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration,
-                              optimizer_str='cem_metaoptimizer',
-                              remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                              report_hooks=None, optimizer_settings=None):
+def hp_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
+                    number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
+                    early_killing_params, optimizer_str='cem_metaoptimizer',
+                    remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
+                    report_hooks=None, optimizer_settings=None):
 
   optimizer_settings = optimizer_settings or {}
   base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
@@ -190,7 +190,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
                                                                                                 remove_jobs_dir,
                                                                                                 git_params, run_local,
                                                                                                 report_hooks,
-                                                                                                optimizer_settings)
+                                                                                                optimizer_settings,
+                                                                                                )
   hp_optimizer.iteration_mode = False
   cluster_interface.iteration_mode = False
   iteration_offset = hp_optimizer.iteration
@@ -246,8 +247,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
         if estimates:
             best_estimate = min(estimates) if minimize else max(estimates)
             successful_jobs_bar.update_best_val(best_estimate)
-
-        kill_bad_looking_jobs(cluster_interface, 10, metric_to_optimize, minimize)
+        if kill_bad_jobs_early:
+            kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, **early_killing_params)
 
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)
@@ -255,7 +256,7 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
   rm_dir_full(base_paths_and_files['current_result_dir'])
 
 
-def kill_bad_looking_jobs(cluster_interface, threshold_rank, metric_to_optimize, minimize):
+def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, target_rank, how_many_stds):
     intermediate_results = [job.reported_metric_values + [job.metrics[metric_to_optimize]]
                             for job in cluster_interface.successful_jobs]
     if not intermediate_results:
@@ -280,8 +281,7 @@ def kill_bad_looking_jobs(cluster_interface, threshold_rank, metric_to_optimize,
         index, value = len(job.reported_metric_values)-1, np.array(job.reported_metric_values[-1])
         all_values = np.concatenate([intermediate_results_np[:, index], value.reshape(1)])
         rank_of_current_job = np.argsort(np.argsort(all_values*sign))[-1]
-        if rank_of_current_job - 3*rank_deviations[index] > threshold_rank:
-            print(f"Job too bad. Index:{index}, Rank:{rank_of_current_job}, deviation:{rank_deviations[index]}, value:{value}")
+        if rank_of_current_job - how_many_stds*rank_deviations[index] > target_rank:
             job.metrics = {metric_to_optimize: float(value)}
             job.status = JobStatus.CONCLUDED
             job.set_results()

@@ -1,5 +1,5 @@
 from pathlib2 import Path
-from . import asynchronous_optimization, init_plotting
+from . import hp_optimization, init_plotting
 from .distributions import *
 from .latex_utils import *
 from .utils import mkdtemp, get_git_url
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
   json_hook = SectionFromJsonHook(section_title="Optimization setting script", section_generator=find_json)
 
-  asynchronous_optimization(
+  hp_optimization(
     base_paths_and_files=base_paths_and_files,
     submission_requirements=params.cluster_requirements,
     optimized_params=distribution_list,
@@ -82,5 +82,7 @@ if __name__ == '__main__':
     report_hooks=[json_hook],
     num_best_jobs_whose_data_is_kept=params.num_best_jobs_whose_data_is_kept,
     optimizer_settings=params.optimizer_settings,
+    kill_bad_jobs_early=params.get('kill_bad_jobs_early', False),
+    early_killing_params=params.get('early_killing_params', {}),
     **params.optimization_setting,
   )
