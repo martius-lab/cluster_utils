@@ -47,6 +47,17 @@ def announce_fraction_finished(fraction_finished):
   send_message(MessageTypes.JOB_PROGRESS_PERCENTAGE, message=(submission_state.job_id, fraction_finished))
 
 
+def announce_early_results(metrics):
+  if not submission_state.connection_active:
+    return
+
+  sanitized = {key: sanitize_numpy_torch(value) for key, value in metrics.items()}
+
+  print('Sending early results to: ',
+        (submission_state.communication_server_ip, submission_state.communication_server_port))
+  send_message(MessageTypes.METRIC_EARLY_REPORT, message=(submission_state.job_id, sanitized))
+
+
 def exit_for_resume():
   if not submission_state.connection_active:
     return
@@ -54,6 +65,13 @@ def exit_for_resume():
   send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
   sys.exit(3)  # With exit code 3 for resume
 
+
+def sanitize_numpy_torch(possibly_np_or_tensor):
+  if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
+    return possibly_np_or_tensor.item()  # silently convert to float
+  if str(type(possibly_np_or_tensor)) == "<class 'numpy.ndarray'>":
+    return float(possibly_np_or_tensor)
+  return possibly_np_or_tensor
 
 def save_metrics_params(metrics, params, save_dir=None):
   if save_dir is None:
@@ -73,10 +91,7 @@ def save_metrics_params(metrics, params, save_dir=None):
   metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
 
   for key, value in metrics.items():
-    if str(type(value)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
-      metrics[key] = value.item()  # silently convert to float
-    if str(type(value)) == "<class 'numpy.ndarray'>":
-      metrics[key] = float(value)
+      metrics[key] = sanitize_numpy_torch(value)
 
   save_dict_as_one_line_csv(metrics, metric_file)
   if submission_state.connection_active:

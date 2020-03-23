@@ -16,7 +16,8 @@ class JobStatus():
   CONCLUDED = 4
 
 class Job():
-  def __init__(self, id, candidate, settings, other_params, paths, iteration, connection_info):
+  def __init__(self, id, candidate, settings, other_params, paths, iteration, connection_info, metric_to_watch=None):
+    self.metric_to_watch = metric_to_watch
     self.paths = paths
     self.id = id
     self.candidate = candidate
@@ -40,6 +41,7 @@ class Job():
     self.resulting_df = None 
     self.param_df = None 
     self.metric_df = None
+    self.reported_metric_values = None
 
   def generate_execution_cmd(self, paths):
     current_setting = deepcopy(self.settings)

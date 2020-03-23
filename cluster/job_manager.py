@@ -209,7 +209,8 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
           new_candidate, new_settings = next(hp_optimizer.ask(1))
           new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                         other_params=processed_other_params, paths=base_paths_and_files,
-                        iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info)
+                        iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info,
+                        metric_to_watch=metric_to_optimize)
           cluster_interface.add_jobs(new_job)
           cluster_interface.submit(new_job)
         if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
@@ -234,9 +235,16 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
         successful_jobs_bar.update(cluster_interface.n_successful_jobs)
         successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
 
+        best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(minimize=minimize)
         if len(hp_optimizer.full_df) > 0:
             best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
-            successful_jobs_bar.update_best_val(best_value)
+        else:
+            best_value = None
+
+        estimates = [item for item in [best_seen_metric, best_value] if item is not None]
+        if estimates:
+            best_estimate = min(estimates) if minimize else max(estimates)
+            successful_jobs_bar.update_best_val(best_estimate)
 
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)

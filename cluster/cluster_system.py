@@ -177,6 +177,18 @@ class ClusterSubmission(ABC):
 
     median = sorted(times_left_known)[len(times_left_known) // 2]
     return Job.time_left_to_str(median)
+
+  def get_best_seen_value_of_main_metric(self, minimize):
+    jobs_with_results = [job.reported_metric_values for job in self.running_jobs if job.reported_metric_values]
+    latest = [item[-1] for item in jobs_with_results]
+    if not latest:
+      return None
+    if minimize:
+      return min(latest)
+    else:
+      return max(latest)
+
+
   '''
   @abstractmethod
   def status(self, job):

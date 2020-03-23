@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 import time
-from cluster import save_metrics_params, update_params_from_cmdline, announce_fraction_finished
+from cluster import save_metrics_params, update_params_from_cmdline, announce_fraction_finished, announce_early_results
 
 def rosenbrock(x, y):
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
@@ -34,6 +34,7 @@ for i in range(params.iterations):
     opt.step()
     time.sleep(10)
     announce_fraction_finished((i+1) / params.iterations)
+    announce_early_results({'final_value': loss})
 
 
 if torch.isnan(loss) or loss > 1e5:

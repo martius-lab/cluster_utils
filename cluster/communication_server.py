@@ -17,6 +17,7 @@ class MessageTypes():
   JOB_CONCLUDED = 3
   EXIT_FOR_RESUME = 4
   JOB_PROGRESS_PERCENTAGE = 5
+  METRIC_EARLY_REPORT = 6
 
 class MinJob():
   def __init__(self, id, settings, status):
@@ -39,7 +40,8 @@ class CommunicationServer():
                      MessageTypes.JOB_SENT_RESULTS: self.handle_job_sent_results,
                      MessageTypes.JOB_CONCLUDED: self.handle_job_concluded,
                      MessageTypes.EXIT_FOR_RESUME: self.handle_exit_for_resume,
-                     MessageTypes.JOB_PROGRESS_PERCENTAGE: self.handle_job_progress}
+                     MessageTypes.JOB_PROGRESS_PERCENTAGE: self.handle_job_progress,
+                     MessageTypes.METRIC_EARLY_REPORT: self.handle_metric_early_report}
 
   @property
   def connection_info(self):
@@ -146,6 +148,12 @@ class CommunicationServer():
     job = self.cluster_system.get_job(job_id)
     if 0 < percentage_done <= 1:
       job.estimated_end = job.start_time + (time.time() - job.start_time) / percentage_done
+
+  def handle_metric_early_report(self, message):
+    job_id, metrics = message
+    job = self.cluster_system.get_job(job_id)
+    if job.metric_to_watch in metrics:
+      job.reported_metric_values.append(metrics[job.metric_to_watch])
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
     print("Received a message I did not understand:")
