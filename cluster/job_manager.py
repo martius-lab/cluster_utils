@@ -260,30 +260,31 @@ def kill_bad_looking_jobs(cluster_interface, threshold_rank, metric_to_optimize,
                             for job in cluster_interface.successful_jobs]
     if not intermediate_results:
         return
-    if not all([len(item) == len(intermediate_results) for item in intermediate_results]):
-        return
+    max_len = max([len(item) for item in intermediate_results])
+    intermediate_results = [item for item in intermediate_results if len(item) == max_len]
 
     if len(intermediate_results) < 5:
         return
 
     intermediate_results_np = np.array(intermediate_results)
     sign = 1 if minimize else -1
-    intermediate_ranks = np.argsort(np.argsort(intermediate_results_np*sign, axis=1), axis=1)
-    rank_deviations = np.sqrt(np.sum((intermediate_ranks - intermediate_ranks[:, -1]) ** 2, axis=1))
+    intermediate_ranks = np.argsort(np.argsort(intermediate_results_np*sign, axis=0), axis=0)
+    rank_deviations = np.sqrt(np.mean((intermediate_ranks - intermediate_ranks[:, -1:]) ** 2, axis=0))
 
     for job in cluster_interface.running_jobs:
         if not job.reported_metric_values:
             continue
-        if len(job.reported_metric_values) > intermediate_results_np.size[1]//2:
+        if len(job.reported_metric_values) > intermediate_results_np.shape[1]//2:
             # If a job runs more than half of its runtime, don't kill it
             continue
         index, value = len(job.reported_metric_values)-1, np.array(job.reported_metric_values[-1])
-        all_values = np.concatenate([intermediate_results[:, index], value])
-        rank_of_current_job = np.argsort(np.argsort(all_values*sign, axis=1), axis=1)[-1]
+        all_values = np.concatenate([intermediate_results_np[:, index], value.reshape(1)])
+        rank_of_current_job = np.argsort(np.argsort(all_values*sign))[-1]
         if rank_of_current_job - 3*rank_deviations[index] > threshold_rank:
             print(f"Job too bad. Index:{index}, Rank:{rank_of_current_job}, deviation:{rank_deviations[index]}, value:{value}")
             job.metrics = {metric_to_optimize: float(value)}
             job.status = JobStatus.CONCLUDED
+            job.set_results()
             cluster_interface.stop_fn(job.cluster_id)
 
 

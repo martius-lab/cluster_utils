@@ -213,7 +213,7 @@ class Metaoptimizer(Optimizer):
       if result is not None:
         df, _, _ = result
       if iteration_df is not None:
-        iteration_df = pd.concat((iteration_df, df), axis=0)
+        iteration_df = pd.concat((iteration_df, df), axis=0, sort=True)
       else:
         iteration_df = df
     if iteration_df is None:

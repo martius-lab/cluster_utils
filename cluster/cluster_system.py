@@ -235,7 +235,7 @@ class ClusterSubmission(ABC):
     for job in self.failed_jobs:
       if job.error_info not in self.error_msgs:
         warn_string = f'\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with error:\x1b[0m\n'
-        warn(f"{warn_string}{''.join(job.error_info)}")
+        warn(f"{warn_string}{''.join(job.error_info or '')}")
         self.error_msgs.add(job.error_info)
 
   def __repr__(self):

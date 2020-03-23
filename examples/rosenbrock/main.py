@@ -32,13 +32,14 @@ for i in range(params.iterations):
     loss = rosenbrock(x, y)
     loss.backward()
     opt.step()
-    time.sleep(10)
+    time.sleep(3)
+
+    if torch.isnan(loss) or loss > 1e5:
+        raise ValueError("Optimization failed")
+
     announce_fraction_finished((i+1) / params.iterations)
     announce_early_results({'final_value': loss})
 
-
-if torch.isnan(loss) or loss > 1e5:
-    raise ValueError("Optimization failed")
 
 
 metrics = {'final_value': loss}
