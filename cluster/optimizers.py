@@ -38,7 +38,7 @@ class Optimizer(ABC):
       job.results_used_for_update = True
     df['iteration'] = self.iteration + 1
 
-    self.full_df = pd.concat([self.full_df, df], ignore_index=True)
+    self.full_df = pd.concat([self.full_df, df], ignore_index=True, sort=True)
     self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
     self.minimal_df = average_out(self.full_df, [self.metric_to_optimize], self.params)
