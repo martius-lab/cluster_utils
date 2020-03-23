@@ -11,6 +11,7 @@ from .job import Job, JobStatus
 from .errors import OneTimeExceptionHandler
 import time
 import pandas as pd
+import numpy as np
 import signal
 import sys
 from warnings import warn
@@ -246,10 +247,44 @@ def asynchronous_optimization(base_paths_and_files, submission_requirements, opt
             best_estimate = min(estimates) if minimize else max(estimates)
             successful_jobs_bar.update_best_val(best_estimate)
 
+        kill_bad_looking_jobs(cluster_interface, 10, metric_to_optimize, minimize)
+
   post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                      num_best_jobs_whose_data_is_kept)
   post_opt(cluster_interface)
   rm_dir_full(base_paths_and_files['current_result_dir'])
+
+
+def kill_bad_looking_jobs(cluster_interface, threshold_rank, metric_to_optimize, minimize):
+    intermediate_results = [job.reported_metric_values + [job.metrics[metric_to_optimize]]
+                            for job in cluster_interface.successful_jobs]
+    if not intermediate_results:
+        return
+    if not all([len(item) == len(intermediate_results) for item in intermediate_results]):
+        return
+
+    if len(intermediate_results) < 5:
+        return
+
+    intermediate_results_np = np.array(intermediate_results)
+    sign = 1 if minimize else -1
+    intermediate_ranks = np.argsort(np.argsort(intermediate_results_np*sign, axis=1), axis=1)
+    rank_deviations = np.sqrt(np.sum((intermediate_ranks - intermediate_ranks[:, -1]) ** 2, axis=1))
+
+    for job in cluster_interface.running_jobs:
+        if not job.reported_metric_values:
+            continue
+        if len(job.reported_metric_values) > intermediate_results_np.size[1]//2:
+            # If a job runs more than half of its runtime, don't kill it
+            continue
+        index, value = len(job.reported_metric_values)-1, np.array(job.reported_metric_values[-1])
+        all_values = np.concatenate([intermediate_results[:, index], value])
+        rank_of_current_job = np.argsort(np.argsort(all_values*sign, axis=1), axis=1)[-1]
+        if rank_of_current_job - 3*rank_deviations[index] > threshold_rank:
+            print(f"Job too bad. Index:{index}, Rank:{rank_of_current_job}, deviation:{rank_deviations[index]}, value:{value}")
+            job.metrics = {metric_to_optimize: float(value)}
+            job.status = JobStatus.CONCLUDED
+            cluster_interface.stop_fn(job.cluster_id)
 
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
