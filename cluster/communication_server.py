@@ -153,6 +153,7 @@ class CommunicationServer():
     job_id, metrics = message
     job = self.cluster_system.get_job(job_id)
     if job.metric_to_watch in metrics:
+      job.reported_metric_values = job.reported_metric_values or []
       job.reported_metric_values.append(metrics[job.metric_to_watch])
 
   def handle_unidentified_message(self, data, msg_type_idx, message):
