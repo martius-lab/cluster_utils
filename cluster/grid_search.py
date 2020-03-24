@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
   init_plotting()
 
-  params = update_params_from_cmdline(verbose=False)
+  params = update_params_from_cmdline(verbose=True)
 
   json_full_name = os.path.abspath(sys.argv[1])
   home = str(Path.home())
