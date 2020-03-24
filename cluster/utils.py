@@ -286,13 +286,21 @@ def fstring_in_json(format_string, namespace):
     return formatted
 
 
-def recursive_dynamic_json(nested_dict, namespace):
+def recursive_dynamic_json(nested_dict_or_list, namespace):
   "Evaluates each key in nested dict as an f-string within a given namespace"
-  for k, v in nested_dict.items():
-    if isinstance(v, collections.Mapping):
-      recursive_dynamic_json(v, namespace)
-    else:
-      nested_dict[k] = fstring_in_json(v, namespace)
+  if isinstance(nested_dict_or_list, collections.Mapping):
+    for k, v in nested_dict_or_list.items():
+      if isinstance(v, collections.Mapping) or isinstance(v, list):
+        recursive_dynamic_json(v, namespace)
+      else:
+        nested_dict_or_list[k] = fstring_in_json(v, namespace)
+  elif isinstance(nested_dict_or_list, list):
+    for i, item in enumerate(nested_dict_or_list):
+      if isinstance(item, collections.Mapping) or isinstance(item, list):
+        recursive_dynamic_json(item, namespace)
+      else:
+        nested_dict_or_list[i] = fstring_in_json(item, namespace)
+
 
 
 class SafeDict(dict):
