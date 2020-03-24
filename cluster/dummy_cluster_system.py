@@ -13,8 +13,8 @@ import numpy as np
 
 
 class Dummy_ClusterSubmission(ClusterSubmission):
-  def __init__(self, requirements, paths, name, remove_jobs_dir=True, iteration_mode=True):
-    super().__init__(name, paths, remove_jobs_dir, iteration_mode)
+  def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
+    super().__init__(paths, remove_jobs_dir, iteration_mode)
     self._process_requirements(requirements)
     self.exceptions_seen = set({})
     self.available_cpus = range(cpu_count())
@@ -37,14 +37,14 @@ class Dummy_ClusterSubmission(ClusterSubmission):
     self.futures_tuple.append(new_futures_tuple)
     return cluster_id
 
-  def stop_fn(self, job):
+  def stop_fn(self, job_id):
     for cluster_id, future in self.futures_tuple:
-      if cluster_id == job.cluster_id:
+      if cluster_id == job_id:
         future.cancel()
     concurrent.futures.wait(self.futures)
 
   def generate_job_spec_file(self, job):
-    job_file_name = '{}_{}.sh'.format(self.name, job.id_number)
+    job_file_name = '{}_{}.sh'.format(job.iteration, job.id)
     run_script_file_path = os.path.join(self.submission_dir, job_file_name)
     cmd = job.generate_execution_cmd(self.paths)
     # Prepare namespace for string formatting (class vars + locals)
@@ -56,7 +56,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
       script_file.write(LOCAL_RUN_SCRIPT % namespace)
     os.chmod(run_script_file_path, 0O755)  # Make executable
 
-    job.job_spec_file_path = run_script_file_path
+    job.run_script_path = run_script_file_path
 
   def status(self, job):
     future = [future for cluster_id, future in self.futures_tuple if cluster_id == job.cluster_id]
