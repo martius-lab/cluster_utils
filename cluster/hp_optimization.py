@@ -44,16 +44,18 @@ if __name__ == '__main__':
   results_path = os.path.join(home, params.results_dir, opt_procedure_name)
   jobs_path = mkdtemp(suffix=opt_procedure_name + "-" + "jobs")
 
-  given_url = params.git_params.get("url")
-  if not given_url:
-    auto_url = get_git_url()
-    if not auto_url:
-      raise git.exc.InvalidGitRepositoryError("No git repository given in json file or auto-detected")
+  git_params = None
+  if params.git_params is not None:
+    given_url = params.git_params.get("url")
+    if not given_url:
+      auto_url = get_git_url()
+      if not auto_url:
+        raise git.exc.InvalidGitRepositoryError("No git repository given in json file or auto-detected")
 
-    git_params = dict(url=auto_url, local_path=main_path, **params.git_params)
+      git_params = dict(url=auto_url, local_path=main_path, **params.git_params)
 
-  else:
-    git_params = dict(local_path=main_path, **params.git_params)
+    else:
+      git_params = dict(local_path=main_path, **params.git_params)
 
   base_paths_and_files = dict(
     main_path=main_path,
