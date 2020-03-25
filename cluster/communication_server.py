@@ -35,7 +35,7 @@ class CommunicationServer():
     def __init__(self, cluster_system):
         self.ip_adress = self.get_own_ip()
         self.port = None
-        logger.info("Master script running on IP: ", self.ip_adress)
+        logger.info(f"Master script running on IP: {self.ip_adress}")
         self.start_listening()
         self.cluster_system = cluster_system
 
