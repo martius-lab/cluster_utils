@@ -20,7 +20,7 @@ logger = logging.getLogger('cluster_utils')
 
 def init_logging(working_dir):
     filename = os.path.join(working_dir, 'cluster_run.log')
-    logging.basicConfig(filename=,
+    logging.basicConfig(filename=filename,
                         level=logging.DEBUG,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     print(f"Detailed logging available in {filename}")
@@ -225,7 +225,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
             if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
                 post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                                    num_best_jobs_whose_data_is_kept)
-                logger.info('starting new iteration:', hp_optimizer.iteration)
+                logger.info(f'starting new iteration: {hp_optimizer.iteration}')
                 pre_iteration_opt(base_paths_and_files)
 
             for job in cluster_interface.submitted_jobs:
