@@ -75,16 +75,18 @@ class CommunicationServer():
                 else:
                     self.handlers[msg_type_idx](message)
 
-        def async_exit(async):
-            async.close()
+        def async_exit(async_connection):
+            async_connection.close()
             signal_h.close()
             server.close()
 
-        def signal_cb(sig, frame):
-            async.send(async_exit)
 
         loop = pyuv.Loop.default_loop()
-        async = pyuv.Async(loop)
+        async_connection = pyuv.Async(loop)
+
+        def signal_cb(sig, frame):
+            async_connection.send(async_exit)
+
 
         server = pyuv.UDP(loop)
         server.bind((self.ip_adress, 0))
