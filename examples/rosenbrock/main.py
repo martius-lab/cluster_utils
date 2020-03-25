@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import torch
@@ -19,6 +20,8 @@ dct = {'Adam': torch.optim.Adam,
 def get_optimizer(parameters, name, opt_params):
     return dct[name](parameters, **opt_params)
 
+
+print(sys.argv)
 
 x_0 = torch.Tensor(np.array(0.0))
 y_0 = torch.Tensor(np.array(0.0))
