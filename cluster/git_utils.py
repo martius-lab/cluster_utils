@@ -149,7 +149,7 @@ class GitConnector(object):
         if commit is not None:
             try:
                 # Hard reset HEAD to specific commit
-                cloned_repo.head.reset(commit=commit)
+                cloned_repo.head.reset(commit=commit, working_tree=True)
             except git.exc.GitCommandError as e:
                 raise RuntimeError(f"Commit {commit} failed as a valid revision. "
                                    f"Maybe it is not reachable within depth {depth}?") from e
