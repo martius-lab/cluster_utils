@@ -16,3 +16,5 @@ examples/basic/metrics\.csv
 examples/basic/param_choice\.csv
 
 examples/basic/settings\.json
+
+examples/rosenbrock/result/
