@@ -1,12 +1,13 @@
+import logging
 import os
 import time
 from contextlib import suppress
 from copy import deepcopy
-from warnings import warn
 from .utils import dict_to_dirname, flatten_nested_string_dict
 from cluster.utils import update_recursive
 import pandas as pd
 
+logger = logging.getLogger("cluster_utils")
 
 class JobStatus():
     INITIAL_STATUS = -1
@@ -67,7 +68,7 @@ class Job():
             raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
 
         if 'custom_python_executable_path' in paths:
-            warn('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+            logger.warning('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
 
         python_executor = paths.get('custom_python_executable_path', 'python3')
         is_python_script = paths.get('is_python_script', True)

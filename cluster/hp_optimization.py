@@ -21,11 +21,11 @@ def get_distribution(distribution, **kwargs):
         raise NotImplementedError(f"Distribution {distribution} does not exist")
 
     if distribution == 'Discrete' and "bounds" in kwargs:
-        warn("Change \'bounds\' to \'options\' for a Discrete distribution!! Trying to continue...")
+        print("Change \'bounds\' to \'options\' for a Discrete distribution!! Trying to continue...")
         kwargs["options"] = kwargs.pop("bounds")
 
     if distribution != 'Discrete' and "options" in kwargs:
-        warn(f"Change \'options\' to \'bounds\' to options for a {distribution} distribution!! Trying to continue...")
+        print(f"Change \'options\' to \'bounds\' to options for a {distribution} distribution!! Trying to continue...")
         kwargs["bounds"] = kwargs.pop("options")
     return distr_dict[distribution](**kwargs)
 

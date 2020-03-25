@@ -1,15 +1,10 @@
 import logging
 import os
-import ast
 from .cluster_system import ClusterSubmission
-from collections import namedtuple, Counter
+from collections import namedtuple
 from copy import copy
-from random import shuffle
 from subprocess import run, PIPE
-from warnings import warn
 from .constants import *
-from contextlib import suppress
-import pandas as pd
 from threading import Thread
 import time
 
@@ -135,13 +130,13 @@ class Condor_ClusterSubmission(ClusterSubmission):
         raw = self.condor_q_info_raw
         err = self.condor_q_info_err
         if 'Failed' in err:
-            warn('Condor_q currently unavailable')
+            logger.warning('Condor_q currently unavailable')
             return None
         condor_lines = raw.split('\n')
         condor_parsed_lines = [[item for item in line.split(' ') if item] for line in condor_lines]
         condor_parsed_lines = [line for line in condor_parsed_lines if len(line) > 8]
         if len(condor_parsed_lines) == 0 or 'SUBMITTED' not in raw:
-            warn('Condor_q currently unavailable')
+            logger.warning('Condor_q currently unavailable')
             return None
 
         stripped_db = [[item.strip() for item in line] for line in condor_parsed_lines]

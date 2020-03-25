@@ -1,6 +1,7 @@
+import logging
+
 from sklearn.ensemble import RandomForestRegressor
 from contextlib import suppress
-from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,7 @@ import seaborn as sns
 from .constants import *
 from .utils import shorten_string
 
+logger = logging.getLogger('cluster_utils')
 
 def performance_summary(df, metrics):
     perf = {}
@@ -34,7 +36,7 @@ def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True
     for metric in metrics:
         std_name = metric + std_ending
         if std_name in result.columns:
-            warn('Name {} already used. Skipping ...'.format(std_name))
+            logger.warning('Name {} already used. Skipping ...'.format(std_name))
         else:
             result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg({metric: np.nanstd})[metric]
     return result
@@ -66,7 +68,7 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
     for val in sorted(unique_vals):
         filtered = smaller_df.loc[smaller_df[param] == val][metric]
         if filtered.nunique() == 1:
-            warn('Singular matrix for {}, skipping'.format(metric))
+            logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
             continue
         with suppress(Exception):
             ax = sns.distplot(filtered, hist=False, label=str(

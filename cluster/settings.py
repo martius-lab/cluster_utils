@@ -8,7 +8,6 @@ import time
 import traceback
 import socket
 from datetime import datetime
-from warnings import warn
 
 import pyuv
 
@@ -17,7 +16,7 @@ from cluster.utils import recursive_objectify, recursive_dynamic_json, load_json
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, create_dir
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
 
 def save_settings_to_json(setting_dict, model_dir):
@@ -78,7 +77,7 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
 def save_metrics_params(metrics, params, save_dir=None):
     if save_dir is None:
         save_dir = params.model_dir
-    create_dir(save_dir)
+    os.makedirs(save_dir, exist_ok=True)
     save_settings_to_json(params, save_dir)
 
     param_file = os.path.join(save_dir, CLUSTER_PARAM_FILE)
@@ -89,7 +88,7 @@ def save_metrics_params(metrics, params, save_dir=None):
     if 'time_elapsed' not in metrics.keys():
         metrics['time_elapsed'] = time_elapsed
     else:
-        warn('\'time_elapsed\' metric already taken. Automatic time saving failed.')
+        print('WARNING: \'time_elapsed\' metric already taken. Automatic time saving failed.')
     metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
 
     for key, value in metrics.items():
@@ -114,7 +113,7 @@ def is_parseable_dict(cmd_line):
         res = ast.literal_eval(cmd_line)
         return isinstance(res, dict)
     except Exception as e:
-        warn('Dict literal eval suppressed exception: ', e)
+        print('WARNING: Dict literal eval suppressed exception: ', e)
         return False
 
 

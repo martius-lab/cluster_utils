@@ -3,7 +3,6 @@ import sys
 import os
 from .utils import rm_dir_full
 from time import sleep
-from warnings import warn
 
 from .cluster_system import ClusterSubmissionHook
 
@@ -170,7 +169,7 @@ class GitConnector(object):
     def meta_information(self):
 
         if self._repo is None:
-            warn('Not connected to a git repository')
+            logger.warning('Not connected to a git repository')
             return
 
         res = dict(use_local_copy=str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),

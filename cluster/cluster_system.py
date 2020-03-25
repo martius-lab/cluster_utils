@@ -4,7 +4,6 @@ import logging
 import os
 from .utils import rm_dir_full
 from abc import ABC, abstractmethod
-from warnings import warn
 from subprocess import run, DEVNULL
 from .job import JobStatus, Job
 
@@ -154,7 +153,7 @@ class ClusterSubmission(ABC):
         if not job.cluster_id is None:
             raise RuntimeError('Can not run a job that already ran')
         if not job in self.jobs:
-            warn('Submitting job that was not yet added to the cluster system interface, will add it now')
+            logger.warning('Submitting job that was not yet added to the cluster system interface, will add it now')
             self.add_jobs(job)
         cluster_id = self.submit_fn(job)
         job.cluster_id = cluster_id
@@ -238,7 +237,7 @@ class ClusterSubmission(ABC):
         for job in self.failed_jobs:
             if job.error_info not in self.error_msgs:
                 warn_string = f'\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with error:\x1b[0m\n'
-                warn(f"{warn_string}{''.join(job.error_info or '')}")
+                logger.warning(f"{warn_string}{''.join(job.error_info or '')}")
                 self.error_msgs.add(job.error_info)
 
     def __repr__(self):
@@ -274,7 +273,7 @@ def is_command_available(cmd):
         if e.errno == os.errno.ENOENT:
             return False
         else:
-            warn('Found command, but ' + cmd + ' could not be executed')
+            logger.warning('Found command, but ' + cmd + ' could not be executed')
             return True
     return True
 

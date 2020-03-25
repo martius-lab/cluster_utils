@@ -14,7 +14,6 @@ from collections import defaultdict
 import tempfile
 from copy import deepcopy
 from time import sleep
-from warnings import warn
 import git
 
 from .constants import *
@@ -27,15 +26,6 @@ def shorten_string(string, max_len):
     if len(string) > max_len - 3:
         return '...' + string[-max_len + 3:]
     return string
-
-
-def get_caller_file(depth=2):
-    _, filename, _, _, _, _ = inspect.stack()[depth]
-    return filename
-
-
-def get_submission_name(iteration):
-    return 'iteration_{}'.format(iteration + 1)
 
 
 def check_valid_name(string):
@@ -64,12 +54,7 @@ def rm_dir_full(dir_name):
         shutil.rmtree(dir_name, ignore_errors=True)
 
     if os.path.exists(dir_name):
-        warn(f'Removing of dir {dir_name} failed')
-
-
-def create_dir(dir_name):
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+        logger.warning(f'Removing of dir {dir_name} failed')
 
 
 def flatten_nested_string_dict(nested_dict, prepend=''):
@@ -94,7 +79,7 @@ def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_sett
     if hyperparam_dict and distribution_list:
         raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
     if not hyperparam_dict and not distribution_list:
-        warn('No hyperparameters vary. Only running restarts')
+        logger.warning('No hyperparameters vary. Only running restarts')
         return [{}]
     if distribution_list and not samples:
         raise TypeError('Number of samples not specified')
@@ -136,15 +121,6 @@ def validate_hyperparam_dict(hyperparam_dict):
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
                 raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
-
-
-def optimizer_sampler(optimizer, num_samples):
-    return optimizer.ask(num_samples)
-    # for distr in distribution_list:
-    #  distr.prepare_samples(howmany=num_samples)
-    # for i in range(num_samples):
-    #  nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
-    #  yield nested_to_dict(nested_items)
 
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):

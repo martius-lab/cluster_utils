@@ -1,6 +1,6 @@
+import logging
 from abc import ABC, abstractmethod
 from collections import Counter
-from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +10,7 @@ import scipy.stats
 from .constants import *
 from .utils import check_valid_name
 
+logger = logging.getLogger('cluster_utils')
 
 def clip(number, bounds):
     low, high = bounds
@@ -105,7 +106,7 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
         self.mean = new_mean
 
         if not (self.lower <= self.mean <= self.upper):
-            warn('Mean of {} is out of bounds'.format(self.param_name))
+            logger.warning('Mean of {} is out of bounds'.format(self.param_name))
 
     def prepare_samples(self, howmany):
         howmany = max(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
@@ -145,7 +146,7 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
         self.log_mean = new_log_mean
 
         if not (self.log_lower <= self.log_mean <= self.log_upper):
-            warn('Mean of {} is out of bounds'.format(self.param_name))
+            logger.warning('Mean of {} is out of bounds'.format(self.param_name))
 
     def prepare_samples(self, howmany):
         howmany = max(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
@@ -175,7 +176,7 @@ class RelaxedCounter(Counter):
     def __getitem__(self, key):
         if key not in self.keys():
             if str(key) in self.keys():
-                warn('String comparison used for key {}'.format(key))
+                logger.warning('String comparison used for key {}'.format(key))
                 return super().__getitem__(str(key))
         return super().__getitem__(key)
 
@@ -200,7 +201,7 @@ class Discrete(Distribution):
                       for val in self.option_list]
         sum = np.sum(self.probs)
         if not np.isclose(sum, 1.0):
-            warn('Probabilities of \'{}\' do not sum up to one.'.format(self.param_name))
+            logger.warning('Probabilities of \'{}\' do not sum up to one.'.format(self.param_name))
             self.probs = list(np.array(self.probs) / sum)
 
     def prepare_samples(self, howmany):

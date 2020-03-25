@@ -1,16 +1,15 @@
+import logging
 import os
-from random import shuffle
 from copy import copy
 from .cluster_system import ClusterSubmission
 from multiprocessing import cpu_count
 import concurrent.futures
 from subprocess import run, PIPE
 from .constants import *
-from warnings import warn
 import random
-from time import sleep
 import numpy as np
 
+logger = logging.getLogger('cluster_utils')
 
 class Dummy_ClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
@@ -87,7 +86,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         self.available_cpus = min(self.max_cpus, cpu_count())
         self.concurrent_jobs = self.available_cpus // self.cpus_per_job
         if self.concurrent_jobs == 0:
-            warn('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
+            logger.warning('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
             self.concurrent_jobs = self.available_cpus
         assert self.concurrent_jobs > 0
 
@@ -98,5 +97,5 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         for err in errs:
             if err not in self.exceptions_seen:
                 self.exceptions_seen.add(err)
-                warn(err)
+                logger.warning(err)
         return len(errs) > 0

@@ -5,17 +5,15 @@ from cluster.progress_bars import redirect_stdout_to_tqdm, SubmittedJobsBar, Run
 from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import optimizer_dict
-from .utils import process_other_params, get_caller_file, rm_dir_full, make_red
+from .utils import process_other_params, rm_dir_full, make_red
 from .git_utils import ClusterSubmissionGitHook
 from .job import Job, JobStatus
-from .errors import OneTimeExceptionHandler
 import time
 import pandas as pd
 import numpy as np
 import logging
 import signal
 import sys
-from warnings import warn
 from .communication_server import CommunicationServer
 
 logger = logging.getLogger('cluster_utils')
@@ -33,12 +31,15 @@ def ensure_empty_dir(dir_name, defensive=False):
             ans = input()
             if ans.lower() == 'y':
                 shutil.rmtree(dir_name, ignore_errors=True)
+                logger.info(f"Deleted old contents of {dir_name}")
                 os.makedirs(dir_name)
         else:
             shutil.rmtree(dir_name, ignore_errors=True)
+            logger.info(f"Deleted old contents of {dir_name}")
             os.makedirs(dir_name)
     else:
         os.makedirs(dir_name)
+        logger.info(f"Directory {dir_name} created")
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
@@ -73,6 +74,7 @@ def update_best_job_datadirs(result_dir, model_dirs):
         if dir_or_file not in short_names:
             rm_dir_full(full_path)
 
+    logger.info(f"Best jobs in directory {datadir} updated.")
 
 def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_to_optimize, minimize, report_hooks,
                             number_of_samples, **optimizer_settings):
@@ -103,6 +105,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
     os.makedirs(base_paths_and_files['current_result_dir'])
     logger.info(f'Creating directory {base_paths_and_files["current_result_dir"]}')
+    logger.info(f'Logs of individual jobs stored at {base_paths_and_files["jobs_dir"]}')
 
     hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
                                            metric_to_optimize, minimize, report_hooks, number_of_samples,
@@ -116,7 +119,6 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
     cluster_interface.register_submission_hook(
         ClusterSubmissionGitHook(git_params, base_paths_and_files))
     cluster_interface.exec_pre_run_routines()
-    error_handler = OneTimeExceptionHandler(ignore_errors=True)
     comm_server = CommunicationServer(cluster_interface)
 
     def signal_handler(sig, frame):
@@ -126,7 +128,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    return hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params
+    return hp_optimizer, cluster_interface, comm_server, processed_other_params
 
 
 def post_opt(cluster_interface):
@@ -183,18 +185,18 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
     optimizer_settings = optimizer_settings or {}
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
 
-    hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                                  submission_requirements,
-                                                                                                  optimized_params,
-                                                                                                  other_params,
-                                                                                                  number_of_samples,
-                                                                                                  metric_to_optimize,
-                                                                                                  minimize, optimizer_str,
-                                                                                                  remove_jobs_dir,
-                                                                                                  git_params, run_local,
-                                                                                                  report_hooks,
-                                                                                                  optimizer_settings,
-                                                                                                  )
+    hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
+                                                                                  submission_requirements,
+                                                                                  optimized_params,
+                                                                                  other_params,
+                                                                                  number_of_samples,
+                                                                                  metric_to_optimize,
+                                                                                  minimize, optimizer_str,
+                                                                                  remove_jobs_dir,
+                                                                                  git_params, run_local,
+                                                                                  report_hooks,
+                                                                                  optimizer_settings,
+                                                                                  )
     hp_optimizer.iteration_mode = False
     cluster_interface.iteration_mode = False
     iteration_offset = hp_optimizer.iteration
@@ -294,19 +296,19 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                 restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
 
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
-    hp_optimizer, cluster_interface, comm_server, error_handler, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                                  submission_requirements,
-                                                                                                  optimized_params,
-                                                                                                  other_params,
-                                                                                                  None,
-                                                                                                  None,
-                                                                                                  False,
-                                                                                                  'gridsearch',
-                                                                                                  remove_jobs_dir,
-                                                                                                  git_params,
-                                                                                                  run_local,
-                                                                                                  report_hooks,
-                                                                                                  dict(restarts=restarts))
+    hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
+                                                                                  submission_requirements,
+                                                                                  optimized_params,
+                                                                                  other_params,
+                                                                                  None,
+                                                                                  None,
+                                                                                  False,
+                                                                                  'gridsearch',
+                                                                                  remove_jobs_dir,
+                                                                                  git_params,
+                                                                                  run_local,
+                                                                                  report_hooks,
+                                                                                  dict(restarts=restarts))
 
     pre_iteration_opt(base_paths_and_files)
 

@@ -6,7 +6,6 @@ import pyuv
 import signal
 import pickle
 import threading
-from warnings import warn
 
 from .job import JobStatus
 
@@ -104,6 +103,7 @@ class CommunicationServer():
 
     def handle_job_started(self, message):
         job_id, hostname = message
+        logger.info(f"Job {job_id} started on hostname {hostname}")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError('Received a start-message from a job that is not listed in the cluster interface system')
@@ -115,6 +115,7 @@ class CommunicationServer():
 
     def handle_error_encountered(self, message):
         job_id, strings = message
+        logger.warning(f"Job {job_id} died with error {strings[-1:]}.")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError('Job was not in the list of jobs but encountered an error... fucked up twice, huh?')
@@ -123,6 +124,7 @@ class CommunicationServer():
 
     def handle_job_sent_results(self, message):
         job_id, metrics = message
+        logger.info(f"Job {job_id} sent results.")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError('Received a results-message from a job that is not listed in the cluster interface system')
@@ -134,6 +136,7 @@ class CommunicationServer():
 
     def handle_job_concluded(self, message):
         job_id, = message
+        logger.info(f"Job {job_id} sent finished.")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError(
@@ -145,19 +148,23 @@ class CommunicationServer():
 
     def handle_exit_for_resume(self, message):
         job_id, = message
+        logger.info(f"Job {job_id} exited to be resumed.")
         job = self.cluster_system.get_job(job_id)
         job.waiting_for_resume = True
 
     def handle_job_progress(self, message):
         job_id, percentage_done = message
+        logger.info(f"Job {job_id} announced it is {int(100*percentage_done)}% done.")
         job = self.cluster_system.get_job(job_id)
         if 0 < percentage_done <= 1:
             job.estimated_end = job.start_time + (time.time() - job.start_time) / percentage_done
 
     def handle_metric_early_report(self, message):
         job_id, metrics = message
+        logger.info(f"Job {job_id} sent intermediate results.")
         job = self.cluster_system.get_job(job_id)
         if job.metric_to_watch in metrics:
+            logger.info(f"Job {job_id} currently has {job.metric_to_watch}={metrics[job.metric_to_watch]}.")
             job.reported_metric_values = job.reported_metric_values or []
             job.reported_metric_values.append(metrics[job.metric_to_watch])
 
