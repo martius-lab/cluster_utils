@@ -136,15 +136,16 @@ class CommunicationServer():
 
     def handle_job_concluded(self, message):
         job_id, = message
-        logger.info(f"Job {job_id} sent finished.")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError(
                 'Received a job-concluded-message from a job that is not listed in the cluster interface system')
         if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
             job.status = JobStatus.FAILED
+            logger.info(f"Job {job_id} announced it end but no results were sent.")
         else:
             job.status = JobStatus.CONCLUDED
+            logger.info(f"Job {job_id} finished successfully.")
 
     def handle_exit_for_resume(self, message):
         job_id, = message
