@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='cluster',
-      version='1.2',
+      version='2.0',
       description='Cluster utilities',
       url='https://github.com/martius-lab',
       author='Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning',
