@@ -1,3 +1,4 @@
+import logging
 import sys
 import os
 from .utils import rm_dir_full
@@ -8,6 +9,7 @@ from .cluster_system import ClusterSubmissionHook
 
 import git
 
+logger = logging.getLogger('cluster_utils')
 
 class GitConnector(object):
     '''
@@ -142,7 +144,7 @@ class GitConnector(object):
             remote_url = remote.url
 
         depth_message = f"depth {depth}" if depth is not None else "full depth"
-        print(f"Create local git clone of {remote_url} in {self._local_path} using branch {branch}, "
+        logger.info(f"Create local git clone of {remote_url} in {self._local_path} using branch {branch}, "
               f"{depth_message} and commit {commit if commit else 'latest'} ... ")
 
         cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch, depth=depth)
@@ -155,16 +157,14 @@ class GitConnector(object):
                 raise RuntimeError(f"Commit {commit} failed as a valid revision. "
                                    f"Maybe it is not reachable within depth {depth}?") from e
 
-        print('Done')
 
     def remove_local_copy(self):
         if self._orig_url and self._remove_local_copy:
-            print('Remove local git clone in {} ... '.format(self._local_path), end='')
+            logger.info('Remove local git clone in {} ... '.format(self._local_path))
             self._repo.close()
             sleep(1.0)
             git.rmtree(self._local_path)
             rm_dir_full(self._local_path)
-            print('Done')
 
     @property
     def meta_information(self):
@@ -196,8 +196,8 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         super().__init__(identifier='GitConnector')
 
         if self.state > 0:
-            print('Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook'
-                  .format(self.params['local_path'], self.identifier))
+            logger.warning(f'Couldn\'t find git repo in {self.params["local_path"]} and no url to git repo specified, '
+                           f'skipping registration of {self.identifier} submission hook')
 
     def determine_state(self):
         self.state = 1
@@ -221,7 +221,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         if 'url' in self.params and self.params.get('commit', None) is None:
             commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha
             commit_hexsha_short = self.git_conn._repo.git.rev_parse(commit_hexsha, short=7)
-            print('Using commit {} in each iteration'.format(commit_hexsha_short))
+            logger.info('Using commit {} in each iteration'.format(commit_hexsha_short))
             self.params['commit'] = commit_hexsha_short
         self.update_status()
 

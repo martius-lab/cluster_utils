@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from itertools import combinations
 from itertools import count
@@ -9,6 +10,7 @@ from matplotlib import rc
 from .data_analysis import *
 from .latex_utils import LatexFile
 
+logger = logging.getLogger('cluster_utils')
 
 def init_plotting():
     sns.set_style("darkgrid", {'legend.frameon': True})
@@ -22,7 +24,7 @@ def init_plotting():
 
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
                          submission_hook_stats=None, maximized_metrics=None, log_scale_list=None, report_hooks=None):
-    print("Producing basic report... ")
+    logger.info("Producing basic report... ")
     log_scale_list = log_scale_list or []
     maximized_metrics = maximized_metrics or []
     report_hooks = report_hooks or []
@@ -70,4 +72,6 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
 
         for hook in report_hooks:
             hook.write_section(latex, file_gen, hook_args)
+        logger.info('Calling pdflatex on prepared report')
         latex.produce_pdf(output_file)
+        logger.info(f'Report saved at {output_file}')

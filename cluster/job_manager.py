@@ -12,10 +12,20 @@ from .errors import OneTimeExceptionHandler
 import time
 import pandas as pd
 import numpy as np
+import logging
 import signal
 import sys
 from warnings import warn
 from .communication_server import CommunicationServer
+
+logger = logging.getLogger('cluster_utils')
+
+def init_logging(working_dir):
+    fh = logging.FileHandler(os.path.join(working_dir, 'cluster_run.log'))
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
 
 def ensure_empty_dir(dir_name, defensive=False):
@@ -73,26 +83,15 @@ def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_
                                                                       metric_to_optimize,
                                                                       minimize, report_hooks, **optimizer_settings)
     if hp_optimizer is None:
+        logger.info("No earlier optimization status found. Starting new optimization")
         hp_optimizer = optimizer_dict[optimizer_str](optimized_params=optimized_params,
                                                      metric_to_optimize=metric_to_optimize,
                                                      minimize=minimize, number_of_samples=number_of_samples,
                                                      report_hooks=report_hooks,
                                                      **optimizer_settings)
-    print('Last iteration: ', hp_optimizer.iteration)
+    else:
+        logger.info("Optimization status loaded.")
     return hp_optimizer
-
-
-global T
-T = time.time()
-delta_t = 3
-
-
-def time_to_print():
-    global T
-    if time.time() - T > delta_t:
-        T = time.time()
-        return True
-    return False
 
 
 def pre_opt(base_paths_and_files, submission_requirements, optimized_params, other_params, number_of_samples,
@@ -100,7 +99,12 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
             optimizer_settings):
     processed_other_params = process_other_params(other_params, None, optimized_params)
     ensure_empty_dir(base_paths_and_files['result_dir'], defensive=True)
+    init_logging(base_paths_and_files['result_dir'])
+
+    logger = logging.getLogger('cluster_utils')
+
     os.makedirs(base_paths_and_files['current_result_dir'])
+    logger.info(f'Creating directory {base_paths_and_files["current_result_dir"]}')
 
     hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
                                            metric_to_optimize, minimize, report_hooks, number_of_samples,
@@ -119,7 +123,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
     def signal_handler(sig, frame):
         cluster_interface.close()
-        print('Exiting now')
+        logger.info('Exiting now')
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -219,7 +223,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
             if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
                 post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                                    num_best_jobs_whose_data_is_kept)
-                print('starting new iteration:', hp_optimizer.iteration)
+                logger.info('starting new iteration:', hp_optimizer.iteration)
                 pre_iteration_opt(base_paths_and_files)
 
             for job in cluster_interface.submitted_jobs:

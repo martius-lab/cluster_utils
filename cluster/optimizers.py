@@ -136,7 +136,6 @@ class Optimizer(ABC):
             sign = -1.0 if self.minimize else 1.0
             mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
             median_std = jobs_df[metric_std].median()
-            print('Median noise noise over restarts', median_std)
 
             # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
             expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
@@ -186,8 +185,6 @@ class Metaoptimizer(Optimizer):
         setattr(metaopt, 'with_restarts', with_restarts)
         metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
         metaopt.report_hooks = report_hooks or []
-        if metaopt is not None:
-            print('Loaded HP optimizer from pickle!')
         return metaopt
 
     def ask(self, num_samples):

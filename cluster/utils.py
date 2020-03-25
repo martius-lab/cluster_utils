@@ -1,3 +1,5 @@
+import logging
+
 from pathlib2 import Path
 import collections
 import csv
@@ -16,6 +18,9 @@ from warnings import warn
 import git
 
 from .constants import *
+
+
+logger = logging.getLogger('cluster_utils')
 
 
 def shorten_string(string, max_len):
@@ -211,7 +216,7 @@ def get_git_url():
 
     url_list = list(repo.remotes.origin.urls)
     if url_list:
-        print(f"Auto-detected git repository with remote url: {url_list[0]}")
+        logger.info(f"Auto-detected git repository with remote url: {url_list[0]}")
         return url_list[0]
 
     return None

@@ -1,3 +1,5 @@
+import logging
+
 from .condor_cluster_system import Condor_ClusterSubmission
 from .dummy_cluster_system import Dummy_ClusterSubmission
 import os
@@ -7,6 +9,7 @@ from warnings import warn
 from subprocess import run, DEVNULL
 from .job import JobStatus, Job
 
+logger = logging.getLogger('cluster_utils')
 
 class ClusterSubmission(ABC):
     def __init__(self, paths, remove_jobs_dir=True, iteration_mode=True):
@@ -42,13 +45,14 @@ class ClusterSubmission(ABC):
         assert isinstance(hook, ClusterSubmissionHook)
         if hook.state > 0:
             return
-        print('Register submission hook {}'.format(hook.identifier))
+
+        logger.info('Register submission hook {}'.format(hook.identifier))
         self.submission_hooks[hook.identifier] = hook
         hook.manager = self
 
     def unregister_submission_hook(self, identifier):
         if identifier in self.submission_hooks:
-            print('Unregister submission hook {}'.format(identifier))
+            logger.info('Unregister submission hook {}'.format(identifier))
             self.submission_hooks.manager = None
             self.submission_hooks.pop(identifier)
         else:
@@ -221,15 +225,15 @@ class ClusterSubmission(ABC):
             self.submit()
         except:
             self.close()
-            print('Emergency cleanup! Check manually!')
+            logger.warning('Job killed in emergency mode! Check condor_q!')
             raise
 
     def close(self):
         self.stop_all()
         if self.remove_jobs_dir:
-            print('Removing jobs dir {} ... '.format(self.submission_dir), end='')
+            logger.info('Removing jobs dir {}'.format(self.submission_dir))
             rm_dir_full(self.submission_dir)
-            print('Done')
+
 
     def check_error_msgs(self):
         for job in self.failed_jobs:
@@ -245,7 +249,7 @@ class ClusterSubmission(ABC):
 
 def get_cluster_type(requirements, run_local=None):
     if is_command_available('condor_q'):
-        print('CONDOR detected, running CONDOR job submission')
+        logger.info('CONDOR detected, running CONDOR job submission')
         return Condor_ClusterSubmission
     else:
         if run_local is None:

@@ -1,3 +1,4 @@
+import logging
 import os
 import ast
 from .cluster_system import ClusterSubmission
@@ -15,6 +16,7 @@ import time
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
 
+logger = logging.getLogger('cluster_utils')
 
 class Condor_ClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
@@ -126,7 +128,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
                 self.condor_q_info_raw = raw
                 self.condor_q_info_err = err
             else:
-                print('Condor_q currently unavailable')
+                logger.warning('Condor_q currently unavailable')
             time.sleep(5)
 
     def _parse_condor_info(self, cluster_id=None):

@@ -1,3 +1,4 @@
+import logging
 import socket
 import time
 
@@ -9,6 +10,7 @@ from warnings import warn
 
 from .job import JobStatus
 
+logger = logging.getLogger('cluster_utils')
 
 class MessageTypes():
     JOB_STARTED = 0
@@ -33,7 +35,7 @@ class CommunicationServer():
     def __init__(self, cluster_system):
         self.ip_adress = self.get_own_ip()
         self.port = None
-        print("Running on IP: ", self.ip_adress)
+        logger.info("Master script running on IP: ", self.ip_adress)
         self.start_listening()
         self.cluster_system = cluster_system
 
@@ -87,7 +89,7 @@ class CommunicationServer():
         server = pyuv.UDP(loop)
         server.bind((self.ip_adress, 0))
         self.port = server.getsockname()[1]
-        print("Running on Port: ", self.port)
+        logger.info(f"Communication happening on port: {self.port}")
         server.start_recv(on_read)
 
         signal_h = pyuv.Signal(loop)
@@ -158,7 +160,4 @@ class CommunicationServer():
             job.reported_metric_values.append(metrics[job.metric_to_watch])
 
     def handle_unidentified_message(self, data, msg_type_idx, message):
-        print("Received a message I did not understand:")
-        print(data)
-        print(msg_type_idx, type(msg_type_idx))
-        print(message, type(message))
+        logger.error(f"Received a message I did not understand: {data}, {msg_type_idx}, {message}")
