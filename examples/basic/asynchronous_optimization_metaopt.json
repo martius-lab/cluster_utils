@@ -2,7 +2,7 @@
   "optimization_procedure_name": "test_asynch_opt_metaopt",
   "results_dir": "/is/rg/al/Projects/tmp",
   "git_params": {
-    "branch": "merge_sbo_esm",
+    "branch": "master",
     "commit": null
   },
   "script_relative_path": "examples/basic/main.py",
