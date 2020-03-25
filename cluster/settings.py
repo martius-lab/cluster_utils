@@ -164,7 +164,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
         submission_state.connection_details_available = True
         submission_state.connection_active = False
     except:
-        print("Could not parse connection info, presuming the job to be run locally")
+        pass
 
     if len(cmd_line) < 2:
         cmd_params = {}
