@@ -3,7 +3,7 @@
   "results_dir": "/is/rg/al/Projects/tmp/example_results",
 
   "git_params": {
-    "branch": "merge_sbo_esm",
+    "branch": "master",
     "commit": null
   },
   "script_relative_path": "examples/basic/main.py",
@@ -32,7 +32,7 @@
     },
     {
       "param": "fn_args.w",
-      "values": [1, 2, 3]
+      "values": "{list(range(1,4))}"
     },
     {
       "param": "fn_args.y",
