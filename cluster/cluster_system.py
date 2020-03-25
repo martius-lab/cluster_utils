@@ -249,7 +249,7 @@ class ClusterSubmission(ABC):
 def get_cluster_type(requirements, run_local=None):
     from .condor_cluster_system import Condor_ClusterSubmission
     from .dummy_cluster_system import Dummy_ClusterSubmission
-    
+
     if is_command_available('condor_q'):
         logger.info('CONDOR detected, running CONDOR job submission')
         return Condor_ClusterSubmission

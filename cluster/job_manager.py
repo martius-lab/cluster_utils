@@ -21,11 +21,9 @@ from .communication_server import CommunicationServer
 logger = logging.getLogger('cluster_utils')
 
 def init_logging(working_dir):
-    fh = logging.FileHandler(os.path.join(working_dir, 'cluster_run.log'))
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    logging.basicConfig(filename=os.path.join(working_dir, 'cluster_run.log'),
+                        level=logging.DEBUG,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 def ensure_empty_dir(dir_name, defensive=False):
