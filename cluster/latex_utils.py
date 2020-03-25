@@ -5,118 +5,120 @@ from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
 from abc import ABC, abstractmethod
 
+
 def subsection(section_name, content):
-  begin = '\\begin{{subsection}}{{{}}}\n'.format(section_name)
-  end = '\\end{subsection}\n'
-  return '{}\n\\leavevmode\n\n\\medskip\n{}{}'.format(begin, content, end)
+    begin = '\\begin{{subsection}}{{{}}}\n'.format(section_name)
+    end = '\\end{subsection}\n'
+    return '{}\n\\leavevmode\n\n\\medskip\n{}{}'.format(begin, content, end)
 
 
 def add_subsection_from_figures(section_name, file_list, common_scale=0.7):
-  content = '\n'.join([include_figure(filename, common_scale) for filename in file_list])
-  return subsection(section_name, content)
+    content = '\n'.join([include_figure(filename, common_scale) for filename in file_list])
+    return subsection(section_name, content)
 
 
 def include_figure(filename, scale_linewidth=1.0):
-  return '\\includegraphics[width={}\linewidth]{{\detokenize{{{}}}}}\n'.format(scale_linewidth, filename)
+    return '\\includegraphics[width={}\linewidth]{{\detokenize{{{}}}}}\n'.format(scale_linewidth, filename)
 
 
 def section(section_name, content):
-  begin = '\\begin{{section}}{{{}}}\n'.format(section_name)
-  end = '\\end{section}\n'
-  return '{}{}{}'.format(begin, content, end)
+    begin = '\\begin{{section}}{{{}}}\n'.format(section_name)
+    end = '\\end{section}\n'
+    return '{}{}{}'.format(begin, content, end)
 
 
 class LatexFile(object):
-  def __init__(self, title):
-    self.title = title
-    self.date = str(datetime.datetime.today()).split()[0]
-    self.sections = []
+    def __init__(self, title):
+        self.title = title
+        self.date = str(datetime.datetime.today()).split()[0]
+        self.sections = []
 
-  def add_section_from_figures(self, name, list_of_filenames, common_scale=1.0):
-    begin = '\\begin{center}'
-    end = '\\end{center}'
-    content = '\n'.join([begin] + [include_figure(filename, common_scale) for filename in list_of_filenames] + [end])
-    self.sections.append(section(name, content))
+    def add_section_from_figures(self, name, list_of_filenames, common_scale=1.0):
+        begin = '\\begin{center}'
+        end = '\\end{center}'
+        content = '\n'.join([begin] + [include_figure(filename, common_scale)
+                                       for filename in list_of_filenames] + [end])
+        self.sections.append(section(name, content))
 
-  def add_subsection_from_figures(self, section_name, file_list, common_scale=1.0):
-    content = '\n'.join([include_figure(filename, common_scale) for filename in file_list])
-    return self.sections.append(subsection(section_name, content))
+    def add_subsection_from_figures(self, section_name, file_list, common_scale=1.0):
+        content = '\n'.join([include_figure(filename, common_scale) for filename in file_list])
+        return self.sections.append(subsection(section_name, content))
 
-  def add_section_from_dataframe(self, name, dataframe):
-    begin = '\\begin{center}'
-    end = '\\end{center}'
-    section_content = '\n'.join([begin, dataframe.to_latex(), end])
-    self.sections.append(section(name, section_content))
+    def add_section_from_dataframe(self, name, dataframe):
+        begin = '\\begin{center}'
+        end = '\\end{center}'
+        section_content = '\n'.join([begin, dataframe.to_latex(), end])
+        self.sections.append(section(name, section_content))
 
-  def add_section_from_python_script(self, name, python_file):
-    with open(python_file) as f:
-      raw = f.read()
-    content = '\\begin{{lstlisting}}[language=Python]\n {}\\end{{lstlisting}}'.format(raw)
-    self.sections.append(section(name, content))
+    def add_section_from_python_script(self, name, python_file):
+        with open(python_file) as f:
+            raw = f.read()
+        content = '\\begin{{lstlisting}}[language=Python]\n {}\\end{{lstlisting}}'.format(raw)
+        self.sections.append(section(name, content))
 
-  def add_generic_section(self, name, content):
-    self.sections.append(section(name, content))
+    def add_generic_section(self, name, content):
+        self.sections.append(section(name, content))
 
-  def add_section_from_json(self, name, json_file):
-    with open(json_file) as f:
-      raw = f.read()
-    content = '\\begin{{lstlisting}}[language=json]\n {}\\end{{lstlisting}}'.format(raw)
-    self.sections.append(section(name, content))
+    def add_section_from_json(self, name, json_file):
+        with open(json_file) as f:
+            raw = f.read()
+        content = '\\begin{{lstlisting}}[language=json]\n {}\\end{{lstlisting}}'.format(raw)
+        self.sections.append(section(name, content))
 
-  def produce_pdf(self, output_file):
-    full_content = '\n'.join(self.sections)
-    title_str = LATEX_TITLE.format(self.title)
-    date_str = LATEX_DATE.format(self.date)
-    whole_latex = '\n'.join([LATEX_BEGIN, title_str, date_str, full_content, LATEX_END])
-    with TemporaryDirectory() as tmpdir:
-      latex_file = os.path.join(tmpdir, 'latex.tex')
-      with open(latex_file, 'w') as f:
-        f.write(whole_latex)
-      run(['pdflatex', latex_file], cwd=tmpdir, check=True, stdout=PIPE)
-      output_tmp = os.path.join(tmpdir, 'latex.pdf')
-      copyfile(output_tmp, output_file)
+    def produce_pdf(self, output_file):
+        full_content = '\n'.join(self.sections)
+        title_str = LATEX_TITLE.format(self.title)
+        date_str = LATEX_DATE.format(self.date)
+        whole_latex = '\n'.join([LATEX_BEGIN, title_str, date_str, full_content, LATEX_END])
+        with TemporaryDirectory() as tmpdir:
+            latex_file = os.path.join(tmpdir, 'latex.tex')
+            with open(latex_file, 'w') as f:
+                f.write(whole_latex)
+            run(['pdflatex', latex_file], cwd=tmpdir, check=True, stdout=PIPE)
+            output_tmp = os.path.join(tmpdir, 'latex.pdf')
+            copyfile(output_tmp, output_file)
 
 
 def latex_format(string):
-  return string.replace('_', '-')
+    return string.replace('_', '-')
 
 
 class SectionHook(ABC):
-  def __init__(self, *, section_title, section_generator):
-    self.title = section_title
-    self.generator = section_generator
+    def __init__(self, *, section_title, section_generator):
+        self.title = section_title
+        self.generator = section_generator
 
-  def write_section(self, latex_object, filename_generator, generator_args):
-    section_content = self.generator(**generator_args, filename_generator=filename_generator)
-    self.add_section(latex_object, section_content)
+    def write_section(self, latex_object, filename_generator, generator_args):
+        section_content = self.generator(**generator_args, filename_generator=filename_generator)
+        self.add_section(latex_object, section_content)
 
-  @abstractmethod
-  def add_section(self, latex_object, section_content):
-    pass
+    @abstractmethod
+    def add_section(self, latex_object, section_content):
+        pass
 
 
 class SectionFromFiguresHook(SectionHook):
-  def __init__(self, *, figure_scale=1.0, **kwargs):
-    super().__init__(**kwargs)
-    self.figure_scale = figure_scale
+    def __init__(self, *, figure_scale=1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.figure_scale = figure_scale
 
-  def add_section(self, latex_object, section_content):
-    latex_object.add_section_from_figures(self.title, section_content, common_scale=self.figure_scale)
+    def add_section(self, latex_object, section_content):
+        latex_object.add_section_from_figures(self.title, section_content, common_scale=self.figure_scale)
 
 
 class SectionFromJsonHook(SectionHook):
-  def add_section(self, latex_object, section_content):
-    latex_object.add_section_from_json(name=self.title, json_file=section_content)
+    def add_section(self, latex_object, section_content):
+        latex_object.add_section_from_json(name=self.title, json_file=section_content)
 
 
 class SectionFromPyHook(SectionHook):
-  def add_section(self, latex_object, section_content):
-    latex_object.add_section_from_python_script(self.title, section_content)
+    def add_section(self, latex_object, section_content):
+        latex_object.add_section_from_python_script(self.title, section_content)
 
 
 class SectionFromDataframeHook(SectionHook):
-  def add_section(self, latex_object, section_content):
-    latex_object.add_section_from_dataframe(self.title, section_content)
+    def add_section(self, latex_object, section_content):
+        latex_object.add_section_from_dataframe(self.title, section_content)
 
 
 LATEX_BEGIN = '''

@@ -54,8 +54,6 @@ queue
 '''
 
 
-
-
 LOCAL_RUN_SCRIPT = '''#!/bin/bash
 # %(id)d
 

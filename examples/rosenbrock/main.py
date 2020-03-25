@@ -5,6 +5,7 @@ import torch
 import time
 from cluster import save_metrics_params, update_params_from_cmdline, announce_fraction_finished, announce_early_results
 
+
 def rosenbrock(x, y):
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
 
@@ -25,7 +26,7 @@ x, y = torch.nn.Parameter(x_0), torch.nn.Parameter(y_0)
 
 params = update_params_from_cmdline()
 
-opt = get_optimizer([x,y], params.optimizer, params.optimizer_params)
+opt = get_optimizer([x, y], params.optimizer, params.optimizer_params)
 loss = rosenbrock(x, y)
 
 for i in range(params.iterations):
@@ -41,7 +42,5 @@ for i in range(params.iterations):
     announce_early_results({'final_value': loss})
 
 
-
 metrics = {'final_value': loss}
 save_metrics_params(metrics, params)
-

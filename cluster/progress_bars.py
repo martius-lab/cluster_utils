@@ -40,7 +40,8 @@ class ProgressBar(ABC):
         ...
 
     def update(self, new_value):
-        real_new_value = max(new_value, self.value)  # Negative updates may occur due to instability. This silences the error
+        # Negative updates may occur due to instability. This silences the error
+        real_new_value = max(new_value, self.value)
         self.tqdm.update(real_new_value - self.value)
         self.value = real_new_value
 
@@ -56,7 +57,8 @@ class SubmittedJobsBar(ProgressBar):
         new_rbar = '| {n_fmt}/{total_fmt}'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
         bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar,dynamic_ncols=True, position=2)
+        self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs',
+                              bar_format=bar_format+new_rbar, dynamic_ncols=True, position=2)
 
 
 class RunningJobsBar(ProgressBar):
@@ -64,7 +66,8 @@ class RunningJobsBar(ProgressBar):
         new_rbar = '| {n_fmt}/{total_fmt}{postfix}'
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.YELLOW, Fore.RESET)
         bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Started execution', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar, dynamic_ncols=True, position=1)
+        self.tqdm = tqdm.tqdm(desc='Started execution', total=total_jobs, unit='jobs',
+                              bar_format=bar_format+new_rbar, dynamic_ncols=True, position=1)
 
     def update_failed_jobs(self, failed_jobs):
         self.tqdm.set_postfix(Failed=failed_jobs)
@@ -75,7 +78,8 @@ class CompletedJobsBar(ProgressBar):
         new_rbar = ('| {n_fmt}/{total_fmt}{postfix}')
         #bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
         bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs', bar_format=bar_format+new_rbar, dynamic_ncols=True, position=0)
+        self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs',
+                              bar_format=bar_format+new_rbar, dynamic_ncols=True, position=0)
         self.bestval = None
         self.minimize = minimize
         self.postfix_dict = {"MedianETA": None,
@@ -88,7 +92,6 @@ class CompletedJobsBar(ProgressBar):
 
             self.tqdm.set_postfix(**dict_to_use)
 
-
     def update_best_val(self, new_val):
         self.bestval = self.bestval or new_val
         if self.minimize:
@@ -97,7 +100,7 @@ class CompletedJobsBar(ProgressBar):
             self.bestval = max(self.bestval, new_val)
 
         self.postfix_dict["best_value"] = self.bestval
-        dict_to_use = {key:value for key, value in self.postfix_dict.items() if value is not None}
+        dict_to_use = {key: value for key, value in self.postfix_dict.items() if value is not None}
 
         self.tqdm.set_postfix(**dict_to_use)
 
@@ -105,7 +108,6 @@ class CompletedJobsBar(ProgressBar):
 if __name__ == "__main__":
     with redirect_stdout_to_tqdm():
         total_jobs = 100
-
 
         submitted_bar = SubmittedJobsBar(total_jobs=total_jobs)
         running_bar = RunningJobsBar(total_jobs=total_jobs)
@@ -120,14 +122,13 @@ if __name__ == "__main__":
             if submitted < total_jobs:
                 submitted += 1
 
-
             if submitted > running and random() > 0.5:
                 running += 1
 
             if running > completed and random() > 0.5:
                 result = random()
                 if result > 0.6:
-                        print(f"Nice new result found {result}")
+                    print(f"Nice new result found {result}")
                 completed += 1
                 completed_bar.update_best_val(result)
 

@@ -15,8 +15,8 @@ class GitConnector(object):
     '''
 
     def __init__(self, local_path=None, url=None, branch=None, depth=None, commit=None, remove_local_copy=True):
-        self._local_path = local_path # local working path
-        self._orig_url = url # if given, make local copy of repo in local working path
+        self._local_path = local_path  # local working path
+        self._orig_url = url  # if given, make local copy of repo in local working path
         self._repo = None
         self._remove_local_copy = remove_local_copy
 
@@ -53,7 +53,8 @@ class GitConnector(object):
             repo = git.Repo(path=local_path, search_parent_directories=True)
         except git.exc.InvalidGitRepositoryError:
             path = os.getcwd() if self._local_path is None else self._local_path
-            raise git.exc.InvalidGitRepositoryError('Could not find git repository at localtion {} or any of the parent directories'.format(path))
+            raise git.exc.InvalidGitRepositoryError(
+                'Could not find git repository at localtion {} or any of the parent directories'.format(path))
         except:
             raise
 
@@ -172,11 +173,11 @@ class GitConnector(object):
             warn('Not connected to a git repository')
             return
 
-        res = dict(use_local_copy= str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),
+        res = dict(use_local_copy=str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),
                    working_dir=self._repo.working_dir,
                    origin_url=self._get_remote_meta('origin')['remote_url'],
                    active_branch=self._repo.active_branch.name,
-                  )
+                   )
         res.update(self._get_commit_meta(self._repo.commit(res['active_branch'])))
 
         return res
@@ -184,6 +185,7 @@ class GitConnector(object):
     @property
     def formatted_meta_information(self):
         return self._get_latex_template().format(**self.meta_information)
+
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def __init__(self, params, paths):
@@ -194,8 +196,8 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         super().__init__(identifier='GitConnector')
 
         if self.state > 0:
-            print('Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook'\
-                .format(self.params['local_path'], self.identifier))
+            print('Couldn\'t find git repo in {} and no url to git repo specified, skipping registration of {} submission hook'
+                  .format(self.params['local_path'], self.identifier))
 
     def determine_state(self):
         self.state = 1
