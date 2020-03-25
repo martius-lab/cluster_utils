@@ -144,7 +144,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
     :param default_params: Dictionary of default params
     :param custom_parser: callable that returns a dict of params on success
     and None on failure (suppress exceptions!)
-    :param register_job: Boolean whether to register the job to the communication server
     :param verbose: Boolean to determine if final settings are pretty printed
     :return: Immutable nested dict with (deep) dot access. Priority: default_params < default_json < cmd_line
     """
@@ -170,8 +169,9 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
         cmd_params = {}
     elif custom_parser and custom_parser(cmd_line):  # Custom parsing, typically for flags
         cmd_params = custom_parser(cmd_line)
-    elif len(cmd_line) == 2 and is_json_file(cmd_line[1]):
+    elif is_json_file(cmd_line[1]):
         cmd_params = load_json(cmd_line[1])
+        print(cmd_line[2:])
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
         cmd_params = ast.literal_eval(cmd_line[1])
     else:
@@ -181,7 +181,7 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
     if JSON_FILE_KEY in default_params:
         json_params = load_json(default_params[JSON_FILE_KEY])
-        if 'default_json' in json_params:
+        if JSON_FILE_KEY in json_params:
             json_base = load_json(json_params[JSON_FILE_KEY])
         else:
             json_base = {}
