@@ -139,7 +139,7 @@ def add_cmd_line_params(base_dict, extra_flags):
     for extra_flag in extra_flags:
         lhs, eq, rhs = extra_flag.rpartition('=')
         parsed_lhs = lhs.split('.')
-        new_lhs = "base_dict" + "".join([f'[{item}]' for item in parsed_lhs])
+        new_lhs = "base_dict" + "".join([f'[\"{item}\"]' for item in parsed_lhs])
         cmd = new_lhs + eq + rhs
         print(cmd)
         exec(cmd)
