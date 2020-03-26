@@ -7,6 +7,7 @@
     "commit": null
   },
   "script_relative_path": "examples/basic/main.py",
+  "load_existing_results": true,
   "environment_setup": {
   },
   "cluster_requirements": {
