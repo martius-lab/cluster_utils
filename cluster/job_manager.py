@@ -105,7 +105,7 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
 
     logger = logging.getLogger('cluster_utils')
 
-    os.makedirs(base_paths_and_files['current_result_dir'])
+    os.makedirs(base_paths_and_files['current_result_dir'], exist_ok=True)
     logger.info(f'Creating directory {base_paths_and_files["current_result_dir"]}')
     logger.info(f'Logs of individual jobs stored at {base_paths_and_files["jobs_dir"]}')
 
