@@ -295,7 +295,8 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
 
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None):
+                restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None,
+                load_existing_results=False):
 
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
@@ -320,6 +321,11 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                 connection_info=comm_server.connection_info)
             for candidate, setting in settings]
     cluster_interface.add_jobs(jobs)
+
+    if load_existing_results:
+        logger.info("Trying to load existing results")
+        for job in jobs:
+            job.try_load_results_from_filesystem(base_paths_and_files)
 
     with redirect_stdout_to_tqdm():
         submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))

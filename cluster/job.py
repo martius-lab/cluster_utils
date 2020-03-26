@@ -3,6 +3,9 @@ import os
 import time
 from contextlib import suppress
 from copy import deepcopy
+
+from cluster.constants import CLUSTER_METRIC_FILE
+
 from .utils import dict_to_dirname, flatten_nested_string_dict
 from cluster.utils import update_recursive
 import pandas as pd
@@ -46,12 +49,16 @@ class Job():
         self.metric_df = None
         self.reported_metric_values = None
 
-    def generate_execution_cmd(self, paths):
+    def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
         update_recursive(current_setting, self.other_params)
         current_setting['id'] = self.id
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
         current_setting['model_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
+        return current_setting
+
+    def generate_execution_cmd(self, paths):
+        current_setting = self.generate_final_setting(paths)
 
         setting_cwd = 'cd {}'.format(paths['main_path'])
         if 'virtual_env_path' in paths:
@@ -100,6 +107,19 @@ class Job():
         self.param_df = pd.DataFrame([flattened_params])
         self.metric_df = pd.DataFrame([self.metrics])
         self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
+
+    def try_load_results_from_filesystem(self, paths):
+        model_dir = os.path.join(paths['current_result_dir'], str(self.id))
+
+        possible_metric_file = os.path.join(model_dir, CLUSTER_METRIC_FILE)
+        if os.path.isfile(possible_metric_file):
+            metric_df = pd.read_csv(possible_metric_file)
+            self.metrics = {column: metric_df[column].iloc[0] for column in metric_df.columns}
+            logger.info(f"Job {self.id} loaded final results {self.metrics} from the filesystem. Will not run!")
+            self.final_settings = self.generate_final_setting(paths)
+            self.set_results()
+            self.status = JobStatus.CONCLUDED
+
 
     def get_results(self):
         if self.resulting_df is None or self.param_df is None or self.metric_df is None:
