@@ -1,39 +1,39 @@
+# Cluster utils
+
+This code has been powering my cluster runs since 2017. It has grown ever since and now it is a proper monster. Enjoy :).
+
 ## Run to install:
 
-``python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git --user``
+``python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git``
 
-or 
-
-``python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git --upgrade --user``
-
-to upgrade
-
-Also recommended to add this line to your .bashrc (.zshrc) on the cluster
+To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
 
 ``export MPLBACKEND="agg"``
 
+## Usage
 
-## News it version 1.2
+There are two basic functionalities:
 
-In HP optimization, the best `k` jobs can optionally have their output dirs preserved. See `example1` (last lines)
+``python3 -m cluster.grid_search.json specification_of_grid_search.json``
 
-Every submission creates a `job_info.csv` in the result directory which matches parameter combinations to cluster job ids
+and
 
-The wait for the first informative cluster status cut down to 10 seconds
+``python3 -m cluster.hp_optimization.json specification_of_hp_opt.json``
 
-Explicit support for virtual environments (`virtual_env_path` is accepted in `paths_and_files`)
+for hyperparameter optimization
 
-The `job_requirements` now accept `gpu_memory_mb` to specify gpu memory requirement.  
+See `examples/basic` and `examples/rosenbrock` for simple demonstrations.
 
+## Main features
 
-## News in version 1.1
+A nonexhaustive list of features is the following:
 
-Git support -- see example 1 to get the idea (thanks Sebastian)
+* **Automatic condor usage** Jobs are submitted, monitored (with error reporting), and cleaned up in an automated and highly customizable way.
 
-Better handling of restarts -> more reliable results
+* **Integrated with git**. Jobs are run from a `git clone` with customizable branch and commit number.
 
-JSON sections supported in LatexFile
+* **Pdf&csv reporting** Both grid search and optimization produce a pdf report with the specification, basic summaries, and plots.
 
-Improved optimization algorithm
+* **Advanced setting handling** Cluster utils offer a customized settings system based on JSON. Pointers within the JSON file and to other JSON files are supported.
 
-
+* **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also, read the code ;).
