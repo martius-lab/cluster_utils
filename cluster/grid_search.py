@@ -1,6 +1,8 @@
 import os
 import shutil
 import sys
+from collections import Counter
+
 import git
 from cluster.latex_utils import SectionFromJsonHook
 from pathlib2 import Path
@@ -49,6 +51,11 @@ if __name__ == '__main__':
 
     hyperparam_dict = [DummyDistribution(hyperparam["param"], hyperparam["values"]) for hyperparam in
                        params.hyperparam_list]
+
+    hyperparam_names = [hyperparam["param"] for hyperparam in params.hyperparam_list]
+    num_duplicates = Counter(hyperparam_names)
+    if max(num_duplicates.values()) > 1:
+        raise ValueError(f"There we duplicate entries in the list of hyperparameters e.g. {num_duplicates.most_common}")
 
     df, all_params, metrics, submission_hook_stats = grid_search(
         base_paths_and_files=base_paths_and_files,
