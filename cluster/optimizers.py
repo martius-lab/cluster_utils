@@ -389,7 +389,7 @@ class GridSearchOptimizer(Optimizer):
         while not settings is None:
             yield (None, settings)
             _, settings = self.ask(1)
-        raise StopIteration()
+        return 
 
     def tell(self, df):
         pass
