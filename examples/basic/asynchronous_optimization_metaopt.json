@@ -8,7 +8,6 @@
   "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
   "environment_setup": {
-    "run_as_module":true
   },
   "cluster_requirements": {
     "request_cpus": 1,

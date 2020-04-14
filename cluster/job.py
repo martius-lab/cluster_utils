@@ -88,9 +88,7 @@ class Job():
             comm_info_string = '\"' + str(self.comm_server_info) + '\"'
             if run_script_as_module_main:
                 # convert path to module name
-                module_name = paths['script_to_run']
-                module_name.replace('/','.')
-                module_name.replace('.py','')
+                module_name = paths['script_to_run'].replace('/','.').replace('.py','')
                 exec_cmd = f"cd {paths['main_path']}; {python_executor} -m {module_name} {comm_info_string} {setting_string}"
             else:
                 base_exec_cmd = '{}'.format(python_executor) + ' {} {} {}'
