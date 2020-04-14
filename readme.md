@@ -14,11 +14,11 @@ To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
 
 There are two basic functionalities:
 
-``python3 -m cluster.grid_search.json specification_of_grid_search.json``
+``python3 -m cluster.grid_search specification_of_grid_search.json``
 
 and
 
-``python3 -m cluster.hp_optimization.json specification_of_hp_opt.json``
+``python3 -m cluster.hp_optimization specification_of_hp_opt.json``
 
 for hyperparameter optimization
 
