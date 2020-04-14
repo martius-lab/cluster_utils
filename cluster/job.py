@@ -83,19 +83,23 @@ class Job():
         self.final_settings = current_setting
 
         if is_python_script:
-            run_script_as_module_main = paths.get('run_script_as_module_main', False)
+            run_script_as_module_main = paths.get('run_as_module', False)
             setting_string = '\"' + str(current_setting) + '\"'
             comm_info_string = '\"' + str(self.comm_server_info) + '\"'
             if run_script_as_module_main:
-                exec_cmd = f"{python_executor} -m {os.path.basename(paths['script_to_run'])} {comm_info_string} {setting_string}"
+                # convert path to module name
+                module_name = paths['script_to_run']
+                module_name.replace('/','.')
+                module_name.replace('.py','')
+                exec_cmd = f"cd {paths['main_path']}; {python_executor} -m {module_name} {comm_info_string} {setting_string}"
             else:
                 base_exec_cmd = '{}'.format(python_executor) + ' {} {} {}'
-                exec_cmd = base_exec_cmd.format(paths['script_to_run'],
+                exec_cmd = base_exec_cmd.format(os.path.join(paths['main_path'],paths['script_to_run']),
                                                 comm_info_string,
                                                 setting_string)
         else:
             base_exec_cmd = '{} {} {}'
-            exec_cmd = base_exec_cmd.format(paths['script_to_run'],
+            exec_cmd = base_exec_cmd.format(os.path.join(paths['main_path'], paths['script_to_run']),
                                             '\"' + str(self.comm_server_info) + '\"',
                                             '\"' + str(current_setting) + '\"')
 

@@ -1,6 +1,6 @@
 {
   "optimization_procedure_name": "test_asynch_opt_metaopt",
-  "results_dir": "/is/rg/al/Projects/tmp",
+  "results_dir": "/tmp",
   "git_params": {
     "branch": "master",
     "commit": null
@@ -8,6 +8,7 @@
   "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
   "environment_setup": {
+    "run_as_module":true
   },
   "cluster_requirements": {
     "request_cpus": 1,
