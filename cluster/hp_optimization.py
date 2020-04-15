@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     base_paths_and_files = dict(
         main_path=main_path,
-        script_to_run=os.path.join(main_path, params.script_relative_path),
+        script_to_run=params.script_relative_path,
         result_dir=results_path,
         jobs_dir=jobs_path,
         **params.environment_setup
