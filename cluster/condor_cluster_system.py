@@ -20,13 +20,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
         os.environ["MPLBACKEND"] = 'agg'
         self._process_requirements(requirements)
         self.exceptions_seen = set({})
-        user_name = run('whoami', shell=True, stdout=PIPE, stderr=PIPE).stdout.decode('utf-8').rstrip('\n')
-        self.condor_q_cmd = 'condor_q {}\n'.format(user_name)
-        condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
-        self.condor_q_info_raw = condor_q_info.stdout.decode('utf-8')
-        self.condor_q_info_err = condor_q_info.stderr.decode('utf-8')
-        t = Thread(target=self.update_condor_q_info, args=(), daemon=True)
-        t.start()
 
     def submit_fn(self, job):
         self.generate_job_spec_file(job)
@@ -113,46 +106,3 @@ class Condor_ClusterSubmission(ClusterSubmission):
             self.requirements_line = f"requirements={concat_requirements}"
         else:
             self.requirements_line = ''
-
-    def update_condor_q_info(self):
-        while(True):
-            condor_q_info = run([self.condor_q_cmd], shell=True, stdout=PIPE, stderr=PIPE)
-            raw = condor_q_info.stdout.decode('utf-8')
-            err = condor_q_info.stderr.decode('utf-8')
-            if not 'Failed' in err:
-                self.condor_q_info_raw = raw
-                self.condor_q_info_err = err
-            else:
-                logger.warning('Condor_q currently unavailable')
-            time.sleep(5)
-
-    def _parse_condor_info(self, cluster_id=None):
-        raw = self.condor_q_info_raw
-        err = self.condor_q_info_err
-        if 'Failed' in err:
-            logger.warning('Condor_q currently unavailable')
-            return None
-        condor_lines = raw.split('\n')
-        condor_parsed_lines = [[item for item in line.split(' ') if item] for line in condor_lines]
-        condor_parsed_lines = [line for line in condor_parsed_lines if len(line) > 8]
-        if len(condor_parsed_lines) == 0 or 'SUBMITTED' not in raw:
-            logger.warning('Condor_q currently unavailable')
-            return None
-
-        stripped_db = [[item.strip() for item in line] for line in condor_parsed_lines]
-        concat_last = [line[:8] + [' '.join(line[8:])] for line in stripped_db]
-        if not cluster_id is None:
-            job_concat_last = []
-            for line in concat_last:
-                try:
-                    if str(int(float(line[0]))) == cluster_id:
-                        job_concat_last.append(line)
-                except:
-                    pass
-            if len(job_concat_last) == 0:
-                return None
-            if len(job_concat_last) > 1:
-                raise ValueError('Found two jobs with same cluster ID')
-            concat_last = job_concat_last
-        fully_parsed = [CondorRecord(*line) for line in concat_last]
-        return fully_parsed
