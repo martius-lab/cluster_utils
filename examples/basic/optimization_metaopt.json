@@ -1,6 +1,6 @@
 {
-  "optimization_procedure_name": "test_asynch_opt_metaopt_module",
-  "results_dir": "/tmp",
+  "optimization_procedure_name": "test_asynch_opt_metaopt",
+  "results_dir": "/is/rg/al/Projects/tmp",
   "git_params": {
     "branch": "master",
     "commit": null
@@ -8,13 +8,12 @@
   "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
   "environment_setup": {
-    "run_as_module":true
   },
   "cluster_requirements": {
     "request_cpus": 1,
     "request_gpus": 0,
     "cuda_requirement": null,
-    "memory_in_mb": 8000,
+    "memory_in_mb": 1000,
     "bid": 1000
   },
   "optimizer_str": "cem_metaoptimizer",
@@ -28,6 +27,7 @@
     "n_jobs_per_iteration": 100
   },
   "fixed_params": {
+    "test_resume": true
   },
   "optimized_params": [
   {
