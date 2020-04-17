@@ -184,15 +184,16 @@ class RelaxedCounter(Counter):
 class Discrete(Distribution):
     def __init__(self, *, options, **kwargs):
         super().__init__(**kwargs)
-        self.option_list = options
-        for item in options:
+        # convert all 'list' options into tuples, because they are hashable etc
+        self.option_list = [ o if not isinstance(o, list) else tuple(o) for o in options]
+        for item in self.option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
                 raise TypeError('Discrete options must from the following types: {}, not {}'.format(
                     PARAM_TYPES, type(item)))
             if not hashable(item):
                 raise TypeError('Discrete options must be hashable, {} failed'.format(item))
 
-        self.probs = [1.0 / len(options) for _ in options]
+        self.probs = [1.0 / len(self.option_list) for _ in self.option_list]
 
     def fit(self, samples):
         frequencies = RelaxedCounter(samples)
