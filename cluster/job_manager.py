@@ -264,7 +264,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
 
 def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, target_rank, how_many_stds):
     intermediate_results = [job.reported_metric_values + [job.metrics[metric_to_optimize]]
-                            for job in cluster_interface.successful_jobs]
+                            for job in cluster_interface.successful_jobs if job.reported_metric_values]
     if not intermediate_results:
         return
     max_len = max([len(item) for item in intermediate_results])
