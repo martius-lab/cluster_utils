@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+
 from .cluster_system import ClusterSubmission
 from collections import namedtuple
 from copy import copy
@@ -24,7 +26,13 @@ class Condor_ClusterSubmission(ClusterSubmission):
     def submit_fn(self, job):
         self.generate_job_spec_file(job)
         submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
-        result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+        while True:
+            try:
+                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0).stdout.decode('utf-8')
+                break
+            except subprocess.TimeoutExpired:
+                logger.warning(f"Job submission for id {job.id} hangs. Retrying...")
+
         logger.info(f"Job with id {job.id} submitted.")
 
         good_lines = [line for line in result.split('\n') if 'submitted' in line]
