@@ -25,6 +25,8 @@ class Condor_ClusterSubmission(ClusterSubmission):
         self.generate_job_spec_file(job)
         submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
         result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE).stdout.decode('utf-8')
+        logger.info(f"Job with id {job.id} submitted.")
+
         good_lines = [line for line in result.split('\n') if 'submitted' in line]
         bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
         if not good_lines or bad_lines:
