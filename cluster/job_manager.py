@@ -21,7 +21,7 @@ logger = logging.getLogger('cluster_utils')
 def init_logging(working_dir):
     filename = os.path.join(working_dir, 'cluster_run.log')
     logging.basicConfig(filename=filename,
-                        level=logging.INFO,
+                        level=logging.DEBUG,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     print(f"Detailed logging available in {filename}")
 
