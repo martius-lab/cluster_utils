@@ -21,7 +21,7 @@ logger = logging.getLogger('cluster_utils')
 def init_logging(working_dir):
     filename = os.path.join(working_dir, 'cluster_run.log')
     logging.basicConfig(filename=filename,
-                        level=logging.DEBUG,
+                        level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     print(f"Detailed logging available in {filename}")
 
@@ -215,8 +215,6 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
             hp_optimizer.tell(jobs_to_tell)
             n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
             if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
-                logger.debug(f"Decided to submit job: completed-{cluster_interface.n_completed_jobs}"
-                             f"submitted-{cluster_interface.n_submitted_jobs}")
                 new_candidate, new_settings = next(hp_optimizer.ask(1))
                 new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
                               other_params=processed_other_params, paths=base_paths_and_files,
@@ -224,6 +222,9 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                               metric_to_watch=metric_to_optimize)
                 cluster_interface.add_jobs(new_job)
                 cluster_interface.submit(new_job)
+            else:
+                logger.info(f"Decided to NOT submit job: completed-{cluster_interface.n_completed_jobs}"
+                            f"submitted-{cluster_interface.n_submitted_jobs}")
             if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
                 post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                                    num_best_jobs_whose_data_is_kept)
