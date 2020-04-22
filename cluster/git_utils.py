@@ -224,7 +224,8 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             self.params['commit'] = commit_hexsha_short
         self.update_status()
 
-        if not os.path.isfile(self.paths['script_to_run']):
+        script_full_path = os.path.join(self.paths['main_path'], self.paths['script_to_run'])
+        if not os.path.isfile(script_full_path):
             raise FileNotFoundError(f"{self.paths['script_to_run']} does not exist. Wrong script name?")
         return self.git_conn
 
