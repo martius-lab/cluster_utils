@@ -77,9 +77,9 @@ class LatexFile(object):
             latex_file = os.path.join(tmpdir, 'latex.tex')
             with open(latex_file, 'w') as f:
                 f.write(whole_latex)
-            logger.info("pdflatex call started")
+            logger.info(f"pdflatex call started on {latex_file}")
             run(['pdflatex', latex_file], cwd=tmpdir, check=True, stdout=PIPE)
-            logger.info("pdflatex call finished")
+            logger.info(f"pdflatex call produced output file {output_file}")
             output_tmp = os.path.join(tmpdir, 'latex.pdf')
             copyfile(output_tmp, output_file)
 
