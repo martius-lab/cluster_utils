@@ -1,9 +1,12 @@
 import datetime
+import logging
 import os
 from shutil import copyfile
 from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
 from abc import ABC, abstractmethod
+
+logger = logging.getLogger('cluster_utils')
 
 
 def subsection(section_name, content):
@@ -74,7 +77,9 @@ class LatexFile(object):
             latex_file = os.path.join(tmpdir, 'latex.tex')
             with open(latex_file, 'w') as f:
                 f.write(whole_latex)
+            logger.info("pdflatex call started")
             run(['pdflatex', latex_file], cwd=tmpdir, check=True, stdout=PIPE)
+            logger.info("pdflatex call finished")
             output_tmp = os.path.join(tmpdir, 'latex.pdf')
             copyfile(output_tmp, output_file)
 
