@@ -10,6 +10,10 @@ import git
 
 logger = logging.getLogger('cluster_utils')
 
+def sanitize_for_latex(string):
+    return string.replace('_', '-').replace('\\', '')
+
+
 class GitConnector(object):
     '''
     Class that provides meta information for git repository
@@ -89,9 +93,9 @@ class GitConnector(object):
         res['checkout_commit_hexsha'] = commit.hexsha
         res['checkout_commit_hexsha_short'] = self._repo.git.rev_parse(res['checkout_commit_hexsha'],
                                                                        short=7)
-        res['checkout_commit_author'] = commit.author.name
+        res['checkout_commit_author'] = sanitize_for_latex(commit.author.name)
         res['checkout_commit_date'] = commit.authored_datetime.strftime('%Y-%m-%d')
-        res['checkout_commit_msg'] = commit.summary
+        res['checkout_commit_msg'] = sanitize_for_latex(commit.summary)
 
         return res
 
