@@ -314,11 +314,11 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
 
     pre_iteration_opt(base_paths_and_files)
 
-    settings = [(candidate, setting) for candidate, setting in hp_optimizer.ask_all()]
-    jobs = [Job(id=cluster_interface.inc_job_id, candidate=candidate, settings=setting,
+    settings = hp_optimizer.ask_all()
+    jobs = [Job(id=cluster_interface.inc_job_id, settings=setting,
                 other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration,
                 connection_info=comm_server.connection_info)
-            for candidate, setting in settings]
+            for setting in settings]
     cluster_interface.add_jobs(jobs)
 
     if load_existing_results:

@@ -361,11 +361,10 @@ class GridSearchOptimizer(Optimizer):
         return settings
 
     def ask_all(self):
-        _, settings = self.ask()
-        while not settings is None:
-            yield (None, settings)
-            _, settings = self.ask()
-        return 
+        settings = self.ask()
+        while settings is not None:
+            yield settings
+            settings = self.ask()
 
     def tell(self, df):
         pass
