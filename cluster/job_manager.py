@@ -153,7 +153,7 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
     jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
     hp_optimizer.tell(jobs_to_tell)
 
-    print(hp_optimizer.full_df[:10])
+    print(hp_optimizer.minimal_df[:10])
 
     hp_optimizer.save_pdf_report(pdf_output, submission_hook_stats, current_result_path)
 

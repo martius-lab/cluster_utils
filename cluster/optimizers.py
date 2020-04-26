@@ -189,7 +189,7 @@ class Metaoptimizer(Optimizer):
         return metaopt
 
     def ask(self):
-        if not self.with_restarts or len(self.minimal_df) < self.num_jobs_in_elite or random.random() < 0.7:
+        if not self.with_restarts or len(self.minimal_df) < self.num_jobs_in_elite or random.random() < 0.8:
             return_settings = self.distribution_list_sampler(num_samples=1)
             return list(return_settings)[0]
         else:
@@ -222,7 +222,7 @@ class Metaoptimizer(Optimizer):
     def random_setting_to_restart(self):
         best_ones = self.get_best_params()
         length = min(len(val) for val in best_ones.values())
-        random_index = random.choice(range(length))
+        random_index = random.choice(range(length // 2))
         nested_items = [(key.split('.'), val[random_index]) for key, val in best_ones.items()]
         return nested_to_dict(nested_items)
 
