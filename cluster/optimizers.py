@@ -1,5 +1,7 @@
 import datetime
 import os
+import random
+
 import cloudpickle as pickle
 from itertools import count
 from tempfile import TemporaryDirectory
@@ -28,8 +30,8 @@ class Optimizer(ABC):
         self.params = [param.param_name for param in self.optimized_params]
 
     @abstractmethod
-    def ask(self, num_samples):
-        raise NotImplementedError
+    def ask(self):
+        pass
 
     @abstractmethod
     def tell(self, df, jobs):
@@ -187,8 +189,11 @@ class Metaoptimizer(Optimizer):
         return metaopt
 
     def ask(self):
-        return_settings = self.distribution_list_sampler(num_samples=1)
-        return None, list(return_settings)[0]
+        if not self.with_restarts or len(self.minimal_df) < self.num_jobs_in_elite or random.random() < 0.7:
+            return_settings = self.distribution_list_sampler(num_samples=1)
+            return list(return_settings)[0]
+        else:
+            return self.random_setting_to_restart
 
     def tell(self, jobs):
         iteration_df = None
@@ -215,27 +220,12 @@ class Metaoptimizer(Optimizer):
 
     @property
     def random_setting_to_restart(self):
-        if not self.with_restarts:
-            return None
-        if not len(self.minimal_df):
-            return None
-
         best_ones = self.get_best_params()
-        repeats = 1 + self.iteration // 4
+        length = min(len(val) for val in best_ones.values())
+        random_index = random.randint(length)
+        nested_items = [(key.split('.'), val[random_index]) for key, val in best_ones.items()]
+        return nested_to_dict(nested_items)
 
-        def restart_setting_generator():
-            length = min(len(val) for val in best_ones.values())
-            job_budget = self.num_jobs_in_elite
-            for i in range(length):
-                nested_items = [(key.split('.'), val[i]) for key, val in best_ones.items()]
-                for j in range(repeats):
-                    job_budget = job_budget - 1
-                    to_restart = nested_to_dict(nested_items)
-                    yield to_restart
-                    if job_budget == 0:
-                        return
-
-        return restart_setting_generator()
 
     @property
     def minimal_restarts_to_count(self):
@@ -298,7 +288,7 @@ class NGOptimizer(Optimizer):
         candidate = self.optimizer.ask()
         nested_items = [(param_name.split(OBJECT_SEPARATOR), value)
                         for param_name, value in candidate.kwargs.items()]
-        return candidate, nested_to_dict(nested_items)
+        return nested_to_dict(nested_items)
 
     def tell(self, jobs):
         for job in jobs:
@@ -363,12 +353,12 @@ class GridSearchOptimizer(Optimizer):
         if settings is None:
             self.iteration += 1
             if self.iteration == self.restarts:
-                return None, None
+                return None
             self.set_setting_generator()
             settings = next(self.setting_generator)
             assert settings is not None
-            return (None, settings)
-        return (None, settings)
+            return settings
+        return settings
 
     def ask_all(self):
         _, settings = self.ask()

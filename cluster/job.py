@@ -22,11 +22,10 @@ class JobStatus():
 
 
 class Job():
-    def __init__(self, id, candidate, settings, other_params, paths, iteration, connection_info, metric_to_watch=None):
+    def __init__(self, id, settings, other_params, paths, iteration, connection_info, metric_to_watch=None):
         self.metric_to_watch = metric_to_watch
         self.paths = paths
         self.id = id
-        self.candidate = candidate
         self.settings = settings
         self.other_params = other_params
         self.cluster_id = None

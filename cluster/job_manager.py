@@ -211,8 +211,8 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
             hp_optimizer.tell(jobs_to_tell)
             n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
             if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
-                new_candidate, new_settings = hp_optimizer.ask()
-                new_job = Job(id=cluster_interface.inc_job_id, candidate=new_candidate, settings=new_settings,
+                new_settings = hp_optimizer.ask()
+                new_job = Job(id=cluster_interface.inc_job_id, settings=new_settings,
                               other_params=processed_other_params, paths=base_paths_and_files,
                               iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info,
                               metric_to_watch=metric_to_optimize)
