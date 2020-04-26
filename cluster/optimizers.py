@@ -222,7 +222,7 @@ class Metaoptimizer(Optimizer):
     def random_setting_to_restart(self):
         best_ones = self.get_best_params()
         length = min(len(val) for val in best_ones.values())
-        random_index = random.randint(length)
+        random_index = random.choice(range(length))
         nested_items = [(key.split('.'), val[random_index]) for key, val in best_ones.items()]
         return nested_to_dict(nested_items)
 
