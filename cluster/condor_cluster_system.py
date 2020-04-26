@@ -16,8 +16,8 @@ CondorRecord = namedtuple('CondorRecord',
 logger = logging.getLogger('cluster_utils')
 
 class Condor_ClusterSubmission(ClusterSubmission):
-    def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
-        super().__init__(paths, remove_jobs_dir, iteration_mode)
+    def __init__(self, requirements, paths, remove_jobs_dir=True):
+        super().__init__(paths, remove_jobs_dir)
 
         os.environ["MPLBACKEND"] = 'agg'
         self._process_requirements(requirements)

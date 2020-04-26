@@ -163,8 +163,6 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
     comm_server.jobs = []
 
-    if hp_optimizer.iteration_mode:
-        cluster_interface.stop_all()
 
     if num_best_jobs_whose_data_is_kept > 0:
         best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
@@ -199,8 +197,6 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                                                                                   report_hooks,
                                                                                   optimizer_settings,
                                                                                   )
-    hp_optimizer.iteration_mode = False
-    cluster_interface.iteration_mode = False
     iteration_offset = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 

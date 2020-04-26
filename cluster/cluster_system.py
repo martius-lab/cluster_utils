@@ -10,7 +10,7 @@ from .job import JobStatus, Job
 logger = logging.getLogger('cluster_utils')
 
 class ClusterSubmission(ABC):
-    def __init__(self, paths, remove_jobs_dir=True, iteration_mode=True):
+    def __init__(self, paths, remove_jobs_dir=True):
         self.jobs = []
         self.remove_jobs_dir = remove_jobs_dir
         self.paths = paths
@@ -18,17 +18,12 @@ class ClusterSubmission(ABC):
         self.finished = False
         self.submission_hooks = dict()
         self._inc_job_id = -1
-        self.iteration_mode = iteration_mode
         self.error_msgs = set()
 
     @property
     def current_jobs(self):
-        if not self.iteration_mode:
-            return self.jobs
-        if len(self.jobs) == 0:
-            return []
-        max_it = max([job.iteration for job in self.jobs])
-        return [job for job in self.jobs if job.iteration == max_it]
+        return self.jobs
+
 
     @property
     def submission_dir(self):

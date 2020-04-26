@@ -13,17 +13,15 @@ import nevergrad as ng
 
 
 class Optimizer(ABC):
-    def __init__(self, *, metric_to_optimize, minimize, report_hooks, number_of_samples, iteration_mode,
+    def __init__(self, *, metric_to_optimize, minimize, report_hooks, number_of_samples,
                  optimized_params):
         self.optimized_params = optimized_params
         self.metric_to_optimize = metric_to_optimize
         self.minimize = minimize
         self.report_hooks = report_hooks or []
         self.number_of_samples = number_of_samples
-        self.iteration_mode = iteration_mode
         # TODO check if obsolete
-        if self.iteration_mode:
-            self.iteration = 0
+
         self.full_df = pd.DataFrame()
         self.minimal_df = pd.DataFrame()
         self.params = [param.param_name for param in self.optimized_params]
@@ -158,8 +156,8 @@ class Optimizer(ABC):
 
 
 class Metaoptimizer(Optimizer):
-    def __init__(self, *, num_jobs_in_elite, with_restarts, iteration_mode=True, **kwargs):
-        super().__init__(iteration_mode=iteration_mode, **kwargs)
+    def __init__(self, *, num_jobs_in_elite, with_restarts, **kwargs):
+        super().__init__(**kwargs)
         self.num_jobs_in_elite = max(5, num_jobs_in_elite)  # Force a minimum of 5 jobs in an elite
         self.with_restarts = with_restarts
         self.best_param_values = {}
@@ -188,17 +186,7 @@ class Metaoptimizer(Optimizer):
         return metaopt
 
     def ask(self, num_samples):
-        if self.iteration_mode:
-            extra_settings = self.settings_to_restart
-            if extra_settings is not None:
-                num_samples = num_samples - self.num_jobs_in_elite
-                sampled_settings = self.distribution_list_sampler(num_samples)
-                return_settings = itertools.chain(extra_settings, sampled_settings)
-            else:
-                sampled_settings = self.distribution_list_sampler(num_samples)
-                return_settings = sampled_settings
-        else:
-            return_settings = self.distribution_list_sampler(num_samples)
+        return_settings = self.distribution_list_sampler(num_samples)
         for setting in return_settings:
             yield None, setting
 
@@ -281,8 +269,8 @@ ng_optimizer_dict = {'twopointsde': ng.optimizers.TwoPointsDE,
 
 
 class NGOptimizer(Optimizer):
-    def __init__(self, *, opt_alg, iteration_mode=True, **kwargs):
-        super().__init__(iteration_mode=iteration_mode, **kwargs)
+    def __init__(self, *, opt_alg, **kwargs):
+        super().__init__(**kwargs)
         assert opt_alg in ng_optimizer_dict.keys()
         # TODO: Adjust for arbitrary types
         self.instrumentation = {param.param_name: self.get_ng_instrumentation(param) for
@@ -363,7 +351,7 @@ class NGOptimizer(Optimizer):
 
 class GridSearchOptimizer(Optimizer):
     def __init__(self, *, restarts, **kwargs):
-        super().__init__(iteration_mode=True, **kwargs)
+        super().__init__(**kwargs)
         self.parameter_dicts = {param.param_name: param.values for param in self.optimized_params}
         self.set_setting_generator()
         self.restarts = restarts

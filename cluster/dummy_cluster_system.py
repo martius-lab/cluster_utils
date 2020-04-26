@@ -12,8 +12,8 @@ import numpy as np
 logger = logging.getLogger('cluster_utils')
 
 class Dummy_ClusterSubmission(ClusterSubmission):
-    def __init__(self, requirements, paths, remove_jobs_dir=True, iteration_mode=True):
-        super().__init__(paths, remove_jobs_dir, iteration_mode)
+    def __init__(self, requirements, paths, remove_jobs_dir=True):
+        super().__init__(paths, remove_jobs_dir)
         self._process_requirements(requirements)
         self.exceptions_seen = set({})
         self.available_cpus = range(cpu_count())
