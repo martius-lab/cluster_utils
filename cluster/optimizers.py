@@ -188,7 +188,7 @@ class Metaoptimizer(Optimizer):
 
     def ask(self):
         return_settings = self.distribution_list_sampler(num_samples=1)
-        return None, return_settings[0]
+        return None, list(return_settings)[0]
 
     def tell(self, jobs):
         iteration_df = None
