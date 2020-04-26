@@ -5,7 +5,7 @@ import time
 from cluster import save_metrics_params, update_params_from_cmdline, exit_for_resume
 
 
-def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input = tuple()):
+def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     """
     A dummy function to test hpo.
 
@@ -18,6 +18,7 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input = tuple()):
     :param tuple_input: a tuple (we only use its length here)
     :return: result of some random computation
     """
+    tuple_input = tuple_input or tuple()
     y_log = np.log(np.abs(y+1e-7))
     v_log = np.log(np.abs(v+1e-7))
     assert (type(w) == type(v) == int), "w and v have to be integers"
