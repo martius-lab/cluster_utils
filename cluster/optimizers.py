@@ -186,10 +186,9 @@ class Metaoptimizer(Optimizer):
         metaopt.report_hooks = report_hooks or []
         return metaopt
 
-    def ask(self, num_samples):
-        return_settings = self.distribution_list_sampler(num_samples)
-        for setting in return_settings:
-            yield None, setting
+    def ask(self):
+        return_settings = self.distribution_list_sampler(num_samples=1)
+        return None, return_settings[0]
 
     def tell(self, jobs):
         iteration_df = None
@@ -215,7 +214,7 @@ class Metaoptimizer(Optimizer):
                            minimum=self.minimize, how_many=self.num_jobs_in_elite)
 
     @property
-    def settings_to_restart(self):
+    def random_setting_to_restart(self):
         if not self.with_restarts:
             return None
         if not len(self.minimal_df):
@@ -295,12 +294,11 @@ class NGOptimizer(Optimizer):
             return ng.var.OrderedDiscrete(param.option_list)
         raise ValueError('Invalid Distribution')
 
-    def ask(self, num_samples):
-        for _ in range(num_samples):
-            candidate = self.optimizer.ask()
-            nested_items = [(param_name.split(OBJECT_SEPARATOR), value)
-                            for param_name, value in candidate.kwargs.items()]
-            yield candidate, nested_to_dict(nested_items)
+    def ask(self):
+        candidate = self.optimizer.ask()
+        nested_items = [(param_name.split(OBJECT_SEPARATOR), value)
+                        for param_name, value in candidate.kwargs.items()]
+        return candidate, nested_to_dict(nested_items)
 
     def tell(self, jobs):
         for job in jobs:
@@ -360,7 +358,7 @@ class GridSearchOptimizer(Optimizer):
     def set_setting_generator(self):
         self.setting_generator = get_sample_generator(None, self.parameter_dicts, None, None)
 
-    def ask(self, num_samples):
+    def ask(self):
         settings = next(self.setting_generator, None)
         if settings is None:
             self.iteration += 1
@@ -373,10 +371,10 @@ class GridSearchOptimizer(Optimizer):
         return (None, settings)
 
     def ask_all(self):
-        _, settings = self.ask(1)
+        _, settings = self.ask()
         while not settings is None:
             yield (None, settings)
-            _, settings = self.ask(1)
+            _, settings = self.ask()
         return 
 
     def tell(self, df):
