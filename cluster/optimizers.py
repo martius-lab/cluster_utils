@@ -20,6 +20,7 @@ class Optimizer(ABC):
         self.minimize = minimize
         self.report_hooks = report_hooks or []
         self.number_of_samples = number_of_samples
+        self.iteration = 0
         # TODO check if obsolete
 
         self.full_df = pd.DataFrame()
@@ -355,7 +356,6 @@ class GridSearchOptimizer(Optimizer):
         self.parameter_dicts = {param.param_name: param.values for param in self.optimized_params}
         self.set_setting_generator()
         self.restarts = restarts
-        self.iteration = 0
 
     def set_setting_generator(self):
         self.setting_generator = get_sample_generator(None, self.parameter_dicts, None, None)
