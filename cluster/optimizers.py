@@ -268,6 +268,7 @@ class NGOptimizer(Optimizer):
         self.instrumentation = ng.Instrumentation(**self.instrumentation)
         self.optimizer = ng_optimizer_dict[opt_alg](instrumentation=self.instrumentation)
         self.with_restarts = False
+        self.candidates = {}
 
     def get_ng_instrumentation(self, param):
         if type(param) == TruncatedLogNormal:
@@ -286,9 +287,18 @@ class NGOptimizer(Optimizer):
 
     def ask(self):
         candidate = self.optimizer.ask()
+        if -1 in self.candidates.keys():
+            raise ValueError("There is already one unassociated candidate!")
+        self.candidates[-1] = candidate
         nested_items = [(param_name.split(OBJECT_SEPARATOR), value)
                         for param_name, value in candidate.kwargs.items()]
         return nested_to_dict(nested_items)
+
+    def add_candidate(self, job_id):
+        if not -1 in self.candidates.keys():
+            raise ValueError("There is no unassociated candidate!")
+        self.candidates[job_id] = self.candidates[-1]
+        del self.candidates[-1]
 
     def tell(self, jobs):
         for job in jobs:
@@ -299,9 +309,9 @@ class NGOptimizer(Optimizer):
                 return
             super().tell(df, jobs)
             if self.minimize:
-                self.optimizer.tell(job.candidate, df.iloc[0][self.metric_to_optimize])
+                self.optimizer.tell(self.candidates[job.id], df.iloc[0][self.metric_to_optimize])
             else:
-                self.optimizer.tell(job.candidate, -df.iloc[0][self.metric_to_optimize])
+                self.optimizer.tell(self.candidates[job.id], -df.iloc[0][self.metric_to_optimize])
 
     def provide_recommendation_settings(self, how_many=1):
         if self.iteration > 0:

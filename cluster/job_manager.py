@@ -2,6 +2,7 @@ import os
 import shutil
 
 from cluster.progress_bars import redirect_stdout_to_tqdm, SubmittedJobsBar, RunningJobsBar, CompletedJobsBar
+from .user_interaction import InteractiveMode
 from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import optimizer_dict
@@ -15,6 +16,7 @@ import logging
 import signal
 import sys
 from .communication_server import CommunicationServer
+from .optimizers import NGOptimizer
 
 logger = logging.getLogger('cluster_utils')
 
@@ -200,60 +202,64 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
     iteration_offset = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 
-    with redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
-        running_bar = RunningJobsBar(total_jobs=number_of_samples)
-        successful_jobs_bar = CompletedJobsBar(total_jobs=number_of_samples, minimize=minimize)
+    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+        with redirect_stdout_to_tqdm():
+            submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
+            running_bar = RunningJobsBar(total_jobs=number_of_samples)
+            successful_jobs_bar = CompletedJobsBar(total_jobs=number_of_samples, minimize=minimize)
 
-        while cluster_interface.n_completed_jobs < number_of_samples:
-            time.sleep(0.2)
-            jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
-            hp_optimizer.tell(jobs_to_tell)
-            n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-            if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
-                new_settings = hp_optimizer.ask()
-                new_job = Job(id=cluster_interface.inc_job_id, settings=new_settings,
-                              other_params=processed_other_params, paths=base_paths_and_files,
-                              iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info,
-                              metric_to_watch=metric_to_optimize)
-                cluster_interface.add_jobs(new_job)
-                cluster_interface.submit(new_job)
-            else:
-                logger.info(f"Decided to NOT submit job: completed-{cluster_interface.n_completed_jobs}"
-                            f"submitted-{cluster_interface.n_submitted_jobs}")
-            if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
-                post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                                   num_best_jobs_whose_data_is_kept)
-                logger.info(f'starting new iteration: {hp_optimizer.iteration}')
-                pre_iteration_opt(base_paths_and_files)
+            while cluster_interface.n_completed_jobs < number_of_samples:
+                check_for_keyboard_input()
+                time.sleep(0.2)
+                jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
+                hp_optimizer.tell(jobs_to_tell)
+                n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
+                if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
+                    new_settings = hp_optimizer.ask()
+                    new_job = Job(id=cluster_interface.inc_job_id, settings=new_settings,
+                                  other_params=processed_other_params, paths=base_paths_and_files,
+                                  iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info,
+                                  metric_to_watch=metric_to_optimize)
+                    if isinstance(hp_optimizer, NGOptimizer):
+                        hp_optimizer.add_candidate(new_job.id)
+                    cluster_interface.add_jobs(new_job)
+                    cluster_interface.submit(new_job)
+                else:
+                    logger.info(f"Decided to NOT submit job: completed-{cluster_interface.n_completed_jobs}"
+                                f"submitted-{cluster_interface.n_submitted_jobs}")
+                if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
+                    post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
+                                       num_best_jobs_whose_data_is_kept)
+                    logger.info(f'starting new iteration: {hp_optimizer.iteration}')
+                    pre_iteration_opt(base_paths_and_files)
 
-            for job in cluster_interface.submitted_jobs:
-                if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
-                    job.check_filesystem_for_errors()
-            cluster_interface.check_error_msgs()
+                for job in cluster_interface.submitted_jobs:
+                    if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                        job.check_filesystem_for_errors()
+                cluster_interface.check_error_msgs()
 
-            if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
-                cluster_interface.close()
-                raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
+                if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
+                    cluster_interface.close()
+                    raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
 
-            submitted_bar.update(cluster_interface.n_submitted_jobs)
-            running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
-            running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
-            successful_jobs_bar.update(cluster_interface.n_successful_jobs)
-            successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
+                submitted_bar.update(cluster_interface.n_submitted_jobs)
+                running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
+                running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
+                successful_jobs_bar.update(cluster_interface.n_successful_jobs)
+                successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
 
-            best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(minimize=minimize)
-            if len(hp_optimizer.full_df) > 0:
-                best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
-            else:
-                best_value = None
+                best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(minimize=minimize)
+                if len(hp_optimizer.full_df) > 0:
+                    best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
+                else:
+                    best_value = None
 
-            estimates = [item for item in [best_seen_metric, best_value] if item is not None]
-            if estimates:
-                best_estimate = min(estimates) if minimize else max(estimates)
-                successful_jobs_bar.update_best_val(best_estimate)
-            if kill_bad_jobs_early:
-                kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, **early_killing_params)
+                estimates = [item for item in [best_seen_metric, best_value] if item is not None]
+                if estimates:
+                    best_estimate = min(estimates) if minimize else max(estimates)
+                    successful_jobs_bar.update_best_val(best_estimate)
+                if kill_bad_jobs_early:
+                    kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, **early_killing_params)
 
     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                        num_best_jobs_whose_data_is_kept)
@@ -292,7 +298,6 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
             job.set_results()
             cluster_interface.stop_fn(job.cluster_id)
 
-
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None,
                 load_existing_results=False):
@@ -326,32 +331,33 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
         for job in jobs:
             job.try_load_results_from_filesystem(base_paths_and_files)
 
-    with redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
-        running_bar = RunningJobsBar(total_jobs=len(jobs))
-        successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+        with redirect_stdout_to_tqdm():
+            submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
+            running_bar = RunningJobsBar(total_jobs=len(jobs))
+            successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
-        while not cluster_interface.n_completed_jobs == len(jobs):
-            to_submit = [job for job in jobs if job.status == JobStatus.INITIAL_STATUS]
-            for job in to_submit[:5]:
-                cluster_interface.submit(job)
+            while not cluster_interface.n_completed_jobs == len(jobs):
+                to_submit = [job for job in jobs if job.status == JobStatus.INITIAL_STATUS]
+                for job in to_submit[:5]:
+                    cluster_interface.submit(job)
 
-            for job in cluster_interface.submitted_jobs:
-                if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
-                    job.check_filesystem_for_errors()
-            cluster_interface.check_error_msgs()
+                for job in cluster_interface.submitted_jobs:
+                    if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                        job.check_filesystem_for_errors()
+                cluster_interface.check_error_msgs()
 
-            submitted_bar.update(cluster_interface.n_submitted_jobs)
-            running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
-            running_bar.update(cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs)
-            successful_jobs_bar.update(cluster_interface.n_successful_jobs)
-            successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
+                submitted_bar.update(cluster_interface.n_submitted_jobs)
+                running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
+                running_bar.update(cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs)
+                successful_jobs_bar.update(cluster_interface.n_successful_jobs)
+                successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
 
-            if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
-                cluster_interface.close()
-                raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
-
-            time.sleep(0.2)
+                if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
+                    cluster_interface.close()
+                    raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
+                check_for_keyboard_input()
+                time.sleep(0.2)
 
     post_opt(cluster_interface)
 
