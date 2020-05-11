@@ -33,7 +33,9 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.job_spec_file_path)
         cluster_id = self.generate_cluster_id()
         new_futures_tuple = (cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
+        logger.info(f"Job with id {job.id} submitted locally.")
         self.futures_tuple.append(new_futures_tuple)
+        print(new_futures_tuple)
         return cluster_id
 
     def stop_fn(self, job_id):

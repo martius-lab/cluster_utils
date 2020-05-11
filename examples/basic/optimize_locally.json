@@ -1,5 +1,5 @@
 {
-  "optimization_procedure_name": "test_asynch_opt_metaopt",
+  "optimization_procedure_name": "test_local_opt",
   "results_dir": "/is/rg/al/Projects/tmp",
   "git_params": {
     "branch": "master",
@@ -10,11 +10,7 @@
   "environment_setup": {
   },
   "cluster_requirements": {
-    "request_cpus": 1,
-    "request_gpus": 0,
-    "cuda_requirement": null,
-    "memory_in_mb": 1000,
-    "bid": 1000
+    "request_cpus": 1
   },
   "optimizer_str": "cem_metaoptimizer",
   "optimizer_settings": {"with_restarts": true,

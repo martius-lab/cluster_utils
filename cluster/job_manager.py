@@ -224,9 +224,6 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                         hp_optimizer.add_candidate(new_job.id)
                     cluster_interface.add_jobs(new_job)
                     cluster_interface.submit(new_job)
-                else:
-                    logger.info(f"Decided to NOT submit job: completed-{cluster_interface.n_completed_jobs}"
-                                f"submitted-{cluster_interface.n_submitted_jobs}")
                 if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
                     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                                        num_best_jobs_whose_data_is_kept)
