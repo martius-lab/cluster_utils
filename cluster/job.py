@@ -47,6 +47,7 @@ class Job():
         self.param_df = None
         self.metric_df = None
         self.reported_metric_values = None
+        self.futures_object = None
 
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
@@ -147,6 +148,11 @@ class Job():
                 exception = f_err.read()
             self.status = JobStatus.FAILED
             self.error_info = exception
+
+        if self.futures_object is not None:  # Local run
+            if self.futures_object.done() and self.futures_object.result().__dict__['returncode'] == 1:
+                self.status = JobStatus.FAILED
+                self.error_info = self.futures_object.result().stderr.decode()
 
     @property
     def time_left(self):

@@ -30,10 +30,11 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         self.generate_job_spec_file(job)
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
         free_cpus_str = ','.join(map(str, free_cpus))
-        cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.job_spec_file_path)
+        cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.run_script_path)
         cluster_id = self.generate_cluster_id()
         new_futures_tuple = (cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
         logger.info(f"Job with id {job.id} submitted locally.")
+        job.futures_object = new_futures_tuple[1]
         self.futures_tuple.append(new_futures_tuple)
         return cluster_id
 
@@ -91,8 +92,8 @@ class Dummy_ClusterSubmission(ClusterSubmission):
             self.concurrent_jobs = self.available_cpus
         assert self.concurrent_jobs > 0
 
+"""
     def check_error_msgs(self):
-        print(self.futures_tuple)
         failed = [future for _, future in self.futures_tuple if
                   future.done() and future.result().__dict__['returncode'] == 1]
         errs = set([future.result().stderr.decode() for future in failed])
@@ -101,3 +102,4 @@ class Dummy_ClusterSubmission(ClusterSubmission):
                 self.exceptions_seen.add(err)
                 logger.warning(err)
         return len(errs) > 0
+"""
