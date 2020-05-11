@@ -35,7 +35,6 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         new_futures_tuple = (cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
         logger.info(f"Job with id {job.id} submitted locally.")
         self.futures_tuple.append(new_futures_tuple)
-        print(new_futures_tuple)
         return cluster_id
 
     def stop_fn(self, job_id):
@@ -93,6 +92,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         assert self.concurrent_jobs > 0
 
     def check_error_msgs(self):
+        print(self.futures_tuple)
         failed = [future for _, future in self.futures_tuple if
                   future.done() and future.result().__dict__['returncode'] == 1]
         errs = set([future.result().stderr.decode() for future in failed])
