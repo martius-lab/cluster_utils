@@ -8,6 +8,7 @@
   "script_relative_path": "examples/basic/main.py",
   "remove_jobs_dir": false,
   "environment_setup": {
+    "pre_job_script": "examples/basic/pre_job_script.sh"
   },
   "cluster_requirements": {
     "request_cpus": 1,

@@ -61,6 +61,12 @@ class Job():
         current_setting = self.generate_final_setting(paths)
 
         setting_cwd = 'cd {}'.format(paths['main_path'])
+        if 'pre_job_script' in paths:
+            pre_job_script = f'./{paths["pre_job_script"]}'
+        else:
+            pre_job_script = ''
+
+
         if 'virtual_env_path' in paths:
             virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
         else:
@@ -101,7 +107,7 @@ class Job():
                                             '\"' + str(self.comm_server_info) + '\"',
                                             '\"' + str(current_setting) + '\"')
 
-        res = '\n'.join([setting_cwd, virtual_env_activate, conda_env_activate, exec_cmd])
+        res = '\n'.join([setting_cwd, pre_job_script, virtual_env_activate, conda_env_activate, exec_cmd])
         return res
 
     def set_results(self):
