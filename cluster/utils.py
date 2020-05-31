@@ -107,7 +107,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         check_valid_name(name)
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
-        value = tuple(value) is isinstance(value,list) else value
+        value = tuple(value) if isinstance(value,list) else value
         if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
             raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
     nested_items = [(name.split('.'), value) for name, value in other_params.items()]
