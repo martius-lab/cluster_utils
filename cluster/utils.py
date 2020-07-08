@@ -80,7 +80,7 @@ def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_sett
         raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
     if not hyperparam_dict and not distribution_list:
         logger.warning('No hyperparameters vary. Only running restarts')
-        return [{}]
+        return iter([{}])
     if distribution_list and not samples:
         raise TypeError('Number of samples not specified')
     if distribution_list:
