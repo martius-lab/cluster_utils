@@ -66,7 +66,8 @@ if __name__ == '__main__':
         report_hooks=[],  # json_hook], TODO: Make this hook thing work again
         restarts=params.restarts,
         remove_jobs_dir=params.get("remove_jobs_dir", True),
-        load_existing_results=params.get("load_existing_results", False)
+        load_existing_results=params.get("load_existing_results", False),
+        run_local=params.get("local_run", None)
     )
 
     df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
