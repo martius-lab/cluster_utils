@@ -20,6 +20,7 @@ from .constants import *
 
 
 logger = logging.getLogger('cluster_utils')
+logger.setLevel(logging.WARN)
 
 
 def shorten_string(string, max_len):
@@ -119,6 +120,8 @@ def validate_hyperparam_dict(hyperparam_dict):
         check_valid_name(name)
         if type(option_list) is not list:
             raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
+        option_list = [ o if not isinstance(o, list) else tuple(o) for o in option_list]
+        hyperparam_dict[name]=option_list
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
                 raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
