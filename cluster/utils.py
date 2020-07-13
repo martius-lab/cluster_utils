@@ -20,7 +20,6 @@ from .constants import *
 
 
 logger = logging.getLogger('cluster_utils')
-logger.setLevel(logging.WARN)
 
 
 def shorten_string(string, max_len):
