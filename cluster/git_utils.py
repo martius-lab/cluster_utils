@@ -8,8 +8,6 @@ from .cluster_system import ClusterSubmissionHook
 
 import git
 
-logger = logging.getLogger('cluster_utils')
-
 def sanitize_for_latex(string):
     return string.replace('_', '-').replace('\\', '')
 
@@ -130,6 +128,7 @@ class GitConnector(object):
         '''
 
         remote_url = self._orig_url
+        logger = logging.getLogger('cluster_utils')
 
         # if url is local path, get url of origin from repo
         if os.path.exists(self._orig_url):
@@ -162,6 +161,7 @@ class GitConnector(object):
 
 
     def remove_local_copy(self):
+        logger = logging.getLogger('cluster_utils')
         if self._orig_url and self._remove_local_copy:
             logger.info('Remove local git clone in {} ... '.format(self._local_path))
             self._repo.close()
@@ -171,6 +171,7 @@ class GitConnector(object):
 
     @property
     def meta_information(self):
+        logger = logging.getLogger('cluster_utils')
 
         if self._repo is None:
             logger.warning('Not connected to a git repository')
@@ -192,6 +193,7 @@ class GitConnector(object):
 
 class ClusterSubmissionGitHook(ClusterSubmissionHook):
     def __init__(self, params, paths):
+        logger = logging.getLogger('cluster_utils')
         self.params = params
         self.git_conn = None
         self.paths = paths
@@ -220,6 +222,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
                 pass
 
     def pre_run_routine(self):
+        logger = logging.getLogger('cluster_utils')
         self.git_conn = GitConnector(**self.params)
         if 'url' in self.params and self.params.get('commit', None) is None:
             commit_hexsha = self.git_conn._repo.commit(self.git_conn._repo.active_branch.name).hexsha

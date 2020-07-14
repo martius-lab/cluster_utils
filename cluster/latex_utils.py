@@ -6,8 +6,6 @@ from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
 from abc import ABC, abstractmethod
 
-logger = logging.getLogger('cluster_utils')
-
 
 def subsection(section_name, content):
     begin = '\\begin{{subsection}}{{{}}}\n'.format(section_name)
@@ -69,6 +67,7 @@ class LatexFile(object):
         self.sections.append(section(name, content))
 
     def produce_pdf(self, output_file):
+        logger = logging.getLogger('cluster_utils')
         full_content = '\n'.join(self.sections)
         title_str = LATEX_TITLE.format(self.title)
         date_str = LATEX_DATE.format(self.date)

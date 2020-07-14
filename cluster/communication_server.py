@@ -9,8 +9,6 @@ import threading
 
 from .job import JobStatus
 
-logger = logging.getLogger('cluster_utils')
-
 class MessageTypes():
     JOB_STARTED = 0
     ERROR_ENCOUNTERED = 1
@@ -32,6 +30,7 @@ class MinJob():
 class CommunicationServer():
 
     def __init__(self, cluster_system):
+        logger = logging.getLogger('cluster_utils')
         self.ip_adress = self.get_own_ip()
         self.port = None
         logger.info(f"Master script running on IP: {self.ip_adress}")
@@ -65,6 +64,8 @@ class CommunicationServer():
         return IP
 
     def start_listening(self):
+        logger = logging.getLogger('cluster_utils')
+
         def on_read(handle, ip_port, flags, data, error):
             if data is not None:
                 # handle.send(ip_port, data) This would be a way to ensure messaging worked well
@@ -102,6 +103,7 @@ class CommunicationServer():
         signal.signal(signal.SIGINT, signal_cb)
 
     def handle_job_started(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, hostname = message
         logger.info(f"Job {job_id} started on hostname {hostname}")
         job = self.cluster_system.get_job(job_id)
@@ -114,6 +116,7 @@ class CommunicationServer():
         job.waiting_for_resume = False
 
     def handle_error_encountered(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, strings = message
         logger.warning(f"Job {job_id} died with error {strings[-1:]}.")
         job = self.cluster_system.get_job(job_id)
@@ -123,6 +126,7 @@ class CommunicationServer():
         job.error_info = ''.join(strings)
 
     def handle_job_sent_results(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, metrics = message
         logger.info(f"Job {job_id} sent results.")
         job = self.cluster_system.get_job(job_id)
@@ -135,6 +139,7 @@ class CommunicationServer():
             raise ValueError('Job sent metrics but something went wrong')
 
     def handle_job_concluded(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, = message
         job = self.cluster_system.get_job(job_id)
         if job is None:
@@ -148,12 +153,14 @@ class CommunicationServer():
             logger.info(f"Job {job_id} finished successfully.")
 
     def handle_exit_for_resume(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, = message
         logger.info(f"Job {job_id} exited to be resumed.")
         job = self.cluster_system.get_job(job_id)
         job.waiting_for_resume = True
 
     def handle_job_progress(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, percentage_done = message
         logger.info(f"Job {job_id} announced it is {int(100*percentage_done)}% done.")
         job = self.cluster_system.get_job(job_id)
@@ -161,6 +168,7 @@ class CommunicationServer():
             job.estimated_end = job.start_time + (time.time() - job.start_time) / percentage_done
 
     def handle_metric_early_report(self, message):
+        logger = logging.getLogger('cluster_utils')
         job_id, metrics = message
         logger.info(f"Job {job_id} sent intermediate results.")
         job = self.cluster_system.get_job(job_id)
@@ -170,4 +178,5 @@ class CommunicationServer():
             job.reported_metric_values.append(metrics[job.metric_to_watch])
 
     def handle_unidentified_message(self, data, msg_type_idx, message):
+        logger = logging.getLogger('cluster_utils')
         logger.error(f"Received a message I did not understand: {data}, {msg_type_idx}, {message}")

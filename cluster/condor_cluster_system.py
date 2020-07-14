@@ -13,7 +13,6 @@ import time
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
 
-logger = logging.getLogger('cluster_utils')
 
 class Condor_ClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True):
@@ -24,6 +23,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
         self.exceptions_seen = set({})
 
     def submit_fn(self, job):
+        logger = logging.getLogger('cluster_utils')
         self.generate_job_spec_file(job)
         submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
         while True:

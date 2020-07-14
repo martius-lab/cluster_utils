@@ -109,6 +109,7 @@ class Optimizer(ABC):
         pass
 
     def best_jobs_model_dirs(self, how_many):
+        logger = logging.getLogger('cluster_utils')
         df_to_use = self.full_df
         if how_many > df_to_use.shape[0]:
             logger.warning('Requesting more best_job_model_dirs than data is available, reducing number to: ' +

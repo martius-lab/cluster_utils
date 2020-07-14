@@ -10,7 +10,6 @@ import scipy.stats
 from .constants import *
 from .utils import check_valid_name
 
-logger = logging.getLogger('cluster_utils')
 
 def clip(number, bounds):
     low, high = bounds
@@ -98,6 +97,7 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
         self.last_mean = None
 
     def fit(self, data_points):
+        logger = logging.getLogger('cluster_utils')
         if len(data_points) < 5:
             return  # Do not refit based on too few samples
         new_mean, self.std = scipy.stats.norm.fit(np.array(data_points))
@@ -136,6 +136,7 @@ class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
         self.last_log_mean = None
 
     def fit(self, data_points):
+        logger = logging.getLogger('cluster_utils')
         if len(data_points) < 5:
             return  # Do not refit based on too few samples
 
@@ -174,6 +175,7 @@ class RelaxedCounter(Counter):
     """Counter class that potentially falls back to a string representation of a key"""
 
     def __getitem__(self, key):
+        logger = logging.getLogger('cluster_utils')
         if key not in self.keys():
             if str(key) in self.keys():
                 logger.warning('String comparison used for key {}'.format(key))
@@ -196,6 +198,7 @@ class Discrete(Distribution):
         self.probs = [1.0 / len(self.option_list) for _ in self.option_list]
 
     def fit(self, samples):
+        logger = logging.getLogger('cluster_utils')
         frequencies = RelaxedCounter(samples)
         # Add plus one to all frequencies to keep all options
         self.probs = [(1.0 / (len(samples) + len(self.option_list))) * (1.0 + frequencies[val])

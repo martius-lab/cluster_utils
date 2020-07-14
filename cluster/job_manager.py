@@ -18,7 +18,6 @@ import sys
 from .communication_server import CommunicationServer
 from .optimizers import NGOptimizer
 
-logger = logging.getLogger('cluster_utils')
 
 def init_logging(working_dir):
     from importlib import reload
@@ -31,6 +30,7 @@ def init_logging(working_dir):
 
 
 def ensure_empty_dir(dir_name, defensive=False):
+    logger = logging.getLogger('cluster_utils')
     if os.path.exists(dir_name):
         if defensive:
             print(make_red(f"Directory {dir_name} exists. Delete everything? (y/N)"))
@@ -58,6 +58,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
 
 
 def update_best_job_datadirs(result_dir, model_dirs):
+    logger = logging.getLogger('cluster_utils')
     datadir = os.path.join(result_dir, 'best_jobs')
     os.makedirs(datadir, exist_ok=True)
 
@@ -84,6 +85,8 @@ def update_best_job_datadirs(result_dir, model_dirs):
 
 def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_to_optimize, minimize, report_hooks,
                             number_of_samples, **optimizer_settings):
+    logger = logging.getLogger('cluster_utils')
+
     possible_pickle = os.path.join(result_dir, STATUS_PICKLE_FILE)
     hp_optimizer = optimizer_dict[optimizer_str].try_load_from_pickle(possible_pickle, optimized_params,
                                                                       metric_to_optimize,
@@ -187,6 +190,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     report_hooks=None, optimizer_settings=None):
 
     optimizer_settings = optimizer_settings or {}
+    logger = logging.getLogger('cluster_utils')
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
 
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
@@ -317,6 +321,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                   dict(restarts=restarts))
 
     pre_iteration_opt(base_paths_and_files)
+    logger = logging.getLogger('cluster_utils')
 
     settings = hp_optimizer.ask_all()
     jobs = [Job(id=cluster_interface.inc_job_id, settings=setting,

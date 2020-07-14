@@ -7,8 +7,6 @@ from abc import ABC, abstractmethod
 from subprocess import run, DEVNULL
 from .job import JobStatus, Job
 
-logger = logging.getLogger('cluster_utils')
-
 class ClusterSubmission(ABC):
     def __init__(self, paths, remove_jobs_dir=True):
         self.jobs = []
@@ -39,11 +37,13 @@ class ClusterSubmission(ABC):
         if hook.state > 0:
             return
 
+        logger = logging.getLogger('cluster_utils')
         logger.info('Register submission hook {}'.format(hook.identifier))
         self.submission_hooks[hook.identifier] = hook
         hook.manager = self
 
     def unregister_submission_hook(self, identifier):
+        logger = logging.getLogger('cluster_utils')
         if identifier in self.submission_hooks:
             logger.info('Unregister submission hook {}'.format(identifier))
             self.submission_hooks.manager = None
@@ -145,6 +145,7 @@ class ClusterSubmission(ABC):
         # t.start()
 
     def _submit(self, job):
+        logger = logging.getLogger('cluster_utils')
         if not job.cluster_id is None:
             raise RuntimeError('Can not run a job that already ran')
         if not job in self.jobs:
@@ -212,6 +213,7 @@ class ClusterSubmission(ABC):
         raise NotImplementedError
 
     def __enter__(self):
+        logger = logging.getLogger('cluster_utils')
         # TODO: take emergency cleanup to new implementation
         try:
             self.exec_pre_submission_routines()
@@ -222,6 +224,7 @@ class ClusterSubmission(ABC):
             raise
 
     def close(self):
+        logger = logging.getLogger('cluster_utils')
         self.stop_all()
         if self.remove_jobs_dir:
             logger.info('Removing jobs dir {}'.format(self.submission_dir))
@@ -229,6 +232,7 @@ class ClusterSubmission(ABC):
 
 
     def check_error_msgs(self):
+        logger = logging.getLogger('cluster_utils')
         for job in self.failed_jobs:
             if job.error_info not in self.error_msgs:
                 warn_string = f'\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with error:\x1b[0m\n'
@@ -243,6 +247,7 @@ class ClusterSubmission(ABC):
 
 
 def get_cluster_type(requirements, run_local=None):
+    logger = logging.getLogger('cluster_utils')
     from .condor_cluster_system import Condor_ClusterSubmission
     from .dummy_cluster_system import Dummy_ClusterSubmission
 
@@ -264,6 +269,7 @@ def get_cluster_type(requirements, run_local=None):
 
 
 def is_command_available(cmd):
+    logger = logging.getLogger('cluster_utils')
     try:
         run(cmd, stderr=DEVNULL, stdout=DEVNULL)
     except OSError as e:

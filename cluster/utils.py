@@ -19,8 +19,6 @@ import git
 from .constants import *
 
 
-logger = logging.getLogger('cluster_utils')
-
 
 def shorten_string(string, max_len):
     if len(string) > max_len - 3:
@@ -44,6 +42,7 @@ def check_valid_name(string):
 
 
 def rm_dir_full(dir_name):
+    logger = logging.getLogger('cluster_utils')
     sleep(0.5)
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name, ignore_errors=True)
@@ -76,6 +75,7 @@ def save_dict_as_one_line_csv(dct, filename):
 
 
 def get_sample_generator(samples, hyperparam_dict, distribution_list, extra_settings=None):
+    logger = logging.getLogger('cluster_utils')
     if hyperparam_dict and distribution_list:
         raise TypeError('At most one of hyperparam_dict and distribution list can be provided')
     if not hyperparam_dict and not distribution_list:
@@ -188,6 +188,7 @@ def temp_directory(prefix='cluster_utils', suffix=''):
 
 
 def get_git_url():
+    logger = logging.getLogger('cluster_utils')
     try:
         repo = git.Repo(search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError:

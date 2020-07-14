@@ -10,8 +10,6 @@ from .utils import dict_to_dirname, flatten_nested_string_dict
 from cluster.utils import update_recursive
 import pandas as pd
 
-logger = logging.getLogger("cluster_utils")
-
 class JobStatus():
     INITIAL_STATUS = -1
     SUBMITTED = 0
@@ -58,6 +56,7 @@ class Job():
         return current_setting
 
     def generate_execution_cmd(self, paths):
+        logger = logging.getLogger("cluster_utils")
         current_setting = self.generate_final_setting(paths)
 
         setting_cwd = 'cd {}'.format(paths['main_path'])
@@ -117,6 +116,7 @@ class Job():
         self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
 
     def try_load_results_from_filesystem(self, paths):
+        logger = logging.getLogger("cluster_utils")
         model_dir = os.path.join(paths['current_result_dir'], str(self.id))
 
         possible_metric_file = os.path.join(model_dir, CLUSTER_METRIC_FILE)

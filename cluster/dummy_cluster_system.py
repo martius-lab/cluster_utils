@@ -9,7 +9,6 @@ from .constants import *
 import random
 import numpy as np
 
-logger = logging.getLogger('cluster_utils')
 
 class Dummy_ClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True):
@@ -27,6 +26,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         return cluster_id
 
     def submit_fn(self, job):
+        logger = logging.getLogger('cluster_utils')
         self.generate_job_spec_file(job)
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
         free_cpus_str = ','.join(map(str, free_cpus))
@@ -81,6 +81,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         return [future for _, future in self.futures_tuple]
 
     def _process_requirements(self, requirements):
+        logger = logging.getLogger('cluster_utils')
         self.cpus_per_job = requirements['request_cpus']
         self.max_cpus = requirements.get('max_cpus', cpu_count())
         if self.max_cpus <= 0:

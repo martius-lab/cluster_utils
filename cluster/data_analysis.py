@@ -11,8 +11,6 @@ import seaborn as sns
 from .constants import *
 from .utils import shorten_string
 
-logger = logging.getLogger('cluster_utils')
-
 def performance_summary(df, metrics):
     perf = {}
     for metric in metrics:
@@ -26,6 +24,7 @@ def performance_summary(df, metrics):
 
 
 def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True):
+    logger = logging.getLogger('cluster_utils')
     if not metrics:
         raise ValueError('Empty set of metrics not accepted.')
     new_df = df[params_to_keep + metrics]
@@ -58,6 +57,7 @@ def color_scheme():
 
 
 def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
+    logger = logging.getLogger('cluster_utils')
     smaller_df = df[[param, metric]]
     unique_vals = smaller_df[param].unique()
     if not len(unique_vals):
