@@ -21,6 +21,8 @@ from .optimizers import NGOptimizer
 logger = logging.getLogger('cluster_utils')
 
 def init_logging(working_dir):
+    from importlib import reload
+    reload(logging)
     filename = os.path.join(working_dir, 'cluster_run.log')
     logging.basicConfig(filename=filename,
                         level=logging.INFO,
