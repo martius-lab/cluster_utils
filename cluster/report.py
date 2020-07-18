@@ -9,7 +9,7 @@ from matplotlib import rc
 
 from .data_analysis import *
 from .latex_utils import LatexFile
-
+from .utils import log_and_print
 
 def init_plotting():
     sns.set_style("darkgrid", {'legend.frameon': True})
@@ -32,7 +32,7 @@ def flatten_params(params_with_tuples):
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
                          submission_hook_stats=None, maximized_metrics=None, log_scale_list=None, report_hooks=None):
     logger = logging.getLogger('cluster_utils')
-    logger.info("Producing basic report... ")
+    log_and_print(logger, "Producing basic report... ")
     log_scale_list = log_scale_list or []
     maximized_metrics = maximized_metrics or []
     report_hooks = report_hooks or []
@@ -51,8 +51,6 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
     params = list(flatten_params(params))
 
     for metric in metrics:
-        print(metric, params + [metric])
-        print (df.columns)
         best_runs_df = best_jobs(df[params + [metric]], metric, 10, minimum=(metric not in maximized_metrics))
         latex.add_section_from_dataframe('Jobs with best result in \'{}\''.format(metric), best_runs_df)
 
@@ -87,4 +85,4 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
             hook.write_section(latex, file_gen, hook_args)
         logger.info('Calling pdflatex on prepared report')
         latex.produce_pdf(output_file)
-        logger.info(f'Report saved at {output_file}')
+        log_and_print(logger, f'Report saved at {output_file}')

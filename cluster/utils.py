@@ -321,3 +321,8 @@ def update_recursive(d, u, defensive=False):
         else:
             d[k] = v
     return d
+
+
+def log_and_print(logger, msg):
+    logger.info(msg)
+    print(msg)
