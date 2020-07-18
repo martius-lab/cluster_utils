@@ -46,13 +46,13 @@ if __name__ == '__main__':
 
     class DummyDistribution():
         def __init__(self, param, values):
-            self.param_name = param
+            self.param_name = tuple(param) if isinstance(param, list) else param
             self.values = values
 
     hyperparam_dict = [DummyDistribution(hyperparam["param"], hyperparam["values"]) for hyperparam in
                        params.hyperparam_list]
+    hyperparam_names = [dummy_dist.param_name for dummy_dist in hyperparam_dict]
 
-    hyperparam_names = [hyperparam["param"] for hyperparam in params.hyperparam_list]
     num_duplicates = Counter(hyperparam_names)
     if num_duplicates and max(num_duplicates.values()) > 1:
         raise ValueError(f"There we duplicate entries in the list of hyperparameters e.g. {num_duplicates.most_common}")

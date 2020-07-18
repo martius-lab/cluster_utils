@@ -21,6 +21,14 @@ def init_plotting():
     rc('font', **font)
 
 
+def flatten_params(params_with_tuples):
+    for p in params_with_tuples:
+        if isinstance(p,tuple):
+            for i in p:
+                yield i
+        else:
+            yield p
+
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
                          submission_hook_stats=None, maximized_metrics=None, log_scale_list=None, report_hooks=None):
     logger = logging.getLogger('cluster_utils')
@@ -39,7 +47,12 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
     summary_df = performance_summary(df, metrics)
     latex.add_section_from_dataframe('Summary of results', summary_df)
 
+    # flatten param-lists if they exist
+    params = list(flatten_params(params))
+
     for metric in metrics:
+        print(metric, params + [metric])
+        print (df.columns)
         best_runs_df = best_jobs(df[params + [metric]], metric, 10, minimum=(metric not in maximized_metrics))
         latex.add_section_from_dataframe('Jobs with best result in \'{}\''.format(metric), best_runs_df)
 
