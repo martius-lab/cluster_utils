@@ -25,6 +25,11 @@ def shorten_string(string, max_len):
         return '...' + string[-max_len + 3:]
     return string
 
+def list_to_tuple(maybe_list):
+    if isinstance(maybe_list,list):
+        return tuple(maybe_list)
+    else:
+        return maybe_list
 
 def check_valid_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
@@ -107,7 +112,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         check_valid_name(name)
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
-        value = tuple(value) if isinstance(value,list) else value
+        value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
             raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
     nested_items = [(name.split('.'), value) for name, value in other_params.items()]
@@ -122,7 +127,7 @@ def validate_hyperparam_dict(hyperparam_dict):
             check_valid_name(name)
         if type(option_list) is not list:
             raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
-        option_list = [ o if not isinstance(o, list) else tuple(o) for o in option_list]
+        option_list = [ list_to_tuple(o) for o in option_list]
         hyperparam_dict[name]=option_list
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
@@ -139,6 +144,7 @@ def hyperparam_dict_samples(hyperparam_dict, num_samples):
 
 
 def hyperparam_dict_product(hyperparam_dict):
+    validate_hyperparam_dict(hyperparam_dict)
     names, option_lists = zip(*hyperparam_dict.items())
 
     for sample_from_product in itertools.product(*list(option_lists)):

@@ -19,17 +19,15 @@
     "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
   },
   "fixed_params": {
+    "fn_args.u": "{pairs[0]}",
+    "fn_args.v": "{pairs[1]}"
   },
   "restarts": 1,
   "samples": null,
   "hyperparam_list": [
     {
-      "param": "fn_args.u",
-      "values": [-0.5]
-    },
-    {
-      "param": "fn_args.v",
-      "values": [10, 50]
+      "param": "pairs",
+      "values": [[-0.5,10],[0,20]]
     },
     {
       "param": "fn_args.w",
@@ -41,7 +39,7 @@
     },
     {
       "param": "fn_args.sharp_penalty",
-      "values": [false, true]
+      "values": [false]
     }
   ]
 }

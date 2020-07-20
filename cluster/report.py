@@ -63,7 +63,6 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
 
         for metric in metrics:
             distr_files = [next(file_gen) for param in params]
-
             distr_files = [fname for fname, param in zip(distr_files, params) if
                            distribution(df, param, metric, fname, metric_logscale=(metric in log_scale_list))]
 
