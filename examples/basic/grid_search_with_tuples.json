@@ -1,0 +1,45 @@
+{
+  "optimization_procedure_name": "gs_test_2",
+  "results_dir": "/is/rg/al/Projects/tmp/example_results",
+  "git_params": {
+    "branch": "master",
+    "commit": null
+  },
+  "script_relative_path": "examples/basic/main.py",
+  "remove_jobs_dir": false,
+  "environment_setup": {
+    "pre_job_script": "examples/basic/pre_job_script.sh"
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 16000,
+    "bid": 800,
+    "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
+  },
+  "fixed_params": {
+    "fn_args.u": "{pairs[0]}",
+    "fn_args.v": "{pairs[1]}"
+  },
+  "restarts": 1,
+  "samples": null,
+  "hyperparam_list": [
+    {
+      "param": "pairs",
+      "values": [[-0.5,10],[0,20]]
+    },
+    {
+      "param": "fn_args.w",
+      "values": [1, 2]
+    },
+    {
+      "param": ["fn_args.x","fn_args.y"],
+      "values": [[3.0,0.1],[3.5,1.0], [4.0,1.0]]
+    },
+    {
+      "param": "fn_args.sharp_penalty",
+      "values": [false]
+    }
+  ]
+}

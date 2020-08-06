@@ -25,6 +25,11 @@ def shorten_string(string, max_len):
         return '...' + string[-max_len + 3:]
     return string
 
+def list_to_tuple(maybe_list):
+    if isinstance(maybe_list,list):
+        return tuple(maybe_list)
+    else:
+        return maybe_list
 
 def check_valid_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
@@ -107,7 +112,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         check_valid_name(name)
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
-        value = tuple(value) if isinstance(value,list) else value
+        value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
             raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
     nested_items = [(name.split('.'), value) for name, value in other_params.items()]
@@ -116,10 +121,13 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
 
 def validate_hyperparam_dict(hyperparam_dict):
     for name, option_list in hyperparam_dict.items():
-        check_valid_name(name)
+        if isinstance(name, tuple):
+            [check_valid_name(n) for n in name]
+        else:
+            check_valid_name(name)
         if type(option_list) is not list:
             raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
-        option_list = [ o if not isinstance(o, list) else tuple(o) for o in option_list]
+        option_list = [ list_to_tuple(o) for o in option_list]
         hyperparam_dict[name]=option_list
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
@@ -137,13 +145,17 @@ def hyperparam_dict_samples(hyperparam_dict, num_samples):
 
 def hyperparam_dict_product(hyperparam_dict):
     validate_hyperparam_dict(hyperparam_dict)
-
-    nested_items = [(name.split(OBJECT_SEPARATOR), options) for name, options in hyperparam_dict.items()]
-    nested_names, option_lists = zip(*nested_items)
+    names, option_lists = zip(*hyperparam_dict.items())
 
     for sample_from_product in itertools.product(*list(option_lists)):
-        yield nested_to_dict(zip(nested_names, sample_from_product))
-
+        list_of_samples = []
+        for name_or_tuple, option_or_tuple in zip(names, sample_from_product):
+            if isinstance(name_or_tuple, tuple):  # in case we specify a tuple/list of keys and values we unzip them here
+                list_of_samples.extend(zip(name_or_tuple, option_or_tuple))
+            else:
+                list_of_samples.append((name_or_tuple, option_or_tuple))
+        nested_items = [(name.split(OBJECT_SEPARATOR), options) for name, options in list_of_samples]
+        yield nested_to_dict(nested_items)
 
 def default_to_regular(d):
     if isinstance(d, defaultdict):
@@ -317,3 +329,8 @@ def update_recursive(d, u, defensive=False):
         else:
             d[k] = v
     return d
+
+
+def log_and_print(logger, msg):
+    logger.info(msg)
+    print(msg)

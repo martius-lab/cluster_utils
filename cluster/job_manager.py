@@ -6,7 +6,7 @@ from .user_interaction import InteractiveMode
 from .cluster_system import get_cluster_type
 from .constants import *
 from .settings import optimizer_dict
-from .utils import process_other_params, rm_dir_full, make_red
+from .utils import process_other_params, rm_dir_full, make_red, log_and_print
 from .git_utils import ClusterSubmissionGitHook
 from .job import Job, JobStatus
 import time
@@ -113,8 +113,8 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
     logger = logging.getLogger('cluster_utils')
 
     os.makedirs(base_paths_and_files['current_result_dir'], exist_ok=True)
-    logger.info(f'Creating directory {base_paths_and_files["current_result_dir"]}')
-    logger.info(f'Logs of individual jobs stored at {base_paths_and_files["jobs_dir"]}')
+    log_and_print(logger, f'Creating directory {base_paths_and_files["current_result_dir"]}')
+    log_and_print(logger, f'Logs of individual jobs stored at {base_paths_and_files["jobs_dir"]}')
 
     hp_optimizer = initialize_hp_optimizer(base_paths_and_files['result_dir'], optimizer_str, optimized_params,
                                            metric_to_optimize, minimize, report_hooks, number_of_samples,
