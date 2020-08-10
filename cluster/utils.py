@@ -269,10 +269,10 @@ def recursive_objectify(nested_dict, make_immutable=True):
 def fstring_in_json(format_string, namespace):
     if type(format_string) != str:
         return format_string
-    if format_string.startswith('$') and format_string[1:] == format_string[1:].upper():  # return environment variable
-        return os.environ[format_string[1:]]
+
+    env_dict = {'$'+key: value for key, value in os.environ.items()}
     try:
-        formatted = eval('f\"' + format_string + '\"', namespace)
+        formatted = eval('f\"' + format_string + '\"', {**namespace, **env_dict})
     except:
         return format_string
 
