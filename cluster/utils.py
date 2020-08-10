@@ -271,7 +271,6 @@ def fstring_in_json(format_string, namespace):
         return format_string
 
     env_dict = {'ENV_'+key: value for key, value in os.environ.items()}
-    print(env_dict)
     try:
         formatted = eval('f\"' + format_string + '\"', {**env_dict, **namespace})
     except:
