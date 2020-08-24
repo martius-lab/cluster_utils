@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -69,6 +70,13 @@ if __name__ == '__main__':
         load_existing_results=params.get("load_existing_results", False),
         run_local=params.get("local_run", None)
     )
+
+    if df is None:
+        logger = logging.getLogger('cluster_utils')
+        logger.warning(('Exiting without report because no job results are '
+                        'available. Either the jobs did not exit properly, or '
+                        'you forgot to call `save_metric_params`.'))
+        sys.exit()
 
     df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
 
