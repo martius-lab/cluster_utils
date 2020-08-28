@@ -187,7 +187,9 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
                     early_killing_params, optimizer_str='cem_metaoptimizer',
                     remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                    report_hooks=None, optimizer_settings=None):
+                    report_hooks=None, optimizer_settings=None, n_completed_jobs_before_resubmit=1):
+    if not (1 <= n_completed_jobs_before_resubmit <= n_jobs_per_iteration):
+        raise ValueError(f'n_completed_jobs_before_resubmit must be in [1, {n_jobs_per_iteration}]')
 
     optimizer_settings = optimizer_settings or {}
     logger = logging.getLogger('cluster_utils')
@@ -219,8 +221,16 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 time.sleep(0.2)
                 jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
                 hp_optimizer.tell(jobs_to_tell)
+
                 n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-                if n_queuing_or_running_jobs < n_jobs_per_iteration and cluster_interface.n_submitted_jobs < number_of_samples:
+                n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs 
+                                                  - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
+                iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset
+                if ((n_queuing_or_running_jobs <= n_jobs_per_iteration - n_completed_jobs_before_resubmit
+                        or n_jobs_submitted_cur_iteration < n_jobs_per_iteration
+                        or n_jobs_submitted_cur_iteration % n_completed_jobs_before_resubmit > 0)
+                        and cluster_interface.n_submitted_jobs < number_of_samples
+                        and not iteration_finished):
                     new_settings = hp_optimizer.ask()
                     new_job = Job(id=cluster_interface.inc_job_id, settings=new_settings,
                                   other_params=processed_other_params, paths=base_paths_and_files,
@@ -230,7 +240,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                         hp_optimizer.add_candidate(new_job.id)
                     cluster_interface.add_jobs(new_job)
                     cluster_interface.submit(new_job)
-                if cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset:
+                if iteration_finished:
                     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
                                        num_best_jobs_whose_data_is_kept)
                     logger.info(f'starting new iteration: {hp_optimizer.iteration}')
