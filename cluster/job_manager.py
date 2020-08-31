@@ -221,14 +221,15 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 time.sleep(0.2)
                 jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
                 hp_optimizer.tell(jobs_to_tell)
-
                 n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
+                n_jobs_completed_cur_iteration = (cluster_interface.n_completed_jobs 
+                                                  - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
                 n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs 
                                                   - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
+                max_job_submissions = ((n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit) 
+                                       * n_completed_jobs_before_resubmit + n_jobs_per_iteration)
                 iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset
-                if ((n_queuing_or_running_jobs <= n_jobs_per_iteration - n_completed_jobs_before_resubmit
-                        or n_jobs_submitted_cur_iteration < n_jobs_per_iteration
-                        or n_jobs_submitted_cur_iteration % n_completed_jobs_before_resubmit > 0)
+                if (n_jobs_submitted_cur_iteration < max_job_submissions
                         and cluster_interface.n_submitted_jobs < number_of_samples
                         and not iteration_finished):
                     new_settings = hp_optimizer.ask()
@@ -260,7 +261,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
                 successful_jobs_bar.update(cluster_interface.n_successful_jobs)
                 successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
-
+                
                 best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(minimize=minimize)
                 if len(hp_optimizer.full_df) > 0:
                     best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
