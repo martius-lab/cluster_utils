@@ -1,20 +1,18 @@
-import logging
-
-from pathlib2 import Path
 import collections
 import csv
 import inspect
 import itertools
 import json
+import logging
 import os
 import random
 import re
 import shutil
-from collections import defaultdict
 import tempfile
+from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
 from time import sleep
-import git
 
 from .constants import *
 
@@ -197,21 +195,6 @@ def mkdtemp(prefix='cluster_utils', suffix=''):
 def temp_directory(prefix='cluster_utils', suffix=''):
     new_prefix = prefix + ('' if not suffix else '-' + suffix + '-')
     return tempfile.TemporaryDirectory(prefix=new_prefix, dir=os.path.join(home, '.cache'))
-
-
-def get_git_url():
-    logger = logging.getLogger('cluster_utils')
-    try:
-        repo = git.Repo(search_parent_directories=True)
-    except git.exc.InvalidGitRepositoryError:
-        return None
-
-    url_list = list(repo.remotes.origin.urls)
-    if url_list:
-        logger.info(f"Auto-detected git repository with remote url: {url_list[0]}")
-        return url_list[0]
-
-    return None
 
 
 def dict_to_dirname(setting, id, smart_naming=True):

@@ -1,11 +1,13 @@
-from pathlib2 import Path
+import os
+import sys
+from pathlib import Path
+
 from . import hp_optimization, init_plotting
 from .distributions import *
+from .git_utils import make_git_params
 from .latex_utils import *
-from .utils import mkdtemp, get_git_url
+from .utils import mkdtemp
 from . import update_params_from_cmdline
-import sys
-import git
 
 
 def get_distribution(distribution, **kwargs):
@@ -31,7 +33,6 @@ def get_distribution(distribution, **kwargs):
 
 
 if __name__ == '__main__':
-
     params = update_params_from_cmdline(verbose=False)
 
     json_full_name = os.path.abspath(sys.argv[1])
@@ -40,22 +41,16 @@ if __name__ == '__main__':
     opt_procedure_name = params.optimization_procedure_name
 
     home = str(Path.home())
-    main_path = mkdtemp(suffix=opt_procedure_name + "-" + "project")
     results_path = os.path.join(home, params.results_dir, opt_procedure_name)
-    jobs_path = mkdtemp(suffix=opt_procedure_name + "-" + "jobs")
+    jobs_path = mkdtemp(suffix=f"{opt_procedure_name}-jobs")
 
-    git_params = None
-    if params.git_params is not None:
-        given_url = params.git_params.get("url")
-        if not given_url:
-            auto_url = get_git_url()
-            if not auto_url:
-                raise git.exc.InvalidGitRepositoryError("No git repository given in json file or auto-detected")
-
-            git_params = dict(url=auto_url, local_path=main_path, **params.git_params)
-
-        else:
-            git_params = dict(local_path=main_path, **params.git_params)
+    run_in_working_dir = params.get("run_in_working_dir", False)
+    if not run_in_working_dir:
+        main_path = mkdtemp(suffix=f"{opt_procedure_name}-project")
+        git_params = make_git_params(params.get('git_params'), main_path)
+    else:
+        main_path = os.getcwd()
+        git_params = None
 
     base_paths_and_files = dict(
         main_path=main_path,

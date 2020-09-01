@@ -125,8 +125,15 @@ def pre_opt(base_paths_and_files, submission_requirements, optimized_params, oth
     cluster_interface = cluster_type(paths=base_paths_and_files,
                                      requirements=submission_requirements,
                                      remove_jobs_dir=remove_jobs_dir)
-    cluster_interface.register_submission_hook(
-        ClusterSubmissionGitHook(git_params, base_paths_and_files))
+    if git_params is not None:
+        cluster_interface.register_submission_hook(
+            ClusterSubmissionGitHook(git_params, base_paths_and_files))
+    else:
+        msg = (f'Running without git repository, using local directory '
+               f'{base_paths_and_files["main_path"]}. Make sure this is intentional!')
+        logger.warning(msg)
+        print(make_red(f'Warning: {msg}'))
+
     cluster_interface.exec_pre_run_routines()
     comm_server = CommunicationServer(cluster_interface)
 
