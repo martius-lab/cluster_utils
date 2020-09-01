@@ -12,6 +12,39 @@ def sanitize_for_latex(string):
     return string.replace('_', '-').replace('\\', '')
 
 
+def get_git_url():
+    logger = logging.getLogger('cluster_utils')
+    try:
+        repo = git.Repo(search_parent_directories=True)
+    except git.exc.InvalidGitRepositoryError:
+        return None
+
+    url_list = list(repo.remotes.origin.urls)
+    if url_list:
+        logger.info(f"Auto-detected git repository with remote url: {url_list[0]}")
+        return url_list[0]
+
+    return None
+
+
+def make_git_params(user_git_params, local_path):
+    if user_git_params is None:
+        git_params = {}
+    else:
+        git_params = user_git_params.copy()
+
+    git_params["local_path"] = local_path
+
+    if "url" not in git_params:
+        auto_url = get_git_url()
+        if not auto_url:
+            raise git.exc.InvalidGitRepositoryError("No git repository given in json file or auto-detected")
+
+        git_params["url"] = auto_url
+
+    return git_params
+
+
 class GitConnector(object):
     '''
     Class that provides meta information for git repository
@@ -211,10 +244,6 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             self.state = 0
         else:
             # Check if local Path is git repo
-
-            if 'git' not in sys.modules:
-                return
-
             try:
                 repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
                 self.state = 0

@@ -3,40 +3,35 @@ import os
 import shutil
 import sys
 from collections import Counter
-
-import git
-from cluster.latex_utils import SectionFromJsonHook
-from pathlib2 import Path
+from pathlib import Path
 
 from cluster import update_params_from_cmdline
+from cluster.latex_utils import SectionFromJsonHook
 from cluster.report import produce_basic_report, init_plotting
-from cluster.utils import mkdtemp, get_git_url
+from cluster.git_utils import make_git_params
+from cluster.utils import mkdtemp
 from . import grid_search
 
 if __name__ == '__main__':
-
+    params = update_params_from_cmdline(verbose=False)
+    
+    json_full_name = os.path.abspath(sys.argv[1])
     init_plotting()
 
-    params = update_params_from_cmdline(verbose=False)
+    opt_procedure_name = params.optimization_procedure_name
 
-    json_full_name = os.path.abspath(sys.argv[1])
     home = str(Path.home())
-
-    main_path = mkdtemp(suffix=f"{params.optimization_procedure_name}-project")
-    results_path = os.path.join(home, params.results_dir, params.optimization_procedure_name)
-    jobs_path = mkdtemp(suffix=f"{params.optimization_procedure_name}-jobs")
-
-    given_url = params.git_params.get("url")
-    if not given_url:
-        auto_url = get_git_url()
-        if not auto_url:
-            raise git.exc.InvalidGitRepositoryError("No git repository given in json file or auto-detected")
-
-        git_params = dict(url=auto_url, local_path=main_path, **params.git_params)
-
+    results_path = os.path.join(home, params.results_dir, opt_procedure_name)
+    jobs_path = mkdtemp(suffix=f"{opt_procedure_name}-jobs")
+    
+    run_in_working_dir = params.get("run_in_working_dir", False)
+    if not run_in_working_dir:
+        main_path = mkdtemp(suffix=f"{opt_procedure_name}-project")
+        git_params = make_git_params(params.get('git_params'), main_path)
     else:
-        git_params = dict(local_path=main_path, **params.git_params)
-
+        main_path = os.getcwd()
+        git_params = None
+    
     base_paths_and_files = dict(
         main_path=main_path,
         script_to_run=params.script_relative_path,
