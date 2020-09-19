@@ -14,7 +14,7 @@ from . import grid_search
 
 if __name__ == '__main__':
     params = update_params_from_cmdline(verbose=False)
-    
+
     json_full_name = os.path.abspath(sys.argv[1])
     init_plotting()
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     home = str(Path.home())
     results_path = os.path.join(home, params.results_dir, opt_procedure_name)
     jobs_path = mkdtemp(suffix=f"{opt_procedure_name}-jobs")
-    
+
     run_in_working_dir = params.get("run_in_working_dir", False)
     if not run_in_working_dir:
         main_path = mkdtemp(suffix=f"{opt_procedure_name}-project")
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     else:
         main_path = os.getcwd()
         git_params = None
-    
+
     base_paths_and_files = dict(
         main_path=main_path,
         script_to_run=params.script_relative_path,
@@ -62,6 +62,7 @@ if __name__ == '__main__':
         report_hooks=[],  # json_hook], TODO: Make this hook thing work again
         restarts=params.restarts,
         remove_jobs_dir=params.get("remove_jobs_dir", True),
+        remove_working_dirs=params.get("remove_working_dirs", False),
         load_existing_results=params.get("load_existing_results", False),
         run_local=params.get("local_run", None)
     )

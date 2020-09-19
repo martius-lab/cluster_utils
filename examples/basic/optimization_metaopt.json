@@ -7,6 +7,7 @@
   },
   "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
+  "remove_working_dirs": false,
   "environment_setup": {
     "pre_job_script": "examples/basic/pre_job_script.sh"
   },
