@@ -74,6 +74,8 @@ if __name__ == '__main__':
         optimized_params=distribution_list,
         other_params=params.fixed_params,
         optimizer_str=params.optimizer_str,
+        remove_jobs_dir=params.get("remove_jobs_dir", True),
+        remove_working_dirs=params.get("remove_working_dirs", True),
         git_params=git_params,
         report_hooks=[json_hook],
         num_best_jobs_whose_data_is_kept=params.num_best_jobs_whose_data_is_kept,

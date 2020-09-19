@@ -57,7 +57,7 @@ def dict_to_dirname(setting, id, smart_naming=True):
     return str(id)
 
 
-def update_best_job_datadirs(result_dir, model_dirs):
+def update_best_job_datadirs(result_dir, model_dirs, remove_working_dirs=True):
     logger = logging.getLogger('cluster_utils')
     datadir = os.path.join(result_dir, 'best_jobs')
     os.makedirs(datadir, exist_ok=True)
@@ -71,7 +71,8 @@ def update_best_job_datadirs(result_dir, model_dirs):
             new_dir_full = os.path.join(datadir, new_dir_name)
             if not os.path.exists((new_dir_full)):
                 shutil.copytree(model_dir, new_dir_full)
-            rm_dir_full(model_dir)
+            if remove_working_dirs:
+                rm_dir_full(model_dir)
 
     # Delete old best directories if outdated
     for dir_or_file in os.listdir(datadir):
@@ -158,7 +159,7 @@ def pre_iteration_opt(base_paths_and_files):
 
 
 def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                       num_best_jobs_whose_data_is_kept):
+                       num_best_jobs_whose_data_is_kept, remove_working_dirs):
     pdf_output = os.path.join(base_paths_and_files['result_dir'], 'result.pdf')
     current_result_path = base_paths_and_files['current_result_dir']
 
@@ -177,23 +178,20 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
     comm_server.jobs = []
 
-
     if num_best_jobs_whose_data_is_kept > 0:
         best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
-        update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs)
+        update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs, remove_working_dirs)
 
-    finished_model_dirs = hp_optimizer.full_df['model_dir']
-    for model_dir in finished_model_dirs:
-        rm_dir_full(model_dir)
-
-    # rm_dir_full(current_result_path)
-    #print('Intermediate results deleted...')
+    if remove_working_dirs:
+        finished_model_dirs = hp_optimizer.full_df['model_dir']
+        for model_dir in finished_model_dirs:
+            rm_dir_full(model_dir)
 
 
 def hp_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
                     number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
                     early_killing_params, optimizer_str='cem_metaoptimizer',
-                    remove_jobs_dir=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
+                    remove_jobs_dir=True, remove_working_dirs=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
                     report_hooks=None, optimizer_settings=None, n_completed_jobs_before_resubmit=1):
     if not (1 <= n_completed_jobs_before_resubmit <= n_jobs_per_iteration):
         raise ValueError(f'n_completed_jobs_before_resubmit must be in [1, {n_jobs_per_iteration}]')
@@ -228,12 +226,11 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 time.sleep(0.2)
                 jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
                 hp_optimizer.tell(jobs_to_tell)
-                n_queuing_or_running_jobs = cluster_interface.n_submitted_jobs - cluster_interface.n_completed_jobs
-                n_jobs_completed_cur_iteration = (cluster_interface.n_completed_jobs 
+                n_jobs_completed_cur_iteration = (cluster_interface.n_completed_jobs
                                                   - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
-                n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs 
+                n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs
                                                   - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
-                max_job_submissions = ((n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit) 
+                max_job_submissions = ((n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit)
                                        * n_completed_jobs_before_resubmit + n_jobs_per_iteration)
                 iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset
                 if (n_jobs_submitted_cur_iteration < max_job_submissions
@@ -250,7 +247,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     cluster_interface.submit(new_job)
                 if iteration_finished:
                     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                                       num_best_jobs_whose_data_is_kept)
+                                       num_best_jobs_whose_data_is_kept, remove_working_dirs)
                     logger.info(f'starting new iteration: {hp_optimizer.iteration}')
                     pre_iteration_opt(base_paths_and_files)
 
@@ -268,7 +265,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
                 successful_jobs_bar.update(cluster_interface.n_successful_jobs)
                 successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
-                
+
                 best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(minimize=minimize)
                 if len(hp_optimizer.full_df) > 0:
                     best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[0]
@@ -283,9 +280,11 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, **early_killing_params)
 
     post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                       num_best_jobs_whose_data_is_kept)
+                       num_best_jobs_whose_data_is_kept, remove_working_dirs)
     post_opt(cluster_interface)
-    rm_dir_full(base_paths_and_files['current_result_dir'])
+
+    if remove_working_dirs:
+        rm_dir_full(base_paths_and_files['current_result_dir'])
 
 
 def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, target_rank, how_many_stds):
@@ -320,23 +319,24 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
             cluster_interface.stop_fn(job.cluster_id)
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                restarts, remove_jobs_dir=True, git_params=None, run_local=None, report_hooks=None,
+                restarts, remove_jobs_dir=True, remove_working_dirs=False,
+                git_params=None, run_local=None, report_hooks=None,
                 load_existing_results=False):
 
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                  submission_requirements,
-                                                                                  optimized_params,
-                                                                                  other_params,
-                                                                                  None,
-                                                                                  None,
-                                                                                  False,
-                                                                                  'gridsearch',
-                                                                                  remove_jobs_dir,
-                                                                                  git_params,
-                                                                                  run_local,
-                                                                                  report_hooks,
-                                                                                  dict(restarts=restarts))
+                                                                                   submission_requirements,
+                                                                                   optimized_params,
+                                                                                   other_params,
+                                                                                   None,
+                                                                                   None,
+                                                                                   False,
+                                                                                   'gridsearch',
+                                                                                   remove_jobs_dir,
+                                                                                   git_params,
+                                                                                   run_local,
+                                                                                   report_hooks,
+                                                                                   dict(restarts=restarts))
 
     pre_iteration_opt(base_paths_and_files)
     logger = logging.getLogger('cluster_utils')
@@ -393,4 +393,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
             df, all_params, metrics = job_df, job_all_params, job_metrics
         else:
             df = pd.concat((df, job_df), 0)
+
+    if remove_working_dirs:
+        rm_dir_full(base_paths_and_files['current_result_dir'])
+
     return df, all_params, metrics, cluster_interface.collect_stats_from_hooks()
