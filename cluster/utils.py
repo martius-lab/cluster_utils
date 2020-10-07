@@ -1,8 +1,6 @@
 import collections
 import csv
-import inspect
 import itertools
-import json
 import logging
 import os
 import random
@@ -10,7 +8,6 @@ import re
 import shutil
 import tempfile
 from collections import defaultdict
-from copy import deepcopy
 from pathlib import Path
 from time import sleep
 
@@ -113,7 +110,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
             raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
-    nested_items = [(name.split('.'), value) for name, value in other_params.items()]
+    nested_items = [(filter(lambda x: x, name.split('.')), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
 
@@ -204,103 +201,6 @@ def dict_to_dirname(setting, id, smart_naming=True):
     if len(res) < 35 and smart_naming:
         return res
     return str(id)
-
-
-class ParamDict(dict):
-    """ An immutable dict where elements can be accessed with a dot"""
-
-    def __getattr__(self, *args, **kwargs):
-        try:
-            return self.__getitem__(*args, **kwargs)
-        except KeyError as e:
-            raise AttributeError(e)
-
-    def __delattr__(self, item):
-        raise TypeError("Setting object not mutable after settings are fixed!")
-
-    def __setattr__(self, key, value):
-        raise TypeError("Setting object not mutable after settings are fixed!")
-
-    def __setitem__(self, key, value):
-        raise TypeError("Setting object not mutable after settings are fixed!")
-
-    def __deepcopy__(self, memo):
-        """ In order to support deepcopy"""
-        return ParamDict([(deepcopy(k, memo), deepcopy(v, memo)) for k, v in self.items()])
-
-    def __repr__(self):
-        return json.dumps(self, indent=4, sort_keys=True)
-
-    def get_pickleable(self):
-        return recursive_objectify(self, make_immutable=False)
-
-
-def recursive_objectify(nested_dict, make_immutable=True):
-    "Turns a nested_dict into a nested ParamDict"
-    result = deepcopy(nested_dict)
-    for k, v in result.items():
-        if isinstance(v, collections.Mapping):
-            result = dict(result)
-            result[k] = recursive_objectify(v, make_immutable)
-    if make_immutable:
-        returned_result = ParamDict(result)
-    else:
-        returned_result = dict(result)
-    return returned_result
-
-
-def fstring_in_json(format_string, namespace):
-    if type(format_string) != str:
-        return format_string
-
-    env_dict = {'ENV_'+key: value for key, value in os.environ.items()}
-    try:
-        formatted = eval('f\"' + format_string + '\"', {**env_dict, **namespace})
-    except:
-        return format_string
-
-    if formatted == format_string:
-        return format_string
-
-    try:
-        return eval(formatted, dict(__builtins__=None))
-    except:
-        return formatted
-
-
-def recursive_dynamic_json(nested_dict_or_list, namespace):
-    "Evaluates each key in nested dict as an f-string within a given namespace"
-    if isinstance(nested_dict_or_list, collections.Mapping):
-        for k, v in nested_dict_or_list.items():
-            if isinstance(v, collections.Mapping) or isinstance(v, list):
-                recursive_dynamic_json(v, namespace)
-            else:
-                nested_dict_or_list[k] = fstring_in_json(v, namespace)
-    elif isinstance(nested_dict_or_list, list):
-        for i, item in enumerate(nested_dict_or_list):
-            if isinstance(item, collections.Mapping) or isinstance(item, list):
-                recursive_dynamic_json(item, namespace)
-            else:
-                nested_dict_or_list[i] = fstring_in_json(item, namespace)
-
-
-class SafeDict(dict):
-    """ A dict with prohibiting init from a list of pairs containing duplicates"""
-
-    def __init__(self, *args, **kwargs):
-        if args and args[0] and not isinstance(args[0], dict):
-            keys, _ = zip(*args[0])
-            duplicates = [item for item, count in collections.Counter(keys).items() if count > 1]
-            if duplicates:
-                raise TypeError("Keys {} repeated in json parsing".format(duplicates))
-        super().__init__(*args, **kwargs)
-
-
-def load_json(file):
-    """ Safe load of a json file (doubled entries raise exception)"""
-    with open(file, 'r') as f:
-        data = json.load(f, object_pairs_hook=SafeDict)
-    return data
 
 
 def update_recursive(d, u, defensive=False):

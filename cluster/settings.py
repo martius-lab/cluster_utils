@@ -13,7 +13,6 @@ import pyuv
 import smart_json
 
 import cluster.submission_state as submission_state
-from cluster.utils import load_json
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer

@@ -9,7 +9,6 @@ REDUCED_DF_FILE = 'reduced_data.csv'
 STD_ENDING = '__std'
 RESTART_PARAM_NAME = 'restarts'
 
-JSON_FILE_KEY = 'default_json'
 OBJECT_SEPARATOR = '.'
 
 # note: must be hashable
