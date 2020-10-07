@@ -7,8 +7,10 @@ from copy import deepcopy
 from cluster.constants import CLUSTER_METRIC_FILE
 
 from .utils import dict_to_dirname, flatten_nested_string_dict
+from .constants import WORKING_DIR, ID
 from cluster.utils import update_recursive
 import pandas as pd
+
 
 class JobStatus():
     INITIAL_STATUS = -1
@@ -35,7 +37,7 @@ class Job():
         self.start_time = None
         self.estimated_end = None
         self.iteration = iteration
-        self.comm_server_info = {'id': id,
+        self.comm_server_info = {ID: id,
                                  'ip': connection_info['ip'],
                                  'port': connection_info['port']}
         self.status = JobStatus.INITIAL_STATUS
@@ -50,9 +52,9 @@ class Job():
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
         update_recursive(current_setting, self.other_params)
-        current_setting['id'] = self.id
+        current_setting[ID] = self.id
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
-        current_setting['working_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
+        current_setting[WORKING_DIR] = os.path.join(paths['current_result_dir'], job_res_dir)
         return current_setting
 
     def generate_execution_cmd(self, paths):

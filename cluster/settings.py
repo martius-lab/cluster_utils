@@ -7,16 +7,39 @@ import sys
 import time
 import traceback
 import socket
+import functools
 
 import pyuv
 
 import smart_settings
-
 import cluster.submission_state as submission_state
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+
+def cluster_main(main_func):
+
+    @functools.wraps(main_func)
+    def wrapper(*args, **kwargs):
+        """ Saves settings file on beginning, calls wrapped function with params from cmd and saves metrics to working_dir
+
+        :param kwargs: kwargs to update_params_from_cmdline
+        :return:
+        """
+        func_args = set(main_func.__code__.co_varnames)
+        not_included_reserved_params = set(RESERVED_PARAMS).difference(func_args)
+        if not 'make_immutable' in kwargs: kwargs['make_immutable'] = False
+        params = update_params_from_cmdline(*args, **kwargs)
+        params_to_func = recursive_objectify({k:v for k,v in params.items() if not k in not_included_reserved_params}, make_immutable=kwargs['make_immutable']) # copy
+
+        os.makedirs(params.working_dir, exist_ok=True)
+        save_settings_to_json(params, params.working_dir)
+        metrics = main_func(**params_to_func)
+        save_metrics_params(metrics, params)
+        return metrics
+
+    return wrapper
 
 
 def save_settings_to_json(setting_dict, working_dir):
