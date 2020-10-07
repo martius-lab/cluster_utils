@@ -185,8 +185,7 @@ def update_params_from_cmdline(cmd_line=None, custom_parser=None, make_immutable
         final_params = smart_json.loads(repr(final_params), make_immutable=make_immutable)
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
         final_params = ast.literal_eval(cmd_line[1])
-        print(final_params)
-        final_params = smart_json.loads(repr(final_params), make_immutable=make_immutable, dynamic=dynamic)
+        final_params = smart_json.loads(json.dumps(final_params), make_immutable=make_immutable, dynamic=dynamic)
     else:
         raise ValueError('Failed to parse command line')
 
