@@ -1,0 +1,51 @@
+{
+  "optimization_procedure_name": "decorator_test",
+  "results_dir": "/is/rg/al/Projects/tmp/example_results",
+  "git_params": {
+    "branch": "master",
+    "commit": null
+  },
+  "script_relative_path": "examples/basic/main_with_decorator.py",
+  "remove_jobs_dir": false,
+  "environment_setup": {
+    "pre_job_script": "examples/basic/pre_job_script.sh"
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 16000,
+    "bid": 800,
+    "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
+  },
+  "fixed_params": {
+  },
+  "restarts": 1,
+  "samples": null,
+  "hyperparam_list": [
+    {
+      "param": "u",
+      "values": [-0.5, 0.0, 0.5]
+    },
+    {
+      "param": "v",
+      "values": [10, 50, 100]
+    },
+    {
+      "param": "w",
+      "values": [1, 2, 3]
+    },
+    {
+      "param": "x",
+      "values": [3.0, 3.5, 4.0]
+    },
+    {
+      "param": "y",
+      "values": [0.1, 1.0, 10.0]
+    },
+    {
+      "param": "sharp_penalty",
+      "values": [false, true]
+    }
+  ]
+}
