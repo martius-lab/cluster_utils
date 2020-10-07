@@ -110,7 +110,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
             raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
-    nested_items = [(filter(lambda x: x, name.split('.')), value) for name, value in other_params.items()]
+    nested_items = [(list(filter(lambda x: x, name.split('.'))), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
 
