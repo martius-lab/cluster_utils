@@ -180,12 +180,12 @@ def update_params_from_cmdline(cmd_line=None, custom_parser=None, make_immutable
     elif custom_parser and custom_parser(cmd_line):  # Custom parsing, typically for flags
         final_params = custom_parser(cmd_line)
     elif is_json_file(cmd_line[1]):
-        final_params = smart_json.loads(cmd_line[1], make_immutable=False, dynamic=dynamic)
+        final_params = smart_json.load(cmd_line[1], make_immutable=False, dynamic=dynamic)
         add_cmd_line_params(final_params, cmd_line[2:])
-        final_params = smart_json.load(repr(final_params), make_immutable=make_immutable)
+        final_params = smart_json.loads(repr(final_params), make_immutable=make_immutable)
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
         final_params = ast.literal_eval(cmd_line[1])
-        final_params = smart_json.load(repr(final_params), make_immutable=make_immutable, dynamic=dynamic)
+        final_params = smart_json.loads(repr(final_params), make_immutable=make_immutable, dynamic=dynamic)
     else:
         raise ValueError('Failed to parse command line')
 
