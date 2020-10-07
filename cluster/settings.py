@@ -7,12 +7,13 @@ import sys
 import time
 import traceback
 import socket
-from datetime import datetime
 
 import pyuv
 
+import smart_json
+
 import cluster.submission_state as submission_state
-from cluster.utils import recursive_objectify, recursive_dynamic_json, load_json, update_recursive
+from cluster.utils import load_json
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
@@ -148,12 +149,11 @@ def add_cmd_line_params(base_dict, extra_flags):
 
 
 
-def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser=None, make_immutable=True,
-                               verbose=True, dynamic_json=True):
+def update_params_from_cmdline(cmd_line=None, custom_parser=None, make_immutable=True,
+                               verbose=True, dynamic=True):
     """ Updates default settings based on command line input.
 
     :param cmd_line: Expecting (same format as) sys.argv
-    :param default_params: Dictionary of default params
     :param custom_parser: callable that returns a dict of params on success
     and None on failure (suppress exceptions!)
     :param verbose: Boolean to determine if final settings are pretty printed
@@ -162,9 +162,6 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
 
     if not cmd_line:
         cmd_line = sys.argv
-
-    if default_params is None:
-        default_params = {}
 
     try:
         connection_details = ast.literal_eval(cmd_line[1])
@@ -179,42 +176,21 @@ def update_params_from_cmdline(cmd_line=None, default_params=None, custom_parser
         pass
 
     if len(cmd_line) < 2:
-        cmd_params = {}
+        final_params = {}
     elif custom_parser and custom_parser(cmd_line):  # Custom parsing, typically for flags
-        cmd_params = custom_parser(cmd_line)
+        final_params = custom_parser(cmd_line)
     elif is_json_file(cmd_line[1]):
-        cmd_params = load_json(cmd_line[1])
-        add_cmd_line_params(cmd_params, cmd_line[2:])
+        final_params = smart_json.loads(cmd_line[1], make_immutable=False, dynamic=dynamic)
+        add_cmd_line_params(final_params, cmd_line[2:])
+        final_params = smart_json.load(repr(final_params), make_immutable=make_immutable)
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
-        cmd_params = ast.literal_eval(cmd_line[1])
+        final_params = ast.literal_eval(cmd_line[1])
+        final_params = smart_json.load(repr(final_params), make_immutable=make_immutable, dynamic=dynamic)
     else:
         raise ValueError('Failed to parse command line')
 
-    update_recursive(default_params, cmd_params)
-
-    if JSON_FILE_KEY in default_params:
-        json_params = load_json(default_params[JSON_FILE_KEY])
-        if JSON_FILE_KEY in json_params:
-            json_base = load_json(json_params[JSON_FILE_KEY])
-        else:
-            json_base = {}
-        update_recursive(json_base, json_params)
-        update_recursive(default_params, json_base)
-
-    update_recursive(default_params, cmd_params)
-
-    if "__timestamp__" in default_params:
-        raise ValueError("Parameter name __timestamp__ is reserved!")
-
-    if dynamic_json:
-        objectified = recursive_objectify(default_params, make_immutable=make_immutable)
-        timestamp = datetime.now().strftime('%H:%M:%S-%d%h%y')
-        namespace = dict(__timestamp__=timestamp, **objectified)
-        recursive_dynamic_json(default_params, namespace)
-    final_params = recursive_objectify(default_params, make_immutable=make_immutable)
-
     if verbose:
-        print(json.dumps(final_params, indent=4, sort_keys=True))
+        print(final_params)
 
     if submission_state.connection_details_available and not submission_state.connection_active:
         register_at_server(final_params.get_pickleable())

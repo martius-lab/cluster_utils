@@ -11,5 +11,6 @@ setup(name='cluster',
       python_requires='>=3.6',
       install_requires=['gitpython>=3.0.5', 'seaborn', 'pandas', 'matplotlib', 'sklearn', 'numpy',
                         'nevergrad @ git+https://github.com/facebookresearch/nevergrad.git', 'tqdm', 'colorama',
-                        'pyuv', 'cloudpickle'],
+                        'pyuv', 'cloudpickle',
+                        'smart_json @ git+https://gitlab.tuebingen.mpg.de/mrolinek/smart-json.git'],
       zip_safe=False)
