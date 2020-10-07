@@ -193,7 +193,7 @@ def update_params_from_cmdline(cmd_line=None, custom_parser=None, make_immutable
         print(final_params)
 
     if submission_state.connection_details_available and not submission_state.connection_active:
-        register_at_server(final_params.get_pickleable())
+        register_at_server(final_params)
         sys.excepthook = report_error_at_server
         atexit.register(report_exit_at_server)
         submission_state.connection_active = True
