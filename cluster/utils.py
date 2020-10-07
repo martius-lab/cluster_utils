@@ -37,8 +37,8 @@ def check_valid_name(string):
                          'Ends with \'{}\' (may cause collisions)'.format(string, STD_ENDING))
     if not bool(re.compile(pat).match(string)):
         raise ValueError('Parameter name \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
-    if string.endswith('.') or string.startswith('.'):
-        raise ValueError('Parameter name \'{}\' not valid. \'.\' not allowed at start/end'.format(string))
+    if string.endswith('.'):
+        raise ValueError('Parameter name \'{}\' not valid. \'.\' not allowed the end'.format(string))
 
 
 def rm_dir_full(dir_name):
