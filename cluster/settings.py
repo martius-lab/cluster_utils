@@ -16,7 +16,7 @@ import cluster.submission_state as submission_state
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, recursive_objectify
 
 def cluster_main(main_func):
 
