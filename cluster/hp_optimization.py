@@ -33,7 +33,8 @@ def get_distribution(distribution, **kwargs):
 
 
 if __name__ == '__main__':
-    params = update_params_from_cmdline(verbose=False)
+    params = update_params_from_cmdline(verbose=False, suppress_invalid_identifier_exception=True)
+    # In order to tolerate '.__import__')
 
     json_full_name = os.path.abspath(sys.argv[1])
     init_plotting()
