@@ -52,7 +52,7 @@ class Job():
         update_recursive(current_setting, self.other_params)
         current_setting['id'] = self.id
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
-        current_setting['model_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
+        current_setting['working_dir'] = os.path.join(paths['current_result_dir'], job_res_dir)
         return current_setting
 
     def generate_execution_cmd(self, paths):
@@ -117,9 +117,9 @@ class Job():
 
     def try_load_results_from_filesystem(self, paths):
         logger = logging.getLogger("cluster_utils")
-        model_dir = os.path.join(paths['current_result_dir'], str(self.id))
+        working_dir = os.path.join(paths['current_result_dir'], str(self.id))
 
-        possible_metric_file = os.path.join(model_dir, CLUSTER_METRIC_FILE)
+        possible_metric_file = os.path.join(working_dir, CLUSTER_METRIC_FILE)
         if os.path.isfile(possible_metric_file):
             metric_df = pd.read_csv(possible_metric_file)
             self.metrics = {column: metric_df[column].iloc[0] for column in metric_df.columns}

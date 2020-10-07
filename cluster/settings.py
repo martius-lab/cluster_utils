@@ -19,8 +19,8 @@ from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
 
-def save_settings_to_json(setting_dict, model_dir):
-    filename = os.path.join(model_dir, JSON_SETTINGS_FILE)
+def save_settings_to_json(setting_dict, working_dir):
+    filename = os.path.join(working_dir, JSON_SETTINGS_FILE)
     with open(filename, 'w') as file:
         file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
@@ -76,7 +76,7 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
 
 def save_metrics_params(metrics, params, save_dir=None):
     if save_dir is None:
-        save_dir = params.model_dir
+        save_dir = params.working_dir
     os.makedirs(save_dir, exist_ok=True)
     save_settings_to_json(params, save_dir)
 

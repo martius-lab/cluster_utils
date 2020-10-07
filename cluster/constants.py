@@ -14,7 +14,7 @@ OBJECT_SEPARATOR = '.'
 # note: must be hashable
 PARAM_TYPES = (bool, str, int, float, tuple)
 
-RESERVED_PARAMS = ('model_dir', 'id', 'iteration', RESTART_PARAM_NAME, 'cluster_job_id')
+RESERVED_PARAMS = ('working_dir', 'id', 'iteration', RESTART_PARAM_NAME, 'cluster_job_id')
 
 RESERVED_NAMES = ('iteration', RESTART_PARAM_NAME, 'cluster_job_id')
 
