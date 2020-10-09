@@ -214,6 +214,18 @@ def update_recursive(d, u, defensive=False):
     return d
 
 
+def check_import_in_fixed_params(setting_dict):
+    if "fixed_params" in setting_dict:
+        if "__import__" in setting_dict['fixed_params']:
+            raise ImportError("Cannot import inside fixed params. Did you mean __import_promise__?")
+
+def rename_import_promise(setting_dict):
+    if "fixed_params" in setting_dict:
+        if "__import_promise__" in setting_dict['fixed_params']:
+            setting_dict['fixed_params']['__import__'] = setting_dict['fixed_params']['__import_promise__']
+            del setting_dict['fixed_params']['__import_promise__']
+
+
 def log_and_print(logger, msg):
     logger.info(msg)
     print(msg)

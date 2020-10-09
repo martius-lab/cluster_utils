@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import sys
 from collections import Counter
 from pathlib import Path
@@ -9,12 +8,12 @@ from cluster import update_params_from_cmdline
 from cluster.latex_utils import SectionFromJsonHook
 from cluster.report import produce_basic_report, init_plotting
 from cluster.git_utils import make_git_params
-from cluster.utils import mkdtemp
+from cluster.utils import mkdtemp, check_import_in_fixed_params, rename_import_promise
 from . import grid_search
 
 if __name__ == '__main__':
-    params = update_params_from_cmdline(verbose=False, suppress_invalid_identifier_exception=True)
-    # In order to tolerate '.__import__'
+    params = update_params_from_cmdline(verbose=False, pre_unpack_hooks=[check_import_in_fixed_params],
+                                        post_unpack_hooks=[rename_import_promise])
 
     json_full_name = os.path.abspath(sys.argv[1])
     init_plotting()
