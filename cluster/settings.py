@@ -12,6 +12,8 @@ import functools
 import pyuv
 
 import smart_settings
+from smart_settings.param_classes import recursive_objectify
+
 from .utils import update_recursive
 
 import cluster.submission_state as submission_state
