@@ -30,7 +30,7 @@ def check_valid_param_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
     if type(string) is not str:
         raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
-    if string in RESERVED_PARAMS + [WORKING_DIR]:  # working_dir cannot be injected in grid_search/hpo
+    if string in RESERVED_PARAMS + (WORKING_DIR,):  # working_dir cannot be injected in grid_search/hpo
         raise ValueError('Parameter name {} is reserved, cannot be overwritten from outside.'.format(string))
     if string.endswith(STD_ENDING):
         raise ValueError('Parameter name \'{}\' not valid.'
