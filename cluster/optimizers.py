@@ -108,15 +108,15 @@ class Optimizer(ABC):
                              **optimizer_settings):
         pass
 
-    def best_jobs_model_dirs(self, how_many):
+    def best_jobs_working_dirs(self, how_many):
         logger = logging.getLogger('cluster_utils')
         df_to_use = self.full_df
         if how_many > df_to_use.shape[0]:
-            logger.warning('Requesting more best_job_model_dirs than data is available, reducing number to: ' +
+            logger.warning('Requesting more best_jobs_working_dirs than data is available, reducing number to: ' +
                  str(df_to_use.shape[0]))
             how_many = df_to_use.shape[0]
-        df_to_use = df_to_use[['model_dir', self.metric_to_optimize]]
-        return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['model_dir']
+        df_to_use = df_to_use[['working_dir', self.metric_to_optimize]]
+        return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['working_dir']
 
     @property
     def minimal_restarts_to_count(self):

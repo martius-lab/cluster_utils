@@ -57,22 +57,22 @@ def dict_to_dirname(setting, id, smart_naming=True):
     return str(id)
 
 
-def update_best_job_datadirs(result_dir, model_dirs, remove_working_dirs=True):
+def update_best_job_datadirs(result_dir, working_dirs, remove_working_dirs=True):
     logger = logging.getLogger('cluster_utils')
     datadir = os.path.join(result_dir, 'best_jobs')
     os.makedirs(datadir, exist_ok=True)
 
-    short_names = [model_dir.split('_')[-1].replace('/', '_') for model_dir in model_dirs]
+    short_names = [working_dir.split('_')[-1].replace('/', '_') for working_dir in working_dirs]
 
     # Copy over new best directories
-    for model_dir in model_dirs:
-        if os.path.exists(model_dir):
-            new_dir_name = model_dir.split('_')[-1].replace('/', '_')
+    for working_dir in working_dirs:
+        if os.path.exists(working_dir):
+            new_dir_name = working_dir.split('_')[-1].replace('/', '_')
             new_dir_full = os.path.join(datadir, new_dir_name)
             if not os.path.exists((new_dir_full)):
-                shutil.copytree(model_dir, new_dir_full)
+                shutil.copytree(working_dir, new_dir_full)
             if remove_working_dirs:
-                rm_dir_full(model_dir)
+                rm_dir_full(working_dir)
 
     # Delete old best directories if outdated
     for dir_or_file in os.listdir(datadir):
@@ -179,13 +179,13 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
     comm_server.jobs = []
 
     if num_best_jobs_whose_data_is_kept > 0:
-        best_model_dirs = hp_optimizer.best_jobs_model_dirs(how_many=num_best_jobs_whose_data_is_kept)
-        update_best_job_datadirs(base_paths_and_files['result_dir'], best_model_dirs, remove_working_dirs)
+        best_working_dirs = hp_optimizer.best_jobs_working_dirs(how_many=num_best_jobs_whose_data_is_kept)
+        update_best_job_datadirs(base_paths_and_files['result_dir'], best_working_dirs, remove_working_dirs)
 
     if remove_working_dirs:
-        finished_model_dirs = hp_optimizer.full_df['model_dir']
-        for model_dir in finished_model_dirs:
-            rm_dir_full(model_dir)
+        finished_working_dirs = hp_optimizer.full_df['working_dir']
+        for working_dir in finished_working_dirs:
+            rm_dir_full(working_dir)
 
 
 def hp_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
