@@ -1,6 +1,6 @@
 {
   "optimization_procedure_name": "decorator_test",
-  "results_dir": "/is/rg/al/Projects/tmp/example_results",
+  "results_dir": "/is/cluster/work/{$USER}/tmp",
   "git_params": {
     "branch": "master",
     "commit": null
