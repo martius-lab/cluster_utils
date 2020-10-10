@@ -31,9 +31,6 @@ def cluster_main(main_func):
         #update_recursive(kwargs, args_dict, defensive=True)
 
         params = update_params_from_cmdline()
-        #update_recursive(params, kwargs)
-        #params_to_func = recursive_objectify({k:v for k,v in params.items() if not k in not_included_reserved_params}, make_immutable=decorator_kwargs['make_immutable']) # copy
-
         os.makedirs(params.working_dir, exist_ok=True)
         save_settings_to_json(params, params.working_dir)
         metrics = main_func(**params)

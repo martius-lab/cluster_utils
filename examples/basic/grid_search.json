@@ -19,9 +19,10 @@
     "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
   },
   "fixed_params": {
+    "test_resume": false
   },
   "restarts": 1,
-  "samples": null,
+  "samples": 50,
   "hyperparam_list": [
     {
       "param": "fn_args.u",

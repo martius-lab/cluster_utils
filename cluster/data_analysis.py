@@ -63,15 +63,14 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
     if not len(unique_vals):
         return False
     ax = None
-    if transition_colors:
-        color_gen = color_scheme()
+    color_gen = color_scheme() if transition_colors else None
     for val in sorted(unique_vals):
         filtered = smaller_df.loc[smaller_df[param] == val][metric]
         if filtered.nunique() == 1:
             logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
             continue
         with suppress(Exception):
-            ax = sns.distplot(filtered, hist=False, label=str(
+            ax = sns.displot(x=filtered, hist=False, label=str(
                 val), color=next(color_gen) if transition_colors else None)
 
     if ax is None:
