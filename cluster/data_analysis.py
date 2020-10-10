@@ -63,17 +63,17 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
     if not len(unique_vals):
         return False
     ax = None
-    color_gen = color_scheme() if transition_colors else None
-    for val in sorted(unique_vals):
-        filtered = smaller_df.loc[smaller_df[param] == val]
-        if filtered[metric].nunique() == 1:
-            logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
-            continue
-        try:
-            ax = sns.kdeplot(data=filtered, x=metric, hue=param, palette='crest', fill=True,
-                             common_norm=False, alpha=.8, linewidth=0)
-        except Exception as e:
-            logger.warning(f'sns.distplot failed for param {param} with exception {e}')
+    #color_gen = color_scheme() if transition_colors else None
+    #for val in sorted(unique_vals):
+    #    filtered = smaller_df.loc[smaller_df[param] == val]
+    #    if filtered[metric].nunique() == 1:
+    #        logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
+    #        continue
+    try:
+        ax = sns.kdeplot(data=smaller_df, x=metric, hue=param, palette='crest', fill=True,
+                         common_norm=False, alpha=.3, linewidth=0)
+    except Exception as e:
+        logger.warning(f'sns.distplot failed for param {param} with exception {e}')
 
     if ax is None:
         return False
