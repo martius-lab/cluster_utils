@@ -46,3 +46,6 @@ def main(working_dir, optimizer, optimizer_params, iterations):
 
     metrics = {'final_value': loss}
     return metrics
+
+if __name__ == '__main__':
+    main()

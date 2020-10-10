@@ -22,14 +22,10 @@ from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 def cluster_main(main_func):
 
     @functools.wraps(main_func)
-    def wrapper(**kwargs):
+    def wrapper():
         """ Saves settings file on beginning, calls wrapped function with params from cmd and saves metrics to working_dir
         :return:
         """
-        #func_args = set(main_func.__code__.co_varnames)
-        #args_dict = dict(zip(func_args, args))
-        #update_recursive(kwargs, args_dict, defensive=True)
-
         params = update_params_from_cmdline()
         os.makedirs(params.working_dir, exist_ok=True)
         save_settings_to_json(params, params.working_dir)
