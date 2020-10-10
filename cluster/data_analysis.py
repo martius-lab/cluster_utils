@@ -69,9 +69,11 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
         if filtered.nunique() == 1:
             logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
             continue
-        with suppress(Exception):
+        try:
             ax = sns.displot(x=filtered, hist=False, label=str(
                 val), color=next(color_gen) if transition_colors else None)
+        except Exception as e:
+            logger.warning(f'sns.distplot failed for param {param} with exception {e}')
 
     if ax is None:
         return False
