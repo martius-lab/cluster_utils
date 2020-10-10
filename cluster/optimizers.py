@@ -1,16 +1,16 @@
 import datetime
 import os
 import random
-
+import pandas as pd
+import numpy as np
 import cloudpickle as pickle
 from itertools import count
 from tempfile import TemporaryDirectory
-from abc import ABC, abstractmethod
-import itertools
 from .data_analysis import *
 from .distributions import *
 from .latex_utils import LatexFile
 from .utils import nested_to_dict, shorten_string, get_sample_generator
+from .constants import ITERATION
 import nevergrad as ng
 
 
@@ -37,7 +37,7 @@ class Optimizer(ABC):
     def tell(self, df, jobs):
         for job in jobs:
             job.results_used_for_update = True
-        df['iteration'] = self.iteration + 1
+        df[ITERATION] = self.iteration + 1
 
         self.full_df = pd.concat([self.full_df, df], ignore_index=True, sort=True)
         self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
@@ -92,13 +92,13 @@ class Optimizer(ABC):
             filename = next(filename_generator)
             if isinstance(distr, NumericalDistribution):
                 log_scale = isinstance(distr, TruncatedLogNormal)
-                res = distribution(self.full_df, 'iteration', distr.param_name,
+                res = distribution(self.full_df, ITERATION, distr.param_name,
                                    filename=filename, metric_logscale=log_scale,
                                    transition_colors=True, x_bounds=(distr.lower, distr.upper))
                 if res:
                     yield filename
             elif isinstance(distr, Discrete):
-                count_plot_horizontal(self.full_df, 'iteration', distr.param_name, filename=filename)
+                count_plot_horizontal(self.full_df, ITERATION, distr.param_name, filename=filename)
                 yield filename
             else:
                 assert False

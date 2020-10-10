@@ -7,7 +7,7 @@ STATUS_PICKLE_FILE = 'status.pickle'
 FULL_DF_FILE = 'all_data.csv'
 REDUCED_DF_FILE = 'reduced_data.csv'
 STD_ENDING = '__std'
-RESTART_PARAM_NAME = 'restarts'
+RESTART_PARAM_NAME = 'job_restarts'
 
 OBJECT_SEPARATOR = '.'
 
@@ -15,13 +15,10 @@ OBJECT_SEPARATOR = '.'
 PARAM_TYPES = (bool, str, int, float, tuple)
 
 WORKING_DIR = 'working_dir'
-ID = 'id'
-ITERATION = 'iteration'
-CLUSTER_JOB_ID = 'cluster_job_id'
+ID = '_id'
+ITERATION = '_iteration'
 
-RESERVED_PARAMS = (WORKING_DIR, ID, ITERATION, RESTART_PARAM_NAME, CLUSTER_JOB_ID)
-
-RESERVED_NAMES = ('iteration', RESTART_PARAM_NAME, 'cluster_job_id')
+RESERVED_PARAMS = (ID, ITERATION, RESTART_PARAM_NAME)
 
 DISTR_BASE_COLORS = [(0.99, 0.7, 0.18), (0.7, 0.7, 0.9), (0.56, 0.692, 0.195), (0.923, 0.386, 0.209)]
 

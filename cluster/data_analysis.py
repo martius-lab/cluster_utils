@@ -225,8 +225,8 @@ def compute_performance_gains(df, params, metric, minimum):
 
     forest = fit_forest(normalize(df), params, metric)
 
-    max_iteration = df['iteration'].max()
-    dfs = [normalize(df[df['iteration'] == 1 + i]) for i in range(max_iteration)]
+    max_iteration = df[ITERATION].max()
+    dfs = [normalize(df[df[ITERATION] == 1 + i]) for i in range(max_iteration)]
 
     names = [f'iteration {1 + i}' for i in range(max_iteration)]
     importances = [list(performance_gain_for_iteration(forest, df_, params, metric, minimum)) for df_ in dfs]

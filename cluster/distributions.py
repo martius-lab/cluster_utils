@@ -8,7 +8,7 @@ import scipy
 import scipy.stats
 
 from .constants import *
-from .utils import check_valid_name
+from .utils import check_valid_param_name
 
 
 def clip(number, bounds):
@@ -20,7 +20,7 @@ class Distribution(ABC):
     def __init__(self, *, param, **kwargs):
         self.param_name = param
 
-        check_valid_name(self.param_name)
+        check_valid_param_name(self.param_name)
 
         self.samples = []
         self.iter = None

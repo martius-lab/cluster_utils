@@ -52,7 +52,6 @@ class Job():
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
         update_recursive(current_setting, self.other_params)
-        current_setting[ID] = self.id
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
         current_setting[WORKING_DIR] = os.path.join(paths['current_result_dir'], job_res_dir)
         return current_setting
@@ -113,6 +112,7 @@ class Job():
 
     def set_results(self):
         flattened_params = dict(flatten_nested_string_dict(self.final_settings))
+        flattened_params[ID] = self.id
         self.param_df = pd.DataFrame([flattened_params])
         self.metric_df = pd.DataFrame([self.metrics])
         self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)

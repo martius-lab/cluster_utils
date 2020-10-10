@@ -12,34 +12,31 @@ import functools
 import pyuv
 
 import smart_settings
-from smart_settings.param_classes import recursive_objectify
 
 import cluster.submission_state as submission_state
 from .communication_server import MessageTypes
 from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv, update_recursive
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
-def cluster_main(main_func, *decorator_args, **decorator_kwargs):
+def cluster_main(main_func):
 
     @functools.wraps(main_func)
-    def wrapper(*args, **kwargs):
+    def wrapper(**kwargs):
         """ Saves settings file on beginning, calls wrapped function with params from cmd and saves metrics to working_dir
         :return:
         """
-        func_args = set(main_func.__code__.co_varnames)
-        args_dict = dict(zip(func_args, args))
-        update_recursive(kwargs, args_dict, defensive=True)
+        #func_args = set(main_func.__code__.co_varnames)
+        #args_dict = dict(zip(func_args, args))
+        #update_recursive(kwargs, args_dict, defensive=True)
 
-        not_included_reserved_params = set(RESERVED_PARAMS).difference(func_args)
-        if not 'make_immutable' in decorator_kwargs: decorator_kwargs['make_immutable'] = False
-        params = update_params_from_cmdline(*decorator_args, **decorator_kwargs)
-        update_recursive(params, kwargs)
-        params_to_func = recursive_objectify({k:v for k,v in params.items() if not k in not_included_reserved_params}, make_immutable=decorator_kwargs['make_immutable']) # copy
+        params = update_params_from_cmdline()
+        #update_recursive(params, kwargs)
+        #params_to_func = recursive_objectify({k:v for k,v in params.items() if not k in not_included_reserved_params}, make_immutable=decorator_kwargs['make_immutable']) # copy
 
         os.makedirs(params.working_dir, exist_ok=True)
         save_settings_to_json(params, params.working_dir)
-        metrics = main_func(**params_to_func)
+        metrics = main_func(**params)
         save_metrics_params(metrics, params)
         return metrics
 
@@ -203,7 +200,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True,
 
     def check_reserved_params(orig_dict):
         for key in orig_dict:
-            if key in RESERVED_NAMES:
+            if key in RESERVED_PARAMS:
                 raise ValueError(f"{key} is a reserved param name")
 
     if len(cmd_line) < 2:

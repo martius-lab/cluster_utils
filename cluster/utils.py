@@ -26,18 +26,18 @@ def list_to_tuple(maybe_list):
     else:
         return maybe_list
 
-def check_valid_name(string):
+def check_valid_param_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
     if type(string) is not str:
         raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
-    if string in RESERVED_PARAMS:
-        raise ValueError('Parameter name {} is reserved'.format(string))
+    if string in RESERVED_PARAMS + [WORKING_DIR]:  # working_dir cannot be injected in grid_search/hpo
+        raise ValueError('Parameter name {} is reserved, cannot be overwritten from outside.'.format(string))
     if string.endswith(STD_ENDING):
         raise ValueError('Parameter name \'{}\' not valid.'
                          'Ends with \'{}\' (may cause collisions)'.format(string, STD_ENDING))
     if not bool(re.compile(pat).match(string)):
         raise ValueError('Parameter name \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
-    if string.endswith('.'):
+    if string.startswith('.') or string.endswith('.'):
         raise ValueError('Parameter name \'{}\' not valid. \'.\' not allowed the end'.format(string))
 
 
@@ -104,7 +104,7 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
     else:
         name_list = []
     for name, value in other_params.items():
-        check_valid_name(name)
+        check_valid_param_name(name)
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
         value = list_to_tuple(value)
@@ -117,9 +117,9 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
 def validate_hyperparam_dict(hyperparam_dict):
     for name, option_list in hyperparam_dict.items():
         if isinstance(name, tuple):
-            [check_valid_name(n) for n in name]
+            [check_valid_param_name(n) for n in name]
         else:
-            check_valid_name(name)
+            check_valid_param_name(name)
         if type(option_list) is not list:
             raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
         option_list = [ list_to_tuple(o) for o in option_list]
