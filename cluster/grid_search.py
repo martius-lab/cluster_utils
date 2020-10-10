@@ -61,6 +61,7 @@ if __name__ == '__main__':
         git_params=git_params,
         report_hooks=[],  # json_hook], TODO: Make this hook thing work again
         restarts=params.restarts,
+        samples=params.get('samples', None),
         remove_jobs_dir=params.get("remove_jobs_dir", True),
         remove_working_dirs=params.get("remove_working_dirs", False),
         load_existing_results=params.get("load_existing_results", False),

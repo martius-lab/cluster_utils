@@ -319,7 +319,7 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
             cluster_interface.stop_fn(job.cluster_id)
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                restarts, remove_jobs_dir=True, remove_working_dirs=False,
+                restarts, remove_jobs_dir=True, remove_working_dirs=False, samples=None,
                 git_params=None, run_local=None, report_hooks=None,
                 load_existing_results=False):
 
@@ -328,7 +328,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                                                                                    submission_requirements,
                                                                                    optimized_params,
                                                                                    other_params,
-                                                                                   None,
+                                                                                   samples,
                                                                                    None,
                                                                                    False,
                                                                                    'gridsearch',
