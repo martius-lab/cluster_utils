@@ -71,7 +71,7 @@ def distribution(df, param, metric, filename=None, metric_logscale=False, transi
     #        continue
     try:
         ax = sns.kdeplot(data=smaller_df, x=metric, hue=param, palette='crest', fill=True,
-                         common_norm=False, alpha=.3, linewidth=0)
+                         common_norm=False, alpha=.5, linewidth=0)
     except Exception as e:
         logger.warning(f'sns.distplot failed for param {param} with exception {e}')
 

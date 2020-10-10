@@ -1,6 +1,6 @@
 {
   "optimization_procedure_name": "rosenbrock_opt",
-  "results_dir": "/is/rg/al/Projects/tmp",
+ "results_dir": "/is/cluster/work/{$USER}/tmp",
   "git_params": {
     "branch": "master",
     "commit": null
