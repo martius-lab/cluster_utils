@@ -190,7 +190,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True,
         connection_details = ast.literal_eval(cmd_line[1])
         submission_state.communication_server_ip = connection_details['ip']
         submission_state.communication_server_port = connection_details['port']
-        submission_state.job_id = connection_details['id']
+        submission_state.job_id = connection_details[ID]
         del cmd_line[1]
         submission_state.connection_details_available = True
         submission_state.connection_active = False
