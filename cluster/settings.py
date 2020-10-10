@@ -188,7 +188,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True,
 
     try:
         connection_details = ast.literal_eval(cmd_line[1])
-    except SyntaxError:
+    except (SyntaxError, ValueError):
         connection_details = {}
         pass
 
