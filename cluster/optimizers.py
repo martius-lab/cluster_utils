@@ -359,7 +359,8 @@ class GridSearchOptimizer(Optimizer):
         self.restarts = restarts
 
     def set_setting_generator(self):
-        self.setting_generator = get_sample_generator(None, self.parameter_dicts, None, None)
+        self.setting_generator = get_sample_generator(self.number_of_samples, self.parameter_dicts, distribution_list=None,
+                                                      extra_settings=None)
 
     def ask(self):
         settings = next(self.setting_generator, None)
