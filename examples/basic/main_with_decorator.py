@@ -1,10 +1,10 @@
 import os
+import time
 
 import numpy as np
-from cluster import cluster_main
+from cluster import cluster_main, exit_for_resume
 
 
-@cluster_main # function needs to contain working_dir
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     """
     A dummy function to test hpo.
@@ -30,10 +30,31 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     if np.random.rand() < 0.1:
         raise ValueError("10 percent of all jobs die here on purpose")
 
-    return {"metric": result}
+    return result
+
+
+@cluster_main
+def main(working_dir, fn_args, test_resume):
+
+    # simulate that the jobs take some time
+    time.sleep(np.random.randint(0, 10))
+    result_file = os.path.join(working_dir, "result.npy")
+    # here we do a little simulation for checkpointing and resuming
+    if os.path.isfile(result_file):
+        # If there is a result to resume
+        noiseless_result = np.load(result_file)
+    else:
+        # Otherwise compute result, checkpoint it and exit
+        noiseless_result = fn_to_optimize(**fn_args)
+        print(f"save result to {result_file}")
+        np.save(result_file, noiseless_result)
+        if test_resume:
+            exit_for_resume()
+
+    noisy_result = noiseless_result + 0.5 * np.random.normal()
+    metrics = {'result': noisy_result, 'noiseless_result': noiseless_result}
+    return metrics
 
 
 if __name__ == "__main__":
-
-    metrics = fn_to_optimize() # the decorator updates the parameters of the function
-    print(metrics)
+    main()
