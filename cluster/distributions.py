@@ -66,7 +66,7 @@ def smart_round(samples):
     return samples
 
 
-class NumericalDistribution(Distribution):
+class NumericalDistribution(BoundedDistribution):
     def __init__(self, *, smart_rounding=True, **kwargs):
         self.smart_rounding = smart_rounding
         super().__init__(**kwargs)
@@ -89,7 +89,7 @@ class DistributionOverIntegers(Distribution):
         super().prepare_samples(howmany)
 
 
-class TruncatedNormal(NumericalDistribution, BoundedDistribution):
+class TruncatedNormal(NumericalDistribution):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.mean = 0.5 * (self.lower + self.upper)
@@ -110,7 +110,7 @@ class TruncatedNormal(NumericalDistribution, BoundedDistribution):
 
     def prepare_samples(self, howmany):
         howmany = max(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
-        mean_to_use = self.mean if self.last_mean is None else 4*self.mean - 3*self.last_mean
+        mean_to_use = self.mean if self.last_mean is None else 4*self.mean - 3*self.last_mean  # a momentum term 3/4
         if not (self.lower <= mean_to_use <= self.upper):
             mean_to_use = self.mean
         self.samples = np.random.normal(size=howmany) * self.std + mean_to_use
@@ -124,7 +124,7 @@ class IntNormal(TruncatedNormal, DistributionOverIntegers):
     pass
 
 
-class TruncatedLogNormal(NumericalDistribution, BoundedDistribution):
+class TruncatedLogNormal(NumericalDistribution):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if self.lower < 1e-10:

@@ -67,14 +67,12 @@ def distribution(df, param, metric, filename=None, metric_logscale=None, x_bound
     metric_logscale = metric_logscale if metric_logscale is not None else detect_scale(smaller_df[metric]) == 'log'
     try:
         ax = sns.kdeplot(data=smaller_df, x=metric, hue=param, palette='crest', fill=True,
-                         common_norm=False, alpha=.5, linewidth=0, log_scale=metric_logscale, clip=x_bounds)
+                         common_norm=False, alpha=.5, linewidth=0, log_scale=metric_logscale)
     except Exception as e:
         logger.warning(f'sns.distplot failed for param {param} with exception {e}')
 
     if ax is None:
         return False
-    #if metric_logscale:
-    #    ax.set_xscale("log")
 
     if x_bounds is not None:
         ax.set_xlim(*x_bounds)
