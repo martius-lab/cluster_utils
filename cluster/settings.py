@@ -27,8 +27,6 @@ def cluster_main(main_func):
         :return:
         """
         params = update_params_from_cmdline()
-        os.makedirs(params.working_dir, exist_ok=True)
-        save_settings_to_json(params, params.working_dir)
         metrics = main_func(**params)
         save_metrics_params(metrics, params)
         return metrics
@@ -91,13 +89,9 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
     return possibly_np_or_tensor
 
 
-def save_metrics_params(metrics, params, save_dir=None):
-    if save_dir is None:
-        save_dir = params.working_dir
-    os.makedirs(save_dir, exist_ok=True)
-    save_settings_to_json(params, save_dir)
+def save_metrics_params(metrics, params):
 
-    param_file = os.path.join(save_dir, CLUSTER_PARAM_FILE)
+    param_file = os.path.join(params.working_dir, CLUSTER_PARAM_FILE)
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
@@ -106,7 +100,7 @@ def save_metrics_params(metrics, params, save_dir=None):
         metrics['time_elapsed'] = time_elapsed
     else:
         print('WARNING: \'time_elapsed\' metric already taken. Automatic time saving failed.')
-    metric_file = os.path.join(save_dir, CLUSTER_METRIC_FILE)
+    metric_file = os.path.join(params.working_dir, CLUSTER_METRIC_FILE)
 
     for key, value in metrics.items():
         metrics[key] = sanitize_numpy_torch(value)
@@ -165,8 +159,8 @@ def add_cmd_line_params(base_dict, extra_flags):
 
 
 
-def update_params_from_cmdline(cmd_line=None, make_immutable=True,
-                               verbose=True, dynamic=True, pre_unpack_hooks=None, post_unpack_hooks=None):
+def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, dynamic=True, pre_unpack_hooks=None,
+                               post_unpack_hooks=None, save_params=True):
     """ Updates default settings based on command line input.
 
     :param cmd_line: Expecting (same format as) sys.argv
@@ -226,6 +220,11 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True,
         atexit.register(report_exit_at_server)
         submission_state.connection_active = True
     update_params_from_cmdline.start_time = time.time()
+
+    if save_params:
+        os.makedirs(final_params.working_dir, exist_ok=True)
+        save_settings_to_json(final_params, final_params.working_dir)
+
     return final_params
 
 
