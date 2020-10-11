@@ -94,7 +94,7 @@ class Optimizer(ABC):
                 log_scale = isinstance(distr, TruncatedLogNormal)
                 res = distribution(self.full_df, ITERATION, distr.param_name,
                                    filename=filename, metric_logscale=log_scale,
-                                   transition_colors=True, x_bounds=(distr.lower, distr.upper))
+                                   x_bounds=(distr.lower, distr.upper))
                 if res:
                     yield filename
             elif isinstance(distr, Discrete):

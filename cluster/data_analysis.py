@@ -55,29 +55,26 @@ def color_scheme():
                 color = darker(color)
 
 
-def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
+def distribution(df, param, metric, filename=None, metric_logscale=None, x_bounds=None):
+
+
     logger = logging.getLogger('cluster_utils')
     smaller_df = df[[param, metric]]
     unique_vals = smaller_df[param].unique()
     if not len(unique_vals):
         return False
     ax = None
-    #color_gen = color_scheme() if transition_colors else None
-    #for val in sorted(unique_vals):
-    #    filtered = smaller_df.loc[smaller_df[param] == val]
-    #    if filtered[metric].nunique() == 1:
-    #        logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
-    #        continue
+    metric_logscale = metric_logscale if metric_logscale is not None else detect_scale(smaller_df[metric]) == 'log'
     try:
         ax = sns.kdeplot(data=smaller_df, x=metric, hue=param, palette='crest', fill=True,
-                         common_norm=False, alpha=.5, linewidth=0)
+                         common_norm=False, alpha=.5, linewidth=0, log_scale=metric_logscale, clip=x_bounds)
     except Exception as e:
         logger.warning(f'sns.distplot failed for param {param} with exception {e}')
 
     if ax is None:
         return False
-    if metric_logscale:
-        ax.set_xscale("log")
+    #if metric_logscale:
+    #    ax.set_xscale("log")
 
     if x_bounds is not None:
         ax.set_xlim(*x_bounds)
@@ -95,7 +92,8 @@ def heat_map(df, param1, param2, metric, filename=None, annot=False):
     reduced_df = df[[param1, param2, metric]]
     grouped_df = reduced_df.groupby([param1, param2], as_index=False).mean()
     pivoted_df = grouped_df.pivot(index=param1, columns=param2, values=metric)
-    ax = sns.heatmap(pivoted_df, annot=annot)
+    fmt = None if not annot else ".2g"
+    ax = sns.heatmap(pivoted_df, annot=annot, fmt=fmt)
     ax.set_title(metric)
     fig = plt.gcf()
     if filename:

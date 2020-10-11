@@ -64,7 +64,7 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
         for metric in metrics:
             distr_files = [next(file_gen) for param in params]
             distr_files = [fname for fname, param in zip(distr_files, params) if
-                           distribution(df, param, metric, fname, metric_logscale=(metric in log_scale_list))]
+                           distribution(df, param, metric, fname)]
 
             section_name = 'Distributions of \'{}\' w.r.t. parameters'.format(metric)
             latex.add_section_from_figures(section_name, distr_files)
@@ -72,7 +72,7 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
             heat_map_files = []
             for param1, param2 in combinations(params, 2):
                 filename = next(file_gen)
-                heat_map(df, param1, param2, metric, filename)
+                heat_map(df, param1, param2, metric, filename, annot=True)
                 heat_map_files.append(filename)
 
             section_name = 'Heatmaps of {} w.r.t. parameters'.format(metric)
