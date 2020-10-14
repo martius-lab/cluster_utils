@@ -110,8 +110,8 @@ def save_metrics_params(metrics, params):
         send_results_to_server(metrics)
 
 
-def is_json_file(cmd_line):
-    if cmd_line.endswith('.json'):
+def is_settings_file(cmd_line):
+    if cmd_line.endswith('.json') or cmd_line.endswith('.yaml'):
         if not os.path.isfile(cmd_line):
             raise FileNotFoundError(f"{cmd_line}: No such JSON script found")
         return True
@@ -194,7 +194,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
 
     if len(cmd_line) < 2:
         final_params = {}
-    elif is_json_file(cmd_line[1]):
+    elif is_settings_file(cmd_line[1]):
         def add_cmd_params(orig_dict):
             add_cmd_line_params(orig_dict, cmd_line[2:])
 
