@@ -221,7 +221,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
         submission_state.connection_active = True
     update_params_from_cmdline.start_time = time.time()
 
-    if save_params:
+    if save_params and 'working_dir' in final_params:
         os.makedirs(final_params.working_dir, exist_ok=True)
         save_settings_to_json(final_params, final_params.working_dir)
 
