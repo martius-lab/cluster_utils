@@ -29,11 +29,11 @@ def flatten_params(params_with_tuples):
         else:
             yield p
 
+
 def produce_basic_report(df, params, metrics, procedure_name, output_file,
-                         submission_hook_stats=None, maximized_metrics=None, log_scale_list=None, report_hooks=None):
+                         submission_hook_stats=None, maximized_metrics=None, report_hooks=None):
     logger = logging.getLogger('cluster_utils')
     log_and_print(logger, "Producing basic report... ")
-    log_scale_list = log_scale_list or []
     maximized_metrics = maximized_metrics or []
     report_hooks = report_hooks or []
 
@@ -60,6 +60,10 @@ def produce_basic_report(df, params, metrics, procedure_name, output_file,
 
     with TemporaryDirectory() as tmpdir:
         file_gen = filename_gen(tmpdir)
+
+        correlation_file = next(file_gen)
+        metric_correlation_plot(df, metrics, correlation_file)
+        latex.add_section_from_figures("Metric Spearman Correlation", [correlation_file])
 
         for metric in metrics:
             distr_files = [next(file_gen) for param in params]

@@ -45,7 +45,7 @@ if __name__ == '__main__':
     time.sleep(np.random.randint(0, 10))
 
     result_file = os.path.join(params.model_dir, "result.npy")
-    os.makedirs(params.model_dir, exist_ok=True)
+    os.makedirs(params.working_dir, exist_ok=True)
     # here we do a little simulation for checkpointing and resuming
     if os.path.isfile(result_file):
         # If there is a result to resume
