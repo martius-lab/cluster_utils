@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # simulate that the jobs take some time
     time.sleep(np.random.randint(0, 10))
 
-    result_file = os.path.join(params.model_dir, "result.npy")
+    result_file = os.path.join(params.working_dir, "result.npy")
     os.makedirs(params.working_dir, exist_ok=True)
     # here we do a little simulation for checkpointing and resuming
     if os.path.isfile(result_file):
