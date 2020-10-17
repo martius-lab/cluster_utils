@@ -252,17 +252,18 @@ def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
 
 
 def metric_correlation_plot(df, metrics, filename=None):
-    corr = df[metrics].corr(method='spearman')
-    mask = np.triu(np.ones_like(corr, dtype=bool))
+    corr = df[list(metrics)].rank().corr(method='spearman')
 
     # Generate a custom diverging colormap
-    cmap = sns.diverging_palette(150, 10, as_cmap=True)
+    cmap = sns.diverging_palette(10, 150, as_cmap=True)
 
     # Draw the heatmap with the mask and correct aspect ratio
-    ax = sns.heatmap(corr, mask=mask, cmap=cmap, vmax=.3, center=0,
+    ax = sns.heatmap(corr, cmap=cmap, vmax=.3, center=0,
                 square=True, linewidths=.5, cbar_kws={"shrink": .5})
+    plt.xticks(rotation=90)
 
     ax.set_title('Spearman correlation of metrics')
+    ax.figure.tight_layout()
     fig = plt.gcf()
 
     if filename:
