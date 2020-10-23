@@ -79,7 +79,7 @@ class ClusterSubmission(ABC):
 
     @property
     def submitted_jobs(self):
-        return [job for job in self.current_jobs if not job.cluster_id is None]
+        return [job for job in self.current_jobs if job.cluster_id is not None]
 
     @property
     def n_submitted_jobs(self):
@@ -146,9 +146,9 @@ class ClusterSubmission(ABC):
 
     def _submit(self, job):
         logger = logging.getLogger('cluster_utils')
-        if not job.cluster_id is None:
+        if job.cluster_id is not None:
             raise RuntimeError('Can not run a job that already ran')
-        if not job in self.jobs:
+        if job not in self.jobs:
             logger.warning('Submitting job that was not yet added to the cluster system interface, will add it now')
             self.add_jobs(job)
         cluster_id = self.submit_fn(job)

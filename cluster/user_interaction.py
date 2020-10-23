@@ -53,8 +53,8 @@ class InteractiveMode():
     def stop_remaining_jobs(self):
         try:
             self.print('Are you sure you want to stop remaining jobs?')
-            jobs_to_cancel = [job.id for job in self.cluster_interface.jobs if
-                              not job in self.cluster_interface.successful_jobs]
+            jobs_to_cancel = [job.id for job in self.cluster_interface.jobs
+                              if job not in self.cluster_interface.successful_jobs]
             self.print(jobs_to_cancel)
             answer = input()
             if answer.lower() in ['y', 'yes']:

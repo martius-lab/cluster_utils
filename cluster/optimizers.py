@@ -299,7 +299,7 @@ class NGOptimizer(Optimizer):
         return nested_to_dict(nested_items)
 
     def add_candidate(self, job_id):
-        if not -1 in self.candidates.keys():
+        if -1 not in self.candidates.keys():
             raise ValueError("There is no unassociated candidate!")
         self.candidates[job_id] = self.candidates[-1]
         del self.candidates[-1]
