@@ -1,10 +1,11 @@
-import tqdm
-from time import sleep
-from random import random
-from colorama import Fore
+import inspect
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-import inspect
+from random import random
+from time import sleep
+
+import tqdm
+from colorama import Fore
 
 
 @contextmanager

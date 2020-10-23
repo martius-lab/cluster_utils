@@ -1,13 +1,14 @@
 import logging
+import pickle
+import signal
 import socket
+import threading
 import time
 
 import pyuv
-import signal
-import pickle
-import threading
 
-from .job import JobStatus
+from cluster.job import JobStatus
+
 
 class MessageTypes():
     JOB_STARTED = 0
@@ -80,13 +81,11 @@ class CommunicationServer():
             signal_h.close()
             server.close()
 
-
         loop = pyuv.Loop.default_loop()
         async_connection = pyuv.Async(loop)
 
         def signal_cb(sig, frame):
             async_connection.send(async_exit)
-
 
         server = pyuv.UDP(loop)
         server.bind((self.ip_adress, 0))

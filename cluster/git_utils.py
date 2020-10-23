@@ -1,12 +1,13 @@
 import logging
-import sys
 import os
-from .utils import rm_dir_full
+import sys
 from time import sleep
 
-from .cluster_system import ClusterSubmissionHook
-
 import git
+
+from cluster.cluster_system import ClusterSubmissionHook
+from cluster.utils import rm_dir_full
+
 
 def sanitize_for_latex(string):
     return string.replace('_', '-').replace('\\', '')
@@ -191,7 +192,6 @@ class GitConnector(object):
             except git.exc.GitCommandError as e:
                 raise RuntimeError(f"Commit {commit} failed as a valid revision. "
                                    f"Maybe it is not reachable within depth {depth}?") from e
-
 
     def remove_local_copy(self):
         logger = logging.getLogger('cluster_utils')

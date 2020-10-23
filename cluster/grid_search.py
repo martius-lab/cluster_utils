@@ -4,12 +4,11 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from cluster import update_params_from_cmdline
-from cluster.latex_utils import SectionFromJsonHook
-from cluster.report import produce_basic_report, init_plotting
+from cluster import grid_search, update_params_from_cmdline
 from cluster.git_utils import make_git_params
-from cluster.utils import mkdtemp, check_import_in_fixed_params, rename_import_promise
-from . import grid_search
+from cluster.latex_utils import SectionFromJsonHook
+from cluster.report import init_plotting, produce_basic_report
+from cluster.utils import check_import_in_fixed_params, mkdtemp, rename_import_promise
 
 if __name__ == '__main__':
     params = update_params_from_cmdline(verbose=False, pre_unpack_hooks=[check_import_in_fixed_params],

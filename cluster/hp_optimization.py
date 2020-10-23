@@ -2,21 +2,19 @@ import os
 import sys
 from pathlib import Path
 
-from . import hp_optimization, init_plotting
-from .distributions import *
-from .git_utils import make_git_params
-from .latex_utils import *
-from .utils import mkdtemp, check_import_in_fixed_params, rename_import_promise
-from . import update_params_from_cmdline
+from cluster import distributions, latex_utils
+from cluster import hp_optimization, init_plotting, update_params_from_cmdline
+from cluster.git_utils import make_git_params
+from cluster.utils import check_import_in_fixed_params, mkdtemp, rename_import_promise
 
 
 def get_distribution(distribution, **kwargs):
     distr_dict = {
-        "TruncatedNormal": TruncatedNormal,
-        "TruncatedLogNormal": TruncatedLogNormal,
-        "IntNormal": IntNormal,
-        "IntLogNormal": IntLogNormal,
-        "Discrete": Discrete,
+        "TruncatedNormal": distributions.TruncatedNormal,
+        "TruncatedLogNormal": distributions.TruncatedLogNormal,
+        "IntNormal": distributions.IntNormal,
+        "IntLogNormal": distributions.IntLogNormal,
+        "Discrete": distributions.Discrete,
     }
 
     if distribution not in distr_dict:
@@ -67,7 +65,8 @@ if __name__ == '__main__':
     def find_json(df, path_to_results, filename_generator):
         return json_full_name
 
-    json_hook = SectionFromJsonHook(section_title="Optimization setting script", section_generator=find_json)
+    json_hook = latex_utils.SectionFromJsonHook(section_title="Optimization setting script",
+                                                section_generator=find_json)
 
     hp_optimization(
         base_paths_and_files=base_paths_and_files,

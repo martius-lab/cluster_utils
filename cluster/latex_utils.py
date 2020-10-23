@@ -1,10 +1,10 @@
 import datetime
 import logging
 import os
-from shutil import copyfile
-from subprocess import run, PIPE
-from tempfile import TemporaryDirectory
 from abc import ABC, abstractmethod
+from shutil import copyfile
+from subprocess import PIPE, run
+from tempfile import TemporaryDirectory
 
 
 def subsection(section_name, content):

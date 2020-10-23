@@ -1,14 +1,14 @@
 import logging
 import os
 import subprocess
-
-from .cluster_system import ClusterSubmission
+import time
 from collections import namedtuple
 from copy import copy
-from subprocess import run, PIPE
-from .constants import *
+from subprocess import PIPE, run
 from threading import Thread
-import time
+
+from cluster import constants
+from cluster.cluster_system import ClusterSubmission
 
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
@@ -60,11 +60,11 @@ class Condor_ClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, 'w') as script_file:
-            script_file.write(MPI_CLUSTER_RUN_SCRIPT % namespace)
+            script_file.write(constants.MPI_CLUSTER_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0O755)  # Make executable
 
         with open(job_spec_file_path, 'w') as spec_file:
-            spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
+            spec_file.write(constants.MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
         job.job_spec_file_path = job_spec_file_path
         job.run_script_path = run_script_file_path

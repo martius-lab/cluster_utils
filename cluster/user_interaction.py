@@ -1,7 +1,7 @@
-import sys
 import select
-import tty
+import sys
 import termios
+import tty
 
 
 class InteractiveMode():

@@ -1,8 +1,9 @@
 import os
+import time
 
 import numpy as np
-import time
-from cluster import save_metrics_params, update_params_from_cmdline, exit_for_resume
+
+from cluster import exit_for_resume, save_metrics_params, update_params_from_cmdline
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):

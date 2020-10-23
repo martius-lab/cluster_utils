@@ -1,9 +1,9 @@
+import argparse
 import concurrent.futures
 import os
 from multiprocessing import cpu_count
-from subprocess import run, PIPE
+from subprocess import PIPE, run
 from time import sleep
-import argparse
 
 defaults = {'std_out_file_extension': '.out',
             'std_err_file_extension': '.err',

@@ -1,14 +1,15 @@
 import logging
-
-from sklearn.ensemble import RandomForestRegressor
+from contextlib import suppress
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.ensemble import RandomForestRegressor
 
-from .constants import *
-from .utils import shorten_string
+from cluster import constants
+from cluster.utils import shorten_string
+
 
 def performance_summary(df, metrics):
     perf = {}
@@ -22,13 +23,13 @@ def performance_summary(df, metrics):
     return pd.DataFrame.from_dict(perf, orient='index')
 
 
-def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True):
+def average_out(df, metrics, params_to_keep, std_ending=constants.STD_ENDING, add_std=True):
     logger = logging.getLogger('cluster_utils')
     if not metrics:
         raise ValueError('Empty set of metrics not accepted.')
     new_df = df[params_to_keep + metrics]
     result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
-    result[RESTART_PARAM_NAME] = new_df.groupby(params_to_keep, as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
+    result[constants.RESTART_PARAM_NAME] = new_df.groupby(params_to_keep, as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
     if not add_std:
         return result
     for metric in metrics:
@@ -49,7 +50,7 @@ def darker(color, factor=0.85):
 
 def color_scheme():
     while True:
-        for color in DISTR_BASE_COLORS:
+        for color in constants.DISTR_BASE_COLORS:
             for i in range(5):
                 yield color
                 color = darker(color)

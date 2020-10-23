@@ -11,8 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 from time import sleep
 
-from .constants import *
-
+from cluster import constants
 
 
 def shorten_string(string, max_len):
@@ -30,11 +29,11 @@ def check_valid_param_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
     if type(string) is not str:
         raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
-    if string in RESERVED_PARAMS + (WORKING_DIR,):  # working_dir cannot be injected in grid_search/hpo
+    if string in constants.RESERVED_PARAMS + (constants.WORKING_DIR,):  # working_dir cannot be injected in grid_search/hpo
         raise ValueError('Parameter name {} is reserved, cannot be overwritten from outside.'.format(string))
-    if string.endswith(STD_ENDING):
+    if string.endswith(constants.STD_ENDING):
         raise ValueError('Parameter name \'{}\' not valid.'
-                         'Ends with \'{}\' (may cause collisions)'.format(string, STD_ENDING))
+                         'Ends with \'{}\' (may cause collisions)'.format(string, constants.STD_ENDING))
     if not bool(re.compile(pat).match(string)):
         raise ValueError('Parameter name \'{}\' not valid. Only \'[0-9][a-z][A-Z]_-.\' allowed.'.format(string))
     if string.startswith('.') or string.endswith('.'):
@@ -61,7 +60,7 @@ def flatten_nested_string_dict(nested_dict, prepend=''):
         if type(key) is not str:
             raise TypeError('Only strings as keys expected')
         if isinstance(value, dict):
-            for sub in flatten_nested_string_dict(value, prepend=prepend + str(key) + OBJECT_SEPARATOR):
+            for sub in flatten_nested_string_dict(value, prepend=prepend + str(key) + constants.OBJECT_SEPARATOR):
                 yield sub
         else:
             yield prepend + str(key), value
@@ -108,8 +107,8 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
         value = list_to_tuple(value)
-        if not any([isinstance(value, allowed_type) for allowed_type in PARAM_TYPES]):
-            raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(value)))
+        if not any([isinstance(value, allowed_type) for allowed_type in constants.PARAM_TYPES]):
+            raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES, type(value)))
     nested_items = [(list(filter(lambda x: x, name.split('.'))), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
@@ -125,13 +124,13 @@ def validate_hyperparam_dict(hyperparam_dict):
         option_list = [ list_to_tuple(o) for o in option_list]
         hyperparam_dict[name]=option_list
         for item in option_list:
-            if not any([isinstance(item, allowed_type) for allowed_type in PARAM_TYPES]):
-                raise TypeError('Settings must from the following types: {}, not {}'.format(PARAM_TYPES, type(item)))
+            if not any([isinstance(item, allowed_type) for allowed_type in constants.PARAM_TYPES]):
+                raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES, type(item)))
 
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):
     validate_hyperparam_dict(hyperparam_dict)
-    nested_items = [(name.split(OBJECT_SEPARATOR), options) for name, options in hyperparam_dict.items()]
+    nested_items = [(name.split(constants.OBJECT_SEPARATOR), options) for name, options in hyperparam_dict.items()]
 
     for i in range(num_samples):
         nested_samples = [(nested_path, random.choice(options)) for nested_path, options in nested_items]
@@ -149,7 +148,7 @@ def hyperparam_dict_product(hyperparam_dict):
                 list_of_samples.extend(zip(name_or_tuple, option_or_tuple))
             else:
                 list_of_samples.append((name_or_tuple, option_or_tuple))
-        nested_items = [(name.split(OBJECT_SEPARATOR), options) for name, options in list_of_samples]
+        nested_items = [(name.split(constants.OBJECT_SEPARATOR), options) for name, options in list_of_samples]
         yield nested_to_dict(nested_items)
 
 def default_to_regular(d):
@@ -173,7 +172,7 @@ def distribution_list_sampler(distribution_list, num_samples):
     for distr in distribution_list:
         distr.prepare_samples(howmany=num_samples)
     for i in range(num_samples):
-        nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
+        nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
         yield nested_to_dict(nested_items)
 
 

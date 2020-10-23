@@ -1,11 +1,11 @@
 import os
 import sys
+import time
 
 import numpy as np
 import torch
-import time
-from cluster import announce_fraction_finished, announce_early_results, \
-    cluster_main
+
+from cluster import announce_early_results, announce_fraction_finished, cluster_main
 
 
 def rosenbrock(x, y):

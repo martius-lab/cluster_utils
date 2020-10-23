@@ -1,12 +1,12 @@
 import errno
 import logging
-
-
 import os
-from .utils import rm_dir_full
+import subprocess
 from abc import ABC, abstractmethod
-from subprocess import run, DEVNULL
-from .job import JobStatus, Job
+
+from cluster.job import Job, JobStatus
+from cluster.utils import rm_dir_full
+
 
 class ClusterSubmission(ABC):
     def __init__(self, paths, remove_jobs_dir=True):
@@ -22,7 +22,6 @@ class ClusterSubmission(ABC):
     @property
     def current_jobs(self):
         return self.jobs
-
 
     @property
     def submission_dir(self):
@@ -231,7 +230,6 @@ class ClusterSubmission(ABC):
             logger.info('Removing jobs dir {}'.format(self.submission_dir))
             rm_dir_full(self.submission_dir)
 
-
     def check_error_msgs(self):
         logger = logging.getLogger('cluster_utils')
         for job in self.failed_jobs:
@@ -272,7 +270,7 @@ def get_cluster_type(requirements, run_local=None):
 def is_command_available(cmd):
     logger = logging.getLogger('cluster_utils')
     try:
-        run(cmd, stderr=DEVNULL, stdout=DEVNULL)
+        subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False

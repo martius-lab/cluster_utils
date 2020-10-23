@@ -1,13 +1,15 @@
+import concurrent.futures
 import logging
 import os
-from copy import copy
-from .cluster_system import ClusterSubmission
-from multiprocessing import cpu_count
-import concurrent.futures
-from subprocess import run, PIPE
-from .constants import *
 import random
+from copy import copy
+from multiprocessing import cpu_count
+from subprocess import PIPE, run
+
 import numpy as np
+
+from cluster import constants
+from cluster.cluster_system import ClusterSubmission
 
 
 class Dummy_ClusterSubmission(ClusterSubmission):
@@ -54,7 +56,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, 'w') as script_file:
-            script_file.write(LOCAL_RUN_SCRIPT % namespace)
+            script_file.write(constants.LOCAL_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0O755)  # Make executable
 
         job.run_script_path = run_script_file_path

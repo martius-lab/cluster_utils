@@ -1,22 +1,23 @@
+import logging
 import os
 import shutil
-
-from cluster.progress_bars import redirect_stdout_to_tqdm, SubmittedJobsBar, RunningJobsBar, CompletedJobsBar
-from .user_interaction import InteractiveMode
-from .cluster_system import get_cluster_type
-from .constants import *
-from .settings import optimizer_dict
-from .utils import process_other_params, rm_dir_full, make_red, log_and_print
-from .git_utils import ClusterSubmissionGitHook
-from .job import Job, JobStatus
-import time
-import pandas as pd
-import numpy as np
-import logging
 import signal
 import sys
-from .communication_server import CommunicationServer
-from .optimizers import NGOptimizer
+import time
+
+import numpy as np
+import pandas as pd
+
+from cluster import constants
+from cluster.cluster_system import get_cluster_type
+from cluster.communication_server import CommunicationServer
+from cluster.git_utils import ClusterSubmissionGitHook
+from cluster.job import Job, JobStatus
+from cluster.optimizers import NGOptimizer
+from cluster.progress_bars import CompletedJobsBar, RunningJobsBar, SubmittedJobsBar, redirect_stdout_to_tqdm
+from cluster.settings import optimizer_dict
+from cluster.user_interaction import InteractiveMode
+from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
 
 
 def init_logging(working_dir):
@@ -88,7 +89,7 @@ def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_
                             number_of_samples, **optimizer_settings):
     logger = logging.getLogger('cluster_utils')
 
-    possible_pickle = os.path.join(result_dir, STATUS_PICKLE_FILE)
+    possible_pickle = os.path.join(result_dir, constants.STATUS_PICKLE_FILE)
     hp_optimizer = optimizer_dict[optimizer_str].try_load_from_pickle(possible_pickle, optimized_params,
                                                                       metric_to_optimize,
                                                                       minimize, report_hooks, **optimizer_settings)
