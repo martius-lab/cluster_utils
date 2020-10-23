@@ -109,7 +109,7 @@ class Job():
 
     def set_results(self):
         flattened_params = dict(flatten_nested_string_dict(self.final_settings))
-        flattened_params[ID] = self.id
+        flattened_params[constants.ID] = self.id
         self.param_df = pd.DataFrame([flattened_params])
         self.metric_df = pd.DataFrame([self.metrics])
         self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)

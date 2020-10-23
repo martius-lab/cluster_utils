@@ -39,8 +39,8 @@ if __name__ == '__main__':
     max_sleep_time = params.get('max_sleep_time', 10)
     time.sleep(np.random.randint(0, max_sleep_time))
 
-    result_file = os.path.join(params.model_dir, "result.npy")
-    os.makedirs(params.model_dir, exist_ok=True)
+    result_file = os.path.join(params.working_dir, "result.npy")
+    os.makedirs(params.working_dir, exist_ok=True)
     # here we do a little simulation for checkpointing and resuming
     if os.path.isfile(result_file):
         # If there is a result to resume

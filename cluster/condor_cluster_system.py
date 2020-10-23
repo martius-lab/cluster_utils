@@ -1,11 +1,9 @@
 import logging
 import os
 import subprocess
-import time
 from collections import namedtuple
 from copy import copy
 from subprocess import PIPE, run
-from threading import Thread
 
 from cluster import constants
 from cluster.cluster_system import ClusterSubmission

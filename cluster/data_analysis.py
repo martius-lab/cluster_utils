@@ -1,5 +1,4 @@
 import logging
-from contextlib import suppress
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -146,7 +145,7 @@ def detect_scale(arr):
 
 def plot_opt_progress(df, metric, filename=None):
     fig = plt.figure()
-    ax = sns.boxplot(x=ITERATION, y=metric, data=df)
+    ax = sns.boxplot(x=constants.ITERATION, y=metric, data=df)
     ax.set_yscale(detect_scale(df[metric]))
     plt.title('Optimization progress')
 
@@ -222,8 +221,8 @@ def compute_performance_gains(df, params, metric, minimum):
 
     forest = fit_forest(normalize(df), params, metric)
 
-    max_iteration = df[ITERATION].max()
-    dfs = [normalize(df[df[ITERATION] == 1 + i]) for i in range(max_iteration)]
+    max_iteration = df[constants.ITERATION].max()
+    dfs = [normalize(df[df[constants.ITERATION] == 1 + i]) for i in range(max_iteration)]
 
     names = [f'iteration {1 + i}' for i in range(max_iteration)]
     importances = [list(performance_gain_for_iteration(forest, df_, params, metric, minimum)) for df_ in dfs]
