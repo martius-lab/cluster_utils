@@ -218,7 +218,7 @@ class ClusterSubmission(ABC):
         try:
             self.exec_pre_submission_routines()
             self.submit()
-        except:
+        except BaseException:
             self.close()
             logger.warning('Job killed in emergency mode! Check condor_q!')
             raise

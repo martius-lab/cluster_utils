@@ -152,7 +152,7 @@ def add_cmd_line_params(base_dict, extra_flags):
         cmd = new_lhs + eq + rhs
         try:
             exec(cmd)
-        except:
+        except Exception:
             raise RuntimeError(f"Command {cmd} failed")
 
 

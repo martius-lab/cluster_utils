@@ -92,7 +92,7 @@ class GitConnector(object):
             path = os.getcwd() if self._local_path is None else self._local_path
             raise git.exc.InvalidGitRepositoryError(
                 'Could not find git repository at localtion {} or any of the parent directories'.format(path))
-        except:
+        except Exception:
             raise
 
         return repo
@@ -107,7 +107,7 @@ class GitConnector(object):
 
         try:
             remote_handle = self._repo.remote(remote_name)
-        except:
+        except Exception:
             remote_handle = None
 
         remote_url = '' if remote_handle is None else remote_handle.url
@@ -247,7 +247,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
             try:
                 repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
                 self.state = 0
-            except:
+            except Exception:
                 pass
 
     def pre_run_routine(self):

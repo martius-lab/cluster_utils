@@ -47,7 +47,7 @@ class InteractiveMode():
             id = int(input())
             job = self.cluster_interface.get_job(id)
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__.keys()]
-        except:
+        except Exception:
             self.print("Error encountered, maybe invalid ID?")
 
     def stop_remaining_jobs(self):
@@ -61,7 +61,7 @@ class InteractiveMode():
                 msg = "Job cancelled by cluster utils"
                 [self.comm_server.handle_error_encountered((id, msg)) for id in jobs_to_cancel]
                 print("Cancelled all remaining jobs.")
-        except:
+        except Exception:
             self.print("Error encountered")
 
     def keyboard_input_available(self):
