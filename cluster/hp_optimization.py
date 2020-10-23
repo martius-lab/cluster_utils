@@ -82,5 +82,6 @@ if __name__ == '__main__':
         optimizer_settings=params.optimizer_settings,
         kill_bad_jobs_early=params.get('kill_bad_jobs_early', False),
         early_killing_params=params.get('early_killing_params', {}),
+        no_user_interaction=params.get('no_user_interaction', False),
         **params.optimization_setting,
     )

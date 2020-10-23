@@ -16,7 +16,7 @@ from cluster.job import Job, JobStatus
 from cluster.optimizers import NGOptimizer
 from cluster.progress_bars import CompletedJobsBar, RunningJobsBar, SubmittedJobsBar, redirect_stdout_to_tqdm
 from cluster.settings import optimizer_dict
-from cluster.user_interaction import InteractiveMode
+from cluster.user_interaction import InteractiveMode, NonInteractiveMode
 from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
 
 
@@ -193,7 +193,8 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
                     early_killing_params, optimizer_str='cem_metaoptimizer',
                     remove_jobs_dir=True, remove_working_dirs=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                    report_hooks=None, optimizer_settings=None, n_completed_jobs_before_resubmit=1):
+                    report_hooks=None, optimizer_settings=None, n_completed_jobs_before_resubmit=1,
+                    no_user_interaction=False):
     if not (1 <= n_completed_jobs_before_resubmit <= n_jobs_per_iteration):
         raise ValueError(f'n_completed_jobs_before_resubmit must be in [1, {n_jobs_per_iteration}]')
 
@@ -216,7 +217,8 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
     iteration_offset = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 
-    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+    interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
+    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
         with redirect_stdout_to_tqdm():
             submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
             running_bar = RunningJobsBar(total_jobs=number_of_samples)
@@ -322,7 +324,7 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 restarts, remove_jobs_dir=True, remove_working_dirs=False, samples=None,
                 git_params=None, run_local=None, report_hooks=None,
-                load_existing_results=False):
+                load_existing_results=False, no_user_interaction=False):
 
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
@@ -354,7 +356,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
         for job in jobs:
             job.try_load_results_from_filesystem(base_paths_and_files)
 
-    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+    interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
+    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
         with redirect_stdout_to_tqdm():
             submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
             running_bar = RunningJobsBar(total_jobs=len(jobs))

@@ -85,3 +85,14 @@ class InteractiveMode():
                     self.input_to_fn_dict[fn_string]()
 
                 tty.setcbreak(sys.stdin.fileno())
+
+
+class NonInteractiveMode:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self):
+        return lambda: None
+
+    def __exit__(self, type, value, traceback):
+        pass
