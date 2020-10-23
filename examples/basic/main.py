@@ -43,7 +43,8 @@ if __name__ == '__main__':
     params = update_params_from_cmdline()
 
     # simulate that the jobs take some time
-    time.sleep(np.random.randint(0, 10))
+    max_sleep_time = params.get('max_sleep_time', 10)
+    time.sleep(np.random.randint(0, max_sleep_time))
 
     result_file = os.path.join(params.working_dir, "result.npy")
     os.makedirs(params.working_dir, exist_ok=True)
