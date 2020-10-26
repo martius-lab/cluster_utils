@@ -47,14 +47,6 @@ class Optimizer(ABC):
         self.minimal_df = data_analysis.average_out(self.full_df, [self.metric_to_optimize], self.params)
         self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
-    @abstractmethod
-    def get_best(self, how_many=1):
-        pass
-
-    @abstractmethod
-    def try_load_from_pickle(cls):
-        pass
-
     def save_pdf_report(self, output_file, submission_hook_stats, current_result_path):
         today = datetime.datetime.now().strftime("%B %d, %Y")
         latex_title = 'Results of optimization procedure from ({})'.format(today)
