@@ -21,7 +21,7 @@ def shorten_string(string, max_len):
 
 
 def list_to_tuple(maybe_list):
-    if isinstance(maybe_list,list):
+    if isinstance(maybe_list, list):
         return tuple(maybe_list)
     else:
         return maybe_list
@@ -123,8 +123,8 @@ def validate_hyperparam_dict(hyperparam_dict):
             check_valid_param_name(name)
         if type(option_list) is not list:
             raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
-        option_list = [ list_to_tuple(o) for o in option_list]
-        hyperparam_dict[name]=option_list
+        option_list = [list_to_tuple(o) for o in option_list]
+        hyperparam_dict[name] = option_list
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in constants.PARAM_TYPES]):
                 raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES, type(item)))

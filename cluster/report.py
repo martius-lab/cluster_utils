@@ -24,7 +24,7 @@ def init_plotting():
 
 def flatten_params(params_with_tuples):
     for p in params_with_tuples:
-        if isinstance(p,tuple):
+        if isinstance(p, tuple):
             for i in p:
                 yield i
         else:
