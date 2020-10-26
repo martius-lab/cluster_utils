@@ -50,7 +50,7 @@ def darker(color, factor=0.85):
 def color_scheme():
     while True:
         for color in constants.DISTR_BASE_COLORS:
-            for i in range(5):
+            for _ in range(5):
                 yield color
                 color = darker(color)
 
@@ -197,7 +197,7 @@ def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
 
     ys_base = df[metric]
     if df[params].shape[0] == 0:
-        for param in params:
+        for _ in params:
             yield 0
     else:
         ys = clf.predict(df[params])

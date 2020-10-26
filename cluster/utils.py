@@ -134,7 +134,7 @@ def hyperparam_dict_samples(hyperparam_dict, num_samples):
     validate_hyperparam_dict(hyperparam_dict)
     nested_items = [(name.split(constants.OBJECT_SEPARATOR), options) for name, options in hyperparam_dict.items()]
 
-    for i in range(num_samples):
+    for _ in range(num_samples):
         nested_samples = [(nested_path, random.choice(options)) for nested_path, options in nested_items]
         yield nested_to_dict(nested_samples)
 
@@ -174,7 +174,7 @@ def nested_to_dict(nested_items):
 def distribution_list_sampler(distribution_list, num_samples):
     for distr in distribution_list:
         distr.prepare_samples(howmany=num_samples)
-    for i in range(num_samples):
+    for _ in range(num_samples):
         nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
         yield nested_to_dict(nested_items)
 

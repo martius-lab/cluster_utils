@@ -175,7 +175,7 @@ class Metaoptimizer(Optimizer):
         if (metric_to_optimize, minimize) != (metaopt.metric_to_optimize, metaopt.minimize):
             raise ValueError('Attempted to continue but optimizes a different metric!')
         current_best_params = metaopt.get_best_params()
-        for distr, meta_distr in zip(optimized_params, metaopt.optimized_params):
+        for distr, _meta_distr in zip(optimized_params, metaopt.optimized_params):
             if distr.param_name in metaopt.params:
                 distr.fit(current_best_params[distr.param_name])
 
@@ -233,7 +233,7 @@ class Metaoptimizer(Optimizer):
     def distribution_list_sampler(self, num_samples):
         for distr in self.optimized_params:
             distr.prepare_samples(howmany=num_samples)
-        for i in range(num_samples):
+        for _ in range(num_samples):
             nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample())
                             for distr in self.optimized_params]
             yield nested_to_dict(nested_items)
