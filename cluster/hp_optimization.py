@@ -2,8 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from cluster import distributions, latex_utils
-from cluster import hp_optimization, init_plotting, update_params_from_cmdline
+from cluster import distributions, hp_optimization, init_plotting, latex_utils, update_params_from_cmdline
 from cluster.git_utils import make_git_params
 from cluster.utils import check_import_in_fixed_params, mkdtemp, rename_import_promise
 
