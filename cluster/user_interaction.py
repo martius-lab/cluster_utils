@@ -65,12 +65,14 @@ class InteractiveMode():
             self.print("Error encountered")
 
     def keyboard_input_available(self):
-        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])  # checks if theres sth to read from stdin
+        # checks if theres sth to read from stdin
+        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
     def check_for_input(self):
         if self.keyboard_input_available():
             esc_key_pushed = False
-            while self.keyboard_input_available():  # check for key push and empty stdin (in case several keys were pushed)
+            # check for key push and empty stdin (in case several keys were pushed)
+            while self.keyboard_input_available():
                 c = sys.stdin.read(1)
                 if c == '\x1b':  # x1b is ESC
                     esc_key_pushed = True

@@ -210,7 +210,8 @@ class GitConnector(object):
             logger.warning('Not connected to a git repository')
             return
 
-        res = dict(use_local_copy=str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),
+        res = dict(use_local_copy='{}{}'.format(self._orig_url is not None,
+                                                ' (removed after done)' if self._remove_local_copy else ''),
                    working_dir=self._repo.working_dir,
                    origin_url=self._get_remote_meta('origin')['remote_url'],
                    active_branch=self._repo.active_branch.name,

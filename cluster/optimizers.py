@@ -92,7 +92,8 @@ class Optimizer(ABC):
                 if res:
                     yield filename
             elif isinstance(distr, distributions.Discrete):
-                data_analysis.count_plot_horizontal(self.full_df, constants.ITERATION, distr.param_name, filename=filename)
+                data_analysis.count_plot_horizontal(self.full_df, constants.ITERATION, distr.param_name,
+                                                    filename=filename)
                 yield filename
             else:
                 raise AssertionError()
@@ -126,7 +127,8 @@ class Optimizer(ABC):
             return ''
 
     def provide_recommendations(self, how_many):
-        jobs_df = self.minimal_df[self.minimal_df[constants.RESTART_PARAM_NAME] >= self.minimal_restarts_to_count].copy()
+        num_restarts = self.minimal_df[constants.RESTART_PARAM_NAME]
+        jobs_df = self.minimal_df[num_restarts >= self.minimal_restarts_to_count].copy()
 
         metric_std = self.metric_to_optimize + constants.STD_ENDING
         final_metric = f'expected {self.metric_to_optimize}'
@@ -135,8 +137,9 @@ class Optimizer(ABC):
             mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
             median_std = jobs_df[metric_std].median()
 
+            num_restarts = jobs_df[constants.RESTART_PARAM_NAME]
             # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-            expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[constants.RESTART_PARAM_NAME]))
+            expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(num_restarts))
             jobs_df[final_metric] = expected_metric
         else:
             jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
@@ -356,8 +359,8 @@ class GridSearchOptimizer(Optimizer):
         self.restarts = restarts
 
     def set_setting_generator(self):
-        self.setting_generator = get_sample_generator(self.number_of_samples, self.parameter_dicts, distribution_list=None,
-                                                      extra_settings=None)
+        self.setting_generator = get_sample_generator(self.number_of_samples, self.parameter_dicts,
+                                                      distribution_list=None, extra_settings=None)
 
     def ask(self):
         settings = next(self.setting_generator, None)

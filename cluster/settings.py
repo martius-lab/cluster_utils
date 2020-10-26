@@ -81,7 +81,8 @@ def exit_for_resume():
 
 
 def sanitize_numpy_torch(possibly_np_or_tensor):
-    if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
+    # Hacky check for torch tensors without importing torch
+    if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":
         return possibly_np_or_tensor.item()  # silently convert to float
     if str(type(possibly_np_or_tensor)) == "<class 'numpy.ndarray'>":
         return float(possibly_np_or_tensor)
@@ -197,7 +198,8 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
             add_cmd_line_params(orig_dict, cmd_line[2:])
 
         final_params = smart_settings.load(cmd_line[1], make_immutable=make_immutable, dynamic=dynamic,
-                                           post_unpack_hooks=[add_cmd_params, check_reserved_params] + post_unpack_hooks,
+                                           post_unpack_hooks=([add_cmd_params, check_reserved_params]
+                                                              + post_unpack_hooks),
                                            pre_unpack_hooks=pre_unpack_hooks)
 
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):

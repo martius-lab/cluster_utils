@@ -78,7 +78,8 @@ class Job():
             raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
 
         if 'custom_python_executable_path' in paths:
-            logger.warning('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+            logger.warning('Setting custom_python_executable_path not recommended. '
+                           'Better set \"virtual_env_path\" instead.')
 
         python_executor = paths.get('custom_python_executable_path', 'python3')
         is_python_script = paths.get('is_python_script', True)
@@ -92,7 +93,8 @@ class Job():
             if run_script_as_module_main:
                 # convert path to module name
                 module_name = paths['script_to_run'].replace('/', '.').replace('.py', '')
-                exec_cmd = f"cd {paths['main_path']}; {python_executor} -m {module_name} {comm_info_string} {setting_string}"
+                exec_cmd = (f"cd {paths['main_path']}; "
+                            f"{python_executor} -m {module_name} {comm_info_string} {setting_string}")
             else:
                 base_exec_cmd = '{}'.format(python_executor) + ' {} {} {}'
                 exec_cmd = base_exec_cmd.format(os.path.join(paths['main_path'], paths['script_to_run']),

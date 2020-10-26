@@ -28,7 +28,8 @@ def average_out(df, metrics, params_to_keep, std_ending=constants.STD_ENDING, ad
         raise ValueError('Empty set of metrics not accepted.')
     new_df = df[params_to_keep + metrics]
     result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
-    result[constants.RESTART_PARAM_NAME] = new_df.groupby(params_to_keep, as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
+    result[constants.RESTART_PARAM_NAME] = new_df.groupby(params_to_keep,
+                                                          as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
     if not add_std:
         return result
     for metric in metrics:

@@ -26,15 +26,16 @@ class Condor_ClusterSubmission(ClusterSubmission):
         submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
         while True:
             try:
-                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0).stdout.decode('utf-8')
+                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0)
+                submit_output = result.stdout.decode('utf-8')
                 break
             except subprocess.TimeoutExpired:
                 logger.warning(f"Job submission for id {job.id} hangs. Retrying...")
 
         logger.info(f"Job with id {job.id} submitted.")
 
-        good_lines = [line for line in result.split('\n') if 'submitted' in line]
-        bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
+        good_lines = [line for line in submit_output.split('\n') if 'submitted' in line]
+        bad_lines = [line for line in submit_output.split('\n') if 'WARNING' in line or 'ERROR' in line]
         if not good_lines or bad_lines:
             print(bad_lines)
             self.close()

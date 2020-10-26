@@ -31,7 +31,8 @@ def check_valid_param_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
     if type(string) is not str:
         raise TypeError(('Parameter \'{}\' not valid. String expected.'.format(string)))
-    if string in constants.RESERVED_PARAMS + (constants.WORKING_DIR,):  # working_dir cannot be injected in grid_search/hpo
+    if string in constants.RESERVED_PARAMS + (constants.WORKING_DIR,):
+        # working_dir cannot be injected in grid_search/hpo
         raise ValueError('Parameter name {} is reserved, cannot be overwritten from outside.'.format(string))
     if string.endswith(constants.STD_ENDING):
         raise ValueError('Parameter name \'{}\' not valid.'
@@ -110,7 +111,8 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
         value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in constants.PARAM_TYPES]):
-            raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES, type(value)))
+            raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES,
+                                                                                        type(value)))
     nested_items = [(list(filter(lambda x: x, name.split('.'))), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
@@ -127,7 +129,8 @@ def validate_hyperparam_dict(hyperparam_dict):
         hyperparam_dict[name] = option_list
         for item in option_list:
             if not any([isinstance(item, allowed_type) for allowed_type in constants.PARAM_TYPES]):
-                raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES, type(item)))
+                raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES,
+                                                                                            type(item)))
 
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):
@@ -146,7 +149,8 @@ def hyperparam_dict_product(hyperparam_dict):
     for sample_from_product in itertools.product(*list(option_lists)):
         list_of_samples = []
         for name_or_tuple, option_or_tuple in zip(names, sample_from_product):
-            if isinstance(name_or_tuple, tuple):  # in case we specify a tuple/list of keys and values we unzip them here
+            if isinstance(name_or_tuple, tuple):
+                # in case we specify a tuple/list of keys and values, we unzip them here
                 list_of_samples.extend(zip(name_or_tuple, option_or_tuple))
             else:
                 list_of_samples.append((name_or_tuple, option_or_tuple))
@@ -175,7 +179,8 @@ def distribution_list_sampler(distribution_list, num_samples):
     for distr in distribution_list:
         distr.prepare_samples(howmany=num_samples)
     for _ in range(num_samples):
-        nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample()) for distr in distribution_list]
+        nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample())
+                        for distr in distribution_list]
         yield nested_to_dict(nested_items)
 
 
