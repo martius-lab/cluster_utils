@@ -56,8 +56,6 @@ def color_scheme():
 
 
 def distribution(df, param, metric, filename=None, metric_logscale=None, x_bounds=None):
-
-
     logger = logging.getLogger('cluster_utils')
     smaller_df = df[[param, metric]]
     unique_vals = smaller_df[param].unique()

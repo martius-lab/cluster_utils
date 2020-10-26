@@ -19,11 +19,13 @@ def shorten_string(string, max_len):
         return '...' + string[-max_len + 3:]
     return string
 
+
 def list_to_tuple(maybe_list):
     if isinstance(maybe_list,list):
         return tuple(maybe_list)
     else:
         return maybe_list
+
 
 def check_valid_param_name(string):
     pat = '[A-Za-z0-9_.-:]*$'
@@ -151,6 +153,7 @@ def hyperparam_dict_product(hyperparam_dict):
         nested_items = [(name.split(constants.OBJECT_SEPARATOR), options) for name, options in list_of_samples]
         yield nested_to_dict(nested_items)
 
+
 def default_to_regular(d):
     if isinstance(d, defaultdict):
         d = {k: default_to_regular(v) for k, v in d.items()}
@@ -217,6 +220,7 @@ def check_import_in_fixed_params(setting_dict):
     if "fixed_params" in setting_dict:
         if "__import__" in setting_dict['fixed_params']:
             raise ImportError("Cannot import inside fixed params. Did you mean __import_promise__?")
+
 
 def rename_import_promise(setting_dict):
     if "fixed_params" in setting_dict:

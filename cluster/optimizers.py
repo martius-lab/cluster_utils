@@ -355,8 +355,10 @@ class NGOptimizer(Optimizer):
 class GridSearchOptimizer(Optimizer):
     def __init__(self, *, restarts, **kwargs):
         super().__init__(**kwargs)
+
         def maybe_list_to_tuple(names):
             return tuple(names) if isinstance(names, list) else names
+
         self.parameter_dicts = {maybe_list_to_tuple(param.param_name): param.values for param in self.optimized_params}
         self.set_setting_generator()
         self.restarts = restarts

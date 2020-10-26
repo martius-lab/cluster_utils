@@ -94,15 +94,3 @@ class Dummy_ClusterSubmission(ClusterSubmission):
             logger.warning('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
             self.concurrent_jobs = self.available_cpus
         assert self.concurrent_jobs > 0
-
-"""
-    def check_error_msgs(self):
-        failed = [future for _, future in self.futures_tuple if
-                  future.done() and future.result().__dict__['returncode'] == 1]
-        errs = set([future.result().stderr.decode() for future in failed])
-        for err in errs:
-            if err not in self.exceptions_seen:
-                self.exceptions_seen.add(err)
-                logger.warning(err)
-        return len(errs) > 0
-"""

@@ -144,6 +144,7 @@ def report_exit_at_server():
           (submission_state.communication_server_ip, submission_state.communication_server_port))
     send_message(MessageTypes.JOB_CONCLUDED, message=(submission_state.job_id,))
 
+
 def add_cmd_line_params(base_dict, extra_flags):
     for extra_flag in extra_flags:
         lhs, eq, rhs = extra_flag.rpartition('=')

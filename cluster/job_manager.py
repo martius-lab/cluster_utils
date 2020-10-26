@@ -85,6 +85,7 @@ def update_best_job_datadirs(result_dir, working_dirs, remove_working_dirs=True)
 
     logger.info(f"Best jobs in directory {datadir} updated.")
 
+
 def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_to_optimize, minimize, report_hooks,
                             number_of_samples, **optimizer_settings):
     logger = logging.getLogger('cluster_utils')
@@ -320,6 +321,7 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
             job.status = JobStatus.CONCLUDED
             job.set_results()
             cluster_interface.stop_fn(job.cluster_id)
+
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 restarts, remove_jobs_dir=True, remove_working_dirs=False, samples=None,

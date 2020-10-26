@@ -42,9 +42,9 @@ def main(working_dir, optimizer, optimizer_params, iterations):
         announce_fraction_finished((i+1) / iterations)
         announce_early_results({'final_value': loss})
 
-
     metrics = {'final_value': loss}
     return metrics
+
 
 if __name__ == '__main__':
     main()
