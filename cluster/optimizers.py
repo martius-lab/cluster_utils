@@ -95,7 +95,7 @@ class Optimizer(ABC):
                 data_analysis.count_plot_horizontal(self.full_df, constants.ITERATION, distr.param_name, filename=filename)
                 yield filename
             else:
-                assert False
+                raise AssertionError()
 
     @abstractmethod
     def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
@@ -180,7 +180,7 @@ class Metaoptimizer(Optimizer):
                 distr.fit(current_best_params[distr.param_name])
 
         metaopt.optimized_params = optimized_params
-        setattr(metaopt, 'with_restarts', with_restarts)
+        metaopt.with_restarts = with_restarts
         metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
         metaopt.report_hooks = report_hooks or []
         return metaopt

@@ -81,7 +81,7 @@ class DistributionOverIntegers(Distribution):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if hasattr(self, 'lower') and hasattr(self, 'upper'):
-            if not (type(self.lower) == type(self.upper) == int):
+            if not (isinstance(self.lower, int) and isinstance(self.upper, int)):
                 raise TypeError('Bounds for integer distribution must be integral')
 
     def prepare_samples(self, howmany):
