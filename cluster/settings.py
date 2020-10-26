@@ -202,10 +202,11 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
 
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
         final_params = ast.literal_eval(cmd_line[1])
-        final_params = smart_settings.loads(json.dumps(final_params), make_immutable=make_immutable,
-                                        dynamic=dynamic,
-                                        post_unpack_hooks=[check_reserved_params] + post_unpack_hooks,
-                                        pre_unpack_hooks=pre_unpack_hooks)
+        final_params = smart_settings.loads(json.dumps(final_params),
+                                            make_immutable=make_immutable,
+                                            dynamic=dynamic,
+                                            post_unpack_hooks=[check_reserved_params] + post_unpack_hooks,
+                                            pre_unpack_hooks=pre_unpack_hooks)
     else:
         raise ValueError('Failed to parse command line')
 

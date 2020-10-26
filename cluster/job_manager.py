@@ -204,17 +204,16 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
 
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                  submission_requirements,
-                                                                                  optimized_params,
-                                                                                  other_params,
-                                                                                  number_of_samples,
-                                                                                  metric_to_optimize,
-                                                                                  minimize, optimizer_str,
-                                                                                  remove_jobs_dir,
-                                                                                  git_params, run_local,
-                                                                                  report_hooks,
-                                                                                  optimizer_settings,
-                                                                                  )
+                                                                                   submission_requirements,
+                                                                                   optimized_params,
+                                                                                   other_params,
+                                                                                   number_of_samples,
+                                                                                   metric_to_optimize,
+                                                                                   minimize, optimizer_str,
+                                                                                   remove_jobs_dir,
+                                                                                   git_params, run_local,
+                                                                                   report_hooks,
+                                                                                   optimizer_settings)
     iteration_offset = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 

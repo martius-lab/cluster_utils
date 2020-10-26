@@ -181,7 +181,7 @@ class GitConnector(object):
 
         depth_message = f"depth {depth}" if depth is not None else "full depth"
         logger.info(f"Create local git clone of {remote_url} in {self._local_path} using branch {branch}, "
-              f"{depth_message} and commit {commit if commit else 'latest'} ... ")
+                    f"{depth_message} and commit {commit if commit else 'latest'} ... ")
 
         cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch, depth=depth)
 

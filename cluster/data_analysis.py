@@ -259,7 +259,7 @@ def metric_correlation_plot(df, metrics, filename=None):
 
     # Draw the heatmap with the mask and correct aspect ratio
     ax = sns.heatmap(corr, cmap=cmap, vmin=-1.0, vmax=1.0, center=0,
-                square=True, linewidths=.5, cbar_kws={"shrink": .5})
+                     square=True, linewidths=.5, cbar_kws={"shrink": .5})
     plt.xticks(rotation=90)
 
     ax.set_title('Spearman correlation of metrics')

@@ -115,7 +115,7 @@ class Optimizer(ABC):
         df_to_use = self.full_df
         if how_many > df_to_use.shape[0]:
             logger.warning('Requesting more best_jobs_working_dirs than data is available, reducing number to: ' +
-                 str(df_to_use.shape[0]))
+                           str(df_to_use.shape[0]))
             how_many = df_to_use.shape[0]
         df_to_use = df_to_use[['working_dir', self.metric_to_optimize]]
         return data_analysis.best_jobs(df_to_use, metric=self.metric_to_optimize,
