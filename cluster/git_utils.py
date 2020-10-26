@@ -245,7 +245,7 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         else:
             # Check if local Path is git repo
             try:
-                repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
+                git.Repo(path=self.params['local_path'], search_parent_directories=True)
                 self.state = 0
             except Exception:
                 pass

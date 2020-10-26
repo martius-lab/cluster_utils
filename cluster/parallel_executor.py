@@ -31,7 +31,7 @@ def execute_parallel_shell_scripts(scripts, cpus_per_job, std_out_file_extension
 
     print('Jobs to execute ', len(scripts))
     num_jobs = len(scripts)
-    idle, running, failed = 0, num_jobs, 0
+    idle, running = 0, num_jobs
 
     num_cpus = cpu_count()
     print('Num cpus: ', num_cpus)
