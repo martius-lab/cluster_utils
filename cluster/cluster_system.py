@@ -1,6 +1,5 @@
 import errno
 import logging
-import os
 import subprocess
 from abc import ABC, abstractmethod
 
