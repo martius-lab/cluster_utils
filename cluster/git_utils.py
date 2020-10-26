@@ -144,7 +144,7 @@ class GitConnector(object):
     Active branch: & {active_branch}\\\\
     Commit: & {checkout_commit_hexsha_short} (from {checkout_commit_author} on {checkout_commit_date})\\\\
     ~ & {checkout_commit_msg}
-\end{{tabular}}'''
+\\end{{tabular}}'''
 
         return template
 

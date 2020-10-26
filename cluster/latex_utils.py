@@ -19,7 +19,7 @@ def add_subsection_from_figures(section_name, file_list, common_scale=0.7):
 
 
 def include_figure(filename, scale_linewidth=1.0):
-    return '\\includegraphics[width={}\linewidth]{{\detokenize{{{}}}}}\n'.format(scale_linewidth, filename)
+    return '\\includegraphics[width={}\\linewidth]{{\\detokenize{{{}}}}}\n'.format(scale_linewidth, filename)
 
 
 def section(section_name, content):
@@ -125,29 +125,29 @@ class SectionFromDataframeHook(SectionHook):
         latex_object.add_section_from_dataframe(self.title, section_content)
 
 
-LATEX_BEGIN = '''
-\\documentclass{amsart}
-\\usepackage{graphicx}
-\\usepackage{framed}
-\\usepackage{verbatim}
-\\usepackage{booktabs}
-\\usepackage{url}
-\\usepackage{underscore}
-\\usepackage{listings}
-\\usepackage{mdframed}
-\\usepackage[margin=1.0in]{geometry}
+LATEX_BEGIN = r'''
+\documentclass{amsart}
+\usepackage{graphicx}
+\usepackage{framed}
+\usepackage{verbatim}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{underscore}
+\usepackage{listings}
+\usepackage{mdframed}
+\usepackage[margin=1.0in]{geometry}
 
-\\usepackage{color}
-\\usepackage{xcolor}
+\usepackage{color}
+\usepackage{xcolor}
 
-\\definecolor{eclipseStrings}{RGB}{42,0.0,255}
-\\definecolor{eclipseKeywords}{RGB}{127,0,85}
-\\colorlet{numb}{magenta!60!black}
+\definecolor{eclipseStrings}{RGB}{42,0.0,255}
+\definecolor{eclipseKeywords}{RGB}{127,0,85}
+\colorlet{numb}{magenta!60!black}
 
-\\lstdefinelanguage{json}{
-    basicstyle=\\normalfont\\ttfamily,
-    commentstyle=\\color{eclipseStrings}, % style of comment
-    stringstyle=\\color{eclipseKeywords}, % style of strings
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    commentstyle=\color{eclipseStrings}, % style of comment
+    stringstyle=\color{eclipseKeywords}, % style of strings
     numbers=left,
     numberstyle=\scriptsize,
     stepnumber=1,
@@ -155,35 +155,35 @@ LATEX_BEGIN = '''
     showstringspaces=false,
     breaklines=true,
     frame=lines,
-    backgroundcolor=\\color{white}, %only if you like
+    backgroundcolor=\color{white}, %only if you like
     string=[s]{"}{"},
-    comment=[l]{:\\ "},
+    comment=[l]{:\ "},
     morecomment=[l]{:"},
     literate=
-        *{0}{{{\\color{numb}0}}}{1}
-         {1}{{{\\color{numb}1}}}{1}
-         {2}{{{\\color{numb}2}}}{1}
-         {3}{{{\\color{numb}3}}}{1}
-         {4}{{{\\color{numb}4}}}{1}
-         {5}{{{\\color{numb}5}}}{1}
-         {6}{{{\\color{numb}6}}}{1}
-         {7}{{{\\color{numb}7}}}{1}
-         {8}{{{\\color{numb}8}}}{1}
-         {9}{{{\\color{numb}9}}}{1}
+        *{0}{{{\color{numb}0}}}{1}
+         {1}{{{\color{numb}1}}}{1}
+         {2}{{{\color{numb}2}}}{1}
+         {3}{{{\color{numb}3}}}{1}
+         {4}{{{\color{numb}4}}}{1}
+         {5}{{{\color{numb}5}}}{1}
+         {6}{{{\color{numb}6}}}{1}
+         {7}{{{\color{numb}7}}}{1}
+         {8}{{{\color{numb}8}}}{1}
+         {9}{{{\color{numb}9}}}{1}
 }
 
-\\definecolor{codegreen}{rgb}{0,0.6,0}
-\\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\\lstdefinestyle{mystyle}{
-    backgroundcolor=\\color{backcolour},
-    commentstyle=\\color{codegreen},
-    keywordstyle=\\color{magenta},
-    numberstyle=\\tiny\\color{codegray},
-    stringstyle=\\color{codepurple},
-    basicstyle=\\footnotesize,
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize,
     breakatwhitespace=false,
     breaklines=true,
     captionpos=b,
@@ -196,23 +196,24 @@ LATEX_BEGIN = '''
     tabsize=2
 }
 
-\\lstset{style=mystyle}
+\lstset{style=mystyle}
 
-\\graphicspath{{./figures/}}
-\\newtheorem{theorem}{Theorem}[section]
-\\newtheorem{conj}[theorem]{Conjecture}
-\\newtheorem{lemma}[theorem]{Lemma}
-\\newtheorem{prop}[theorem]{Proposition}
-\\newtheorem{cor}[theorem]{Corollary}
-\\def \\qbar {\\overline{\\mathbb{Q}}}
-\\theoremstyle{definition}
-\\newtheorem{definition}[theorem]{Definition}
-\\newtheorem{example}[theorem]{Example}
-\\newtheorem{xca}[theorem]{Exercise}
-\\theoremstyle{remark}
-\\newtheorem{remark}[theorem]{Remark}
-\\numberwithin{equation}{section}
-\\begin{document}\n
+\graphicspath{{./figures/}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{conj}[theorem]{Conjecture}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{cor}[theorem]{Corollary}
+\def \qbar {\overline{\mathbb{Q}}}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{xca}[theorem]{Exercise}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\numberwithin{equation}{section}
+\begin{document}
+
 '''
 
 LATEX_TITLE = '\\title{{{}}}\n'
