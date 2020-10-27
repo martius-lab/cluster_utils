@@ -1,13 +1,14 @@
 import logging
+import pickle
+import signal
 import socket
+import threading
 import time
 
 import pyuv
-import signal
-import pickle
-import threading
 
-from .job import JobStatus
+from cluster.job import JobStatus
+
 
 class MessageTypes():
     JOB_STARTED = 0
@@ -57,7 +58,7 @@ class CommunicationServer():
             # doesn't even have to be reachable
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except:
+        except Exception:
             IP = '127.0.0.1'
         finally:
             s.close()
@@ -80,13 +81,11 @@ class CommunicationServer():
             signal_h.close()
             server.close()
 
-
         loop = pyuv.Loop.default_loop()
         async_connection = pyuv.Async(loop)
 
         def signal_cb(sig, frame):
             async_connection.send(async_exit)
-
 
         server = pyuv.UDP(loop)
         server.bind((self.ip_adress, 0))

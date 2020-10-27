@@ -1,12 +1,13 @@
 import logging
-import sys
 import os
-from .utils import rm_dir_full
+import sys
 from time import sleep
 
-from .cluster_system import ClusterSubmissionHook
-
 import git
+
+from cluster.cluster_system import ClusterSubmissionHook
+from cluster.utils import rm_dir_full
+
 
 def sanitize_for_latex(string):
     return string.replace('_', '-').replace('\\', '')
@@ -91,7 +92,7 @@ class GitConnector(object):
             path = os.getcwd() if self._local_path is None else self._local_path
             raise git.exc.InvalidGitRepositoryError(
                 'Could not find git repository at localtion {} or any of the parent directories'.format(path))
-        except:
+        except Exception:
             raise
 
         return repo
@@ -106,7 +107,7 @@ class GitConnector(object):
 
         try:
             remote_handle = self._repo.remote(remote_name)
-        except:
+        except Exception:
             remote_handle = None
 
         remote_url = '' if remote_handle is None else remote_handle.url
@@ -143,7 +144,7 @@ class GitConnector(object):
     Active branch: & {active_branch}\\\\
     Commit: & {checkout_commit_hexsha_short} (from {checkout_commit_author} on {checkout_commit_date})\\\\
     ~ & {checkout_commit_msg}
-\end{{tabular}}'''
+\\end{{tabular}}'''
 
         return template
 
@@ -180,7 +181,7 @@ class GitConnector(object):
 
         depth_message = f"depth {depth}" if depth is not None else "full depth"
         logger.info(f"Create local git clone of {remote_url} in {self._local_path} using branch {branch}, "
-              f"{depth_message} and commit {commit if commit else 'latest'} ... ")
+                    f"{depth_message} and commit {commit if commit else 'latest'} ... ")
 
         cloned_repo = git.Repo.clone_from(remote_url, self._local_path, branch=branch, depth=depth)
 
@@ -191,7 +192,6 @@ class GitConnector(object):
             except git.exc.GitCommandError as e:
                 raise RuntimeError(f"Commit {commit} failed as a valid revision. "
                                    f"Maybe it is not reachable within depth {depth}?") from e
-
 
     def remove_local_copy(self):
         logger = logging.getLogger('cluster_utils')
@@ -210,7 +210,8 @@ class GitConnector(object):
             logger.warning('Not connected to a git repository')
             return
 
-        res = dict(use_local_copy=str(self._orig_url is not None) + (' (removed after done)' if self._remove_local_copy else ''),
+        res = dict(use_local_copy='{}{}'.format(self._orig_url is not None,
+                                                ' (removed after done)' if self._remove_local_copy else ''),
                    working_dir=self._repo.working_dir,
                    origin_url=self._get_remote_meta('origin')['remote_url'],
                    active_branch=self._repo.active_branch.name,
@@ -245,9 +246,9 @@ class ClusterSubmissionGitHook(ClusterSubmissionHook):
         else:
             # Check if local Path is git repo
             try:
-                repo = git.Repo(path=self.params['local_path'], search_parent_directories=True)
+                git.Repo(path=self.params['local_path'], search_parent_directories=True)
                 self.state = 0
-            except:
+            except Exception:
                 pass
 
     def pre_run_routine(self):

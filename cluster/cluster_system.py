@@ -1,12 +1,11 @@
 import errno
 import logging
-
-
-import os
-from .utils import rm_dir_full
+import subprocess
 from abc import ABC, abstractmethod
-from subprocess import run, DEVNULL
-from .job import JobStatus, Job
+
+from cluster.job import Job, JobStatus
+from cluster.utils import rm_dir_full
+
 
 class ClusterSubmission(ABC):
     def __init__(self, paths, remove_jobs_dir=True):
@@ -22,7 +21,6 @@ class ClusterSubmission(ABC):
     @property
     def current_jobs(self):
         return self.jobs
-
 
     @property
     def submission_dir(self):
@@ -80,7 +78,7 @@ class ClusterSubmission(ABC):
 
     @property
     def submitted_jobs(self):
-        return [job for job in self.current_jobs if not job.cluster_id is None]
+        return [job for job in self.current_jobs if job.cluster_id is not None]
 
     @property
     def n_submitted_jobs(self):
@@ -147,9 +145,9 @@ class ClusterSubmission(ABC):
 
     def _submit(self, job):
         logger = logging.getLogger('cluster_utils')
-        if not job.cluster_id is None:
+        if job.cluster_id is not None:
             raise RuntimeError('Can not run a job that already ran')
-        if not job in self.jobs:
+        if job not in self.jobs:
             logger.warning('Submitting job that was not yet added to the cluster system interface, will add it now')
             self.add_jobs(job)
         cluster_id = self.submit_fn(job)
@@ -163,8 +161,9 @@ class ClusterSubmission(ABC):
 
     def stop_all(self):
         print('Killing remaining jobs...')
+        statuses_for_stopping = (JobStatus.SUBMITTED, JobStatus.RUNNING, JobStatus.SENT_RESULTS)
         for job in self.jobs:
-            if job.cluster_id is not None and job.status in [JobStatus.SUBMITTED, JobStatus.RUNNING, JobStatus.SENT_RESULTS]:
+            if job.cluster_id is not None and job.status in statuses_for_stopping:
                 self.stop(job)
                 # TODO: Add check all are gone
 
@@ -219,7 +218,7 @@ class ClusterSubmission(ABC):
         try:
             self.exec_pre_submission_routines()
             self.submit()
-        except:
+        except BaseException:
             self.close()
             logger.warning('Job killed in emergency mode! Check condor_q!')
             raise
@@ -230,7 +229,6 @@ class ClusterSubmission(ABC):
         if self.remove_jobs_dir:
             logger.info('Removing jobs dir {}'.format(self.submission_dir))
             rm_dir_full(self.submission_dir)
-
 
     def check_error_msgs(self):
         logger = logging.getLogger('cluster_utils')
@@ -272,7 +270,7 @@ def get_cluster_type(requirements, run_local=None):
 def is_command_available(cmd):
     logger = logging.getLogger('cluster_utils')
     try:
-        run(cmd, stderr=DEVNULL, stdout=DEVNULL)
+        subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False

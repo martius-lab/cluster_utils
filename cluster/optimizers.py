@@ -1,17 +1,19 @@
 import datetime
+import itertools
+import logging
 import os
 import random
-import pandas as pd
-import numpy as np
-import cloudpickle as pickle
-from itertools import count
+from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
-from .data_analysis import *
-from .distributions import *
-from .latex_utils import LatexFile
-from .utils import nested_to_dict, shorten_string, get_sample_generator
-from .constants import ITERATION
+
+import cloudpickle as pickle
 import nevergrad as ng
+import numpy as np
+import pandas as pd
+
+from cluster import constants, data_analysis, distributions
+from cluster.latex_utils import LatexFile
+from cluster.utils import get_sample_generator, nested_to_dict, shorten_string
 
 
 class Optimizer(ABC):
@@ -37,21 +39,13 @@ class Optimizer(ABC):
     def tell(self, df, jobs):
         for job in jobs:
             job.results_used_for_update = True
-        df[ITERATION] = self.iteration + 1
+        df[constants.ITERATION] = self.iteration + 1
 
         self.full_df = pd.concat([self.full_df, df], ignore_index=True, sort=True)
         self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
-        self.minimal_df = average_out(self.full_df, [self.metric_to_optimize], self.params)
+        self.minimal_df = data_analysis.average_out(self.full_df, [self.metric_to_optimize], self.params)
         self.minimal_df = self.minimal_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
-
-    @abstractmethod
-    def get_best(self, how_many=1):
-        pass
-
-    @abstractmethod
-    def try_load_from_pickle(cls):
-        pass
 
     def save_pdf_report(self, output_file, submission_hook_stats, current_result_path):
         today = datetime.datetime.now().strftime("%B %d, %Y")
@@ -62,7 +56,7 @@ class Optimizer(ABC):
             latex.add_generic_section('Git Meta Information', content=submission_hook_stats['GitConnector'])
 
         def filename_gen(base_path):
-            for num in count():
+            for num in itertools.count():
                 yield os.path.join(base_path, '{}.pdf'.format(num))
 
         with TemporaryDirectory() as tmpdir:
@@ -70,11 +64,11 @@ class Optimizer(ABC):
             hook_args = dict(df=self.full_df,
                              path_to_results=current_result_path)
             overall_progress_file = next(file_gen)
-            plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
+            data_analysis.plot_opt_progress(self.full_df, self.metric_to_optimize, overall_progress_file)
 
             sensitivity_file = next(file_gen)
-            importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize, self.minimize,
-                                         sensitivity_file)
+            data_analysis.importance_by_iteration_plot(self.full_df, self.params, self.metric_to_optimize,
+                                                       self.minimize, sensitivity_file)
 
             distr_plot_files = self.distribution_plots(file_gen)
 
@@ -90,18 +84,19 @@ class Optimizer(ABC):
     def distribution_plots(self, filename_generator):
         for distr in self.optimized_params:
             filename = next(filename_generator)
-            if isinstance(distr, NumericalDistribution):
-                log_scale = isinstance(distr, TruncatedLogNormal)
-                res = distribution(self.full_df, ITERATION, distr.param_name,
-                                   filename=filename, metric_logscale=log_scale,
-                                   x_bounds=(distr.lower, distr.upper))
+            if isinstance(distr, distributions.NumericalDistribution):
+                log_scale = isinstance(distr, distributions.TruncatedLogNormal)
+                res = data_analysis.distribution(self.full_df, constants.ITERATION, distr.param_name,
+                                                 filename=filename, metric_logscale=log_scale,
+                                                 x_bounds=(distr.lower, distr.upper))
                 if res:
                     yield filename
-            elif isinstance(distr, Discrete):
-                count_plot_horizontal(self.full_df, ITERATION, distr.param_name, filename=filename)
+            elif isinstance(distr, distributions.Discrete):
+                data_analysis.count_plot_horizontal(self.full_df, constants.ITERATION, distr.param_name,
+                                                    filename=filename)
                 yield filename
             else:
-                assert False
+                raise AssertionError()
 
     @abstractmethod
     def try_load_from_pickle(cls, file, optimized_params, metric_to_optimize, minimize, report_hooks,
@@ -113,10 +108,11 @@ class Optimizer(ABC):
         df_to_use = self.full_df
         if how_many > df_to_use.shape[0]:
             logger.warning('Requesting more best_jobs_working_dirs than data is available, reducing number to: ' +
-                 str(df_to_use.shape[0]))
+                           str(df_to_use.shape[0]))
             how_many = df_to_use.shape[0]
         df_to_use = df_to_use[['working_dir', self.metric_to_optimize]]
-        return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)['working_dir']
+        return data_analysis.best_jobs(df_to_use, metric=self.metric_to_optimize,
+                                       how_many=how_many, minimum=self.minimize)['working_dir']
 
     @property
     def minimal_restarts_to_count(self):
@@ -124,23 +120,26 @@ class Optimizer(ABC):
 
     def get_best(self, how_many=10):
         if self.iteration > 0:
-            df_to_use = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count]
-            return best_jobs(df_to_use, metric=self.metric_to_optimize, how_many=how_many, minimum=self.minimize)
+            df_to_use = self.minimal_df[self.minimal_df[constants.RESTART_PARAM_NAME] >= self.minimal_restarts_to_count]
+            return data_analysis.best_jobs(df_to_use, metric=self.metric_to_optimize,
+                                           how_many=how_many, minimum=self.minimize)
         else:
             return ''
 
     def provide_recommendations(self, how_many):
-        jobs_df = self.minimal_df[self.minimal_df[RESTART_PARAM_NAME] >= self.minimal_restarts_to_count].copy()
+        num_restarts = self.minimal_df[constants.RESTART_PARAM_NAME]
+        jobs_df = self.minimal_df[num_restarts >= self.minimal_restarts_to_count].copy()
 
-        metric_std = self.metric_to_optimize + STD_ENDING
+        metric_std = self.metric_to_optimize + constants.STD_ENDING
         final_metric = f'expected {self.metric_to_optimize}'
         if self.with_restarts and self.minimal_restarts_to_count > 1:
             sign = -1.0 if self.minimize else 1.0
             mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
             median_std = jobs_df[metric_std].median()
 
+            num_restarts = jobs_df[constants.RESTART_PARAM_NAME]
             # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-            expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(jobs_df[RESTART_PARAM_NAME]))
+            expected_metric = mean - (sign * (np.maximum(std, median_std)) / np.sqrt(num_restarts))
             jobs_df[final_metric] = expected_metric
         else:
             jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
@@ -148,11 +147,11 @@ class Optimizer(ABC):
         best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[:how_many].reset_index()
         del best_jobs_df[metric_std]
         del best_jobs_df[self.metric_to_optimize]
-        del best_jobs_df[RESTART_PARAM_NAME]
+        del best_jobs_df[constants.RESTART_PARAM_NAME]
         del best_jobs_df['index']
 
         best_jobs_df.index += 1
-        best_jobs_df[final_metric] = list(smart_round(best_jobs_df[final_metric]))
+        best_jobs_df[final_metric] = list(distributions.smart_round(best_jobs_df[final_metric]))
 
         best_jobs_df = best_jobs_df.transpose()
         best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
@@ -179,12 +178,12 @@ class Metaoptimizer(Optimizer):
         if (metric_to_optimize, minimize) != (metaopt.metric_to_optimize, metaopt.minimize):
             raise ValueError('Attempted to continue but optimizes a different metric!')
         current_best_params = metaopt.get_best_params()
-        for distr, meta_distr in zip(optimized_params, metaopt.optimized_params):
+        for distr, _meta_distr in zip(optimized_params, metaopt.optimized_params):
             if distr.param_name in metaopt.params:
                 distr.fit(current_best_params[distr.param_name])
 
         metaopt.optimized_params = optimized_params
-        setattr(metaopt, 'with_restarts', with_restarts)
+        metaopt.with_restarts = with_restarts
         metaopt.params = [distr.param_name for distr in metaopt.optimized_params]
         metaopt.report_hooks = report_hooks or []
         return metaopt
@@ -216,8 +215,8 @@ class Metaoptimizer(Optimizer):
             distr.fit(current_best_params[distr.param_name])
 
     def get_best_params(self):
-        return best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
-                           minimum=self.minimize, how_many=self.num_jobs_in_elite)
+        return data_analysis.best_params(self.minimal_df, params=self.params, metric=self.metric_to_optimize,
+                                         minimum=self.minimize, how_many=self.num_jobs_in_elite)
 
     @property
     def random_setting_to_restart(self):
@@ -226,7 +225,6 @@ class Metaoptimizer(Optimizer):
         random_index = random.choice(range(length // 2))
         nested_items = [(key.split('.'), val[random_index]) for key, val in best_ones.items()]
         return nested_to_dict(nested_items)
-
 
     @property
     def minimal_restarts_to_count(self):
@@ -238,15 +236,15 @@ class Metaoptimizer(Optimizer):
     def distribution_list_sampler(self, num_samples):
         for distr in self.optimized_params:
             distr.prepare_samples(howmany=num_samples)
-        for i in range(num_samples):
-            nested_items = [(distr.param_name.split(OBJECT_SEPARATOR), distr.sample())
+        for _ in range(num_samples):
+            nested_items = [(distr.param_name.split(constants.OBJECT_SEPARATOR), distr.sample())
                             for distr in self.optimized_params]
             yield nested_to_dict(nested_items)
 
     def save_data_and_self(self, directory):
-        self.full_df.to_csv(os.path.join(directory, FULL_DF_FILE))
-        self.minimal_df.to_csv(os.path.join(directory, REDUCED_DF_FILE))
-        self_file = os.path.join(directory, STATUS_PICKLE_FILE)
+        self.full_df.to_csv(os.path.join(directory, constants.FULL_DF_FILE))
+        self.minimal_df.to_csv(os.path.join(directory, constants.REDUCED_DF_FILE))
+        self_file = os.path.join(directory, constants.STATUS_PICKLE_FILE)
         with open(self_file, 'wb') as f:
             pickle.dump(self, f)
 
@@ -272,17 +270,17 @@ class NGOptimizer(Optimizer):
         self.candidates = {}
 
     def get_ng_instrumentation(self, param):
-        if type(param) == TruncatedLogNormal:
+        if type(param) == distributions.TruncatedLogNormal:
             return ng.var.Log(param.lower, param.upper, width=2.0)
-        if type(param) == TruncatedNormal:
+        if type(param) == distributions.TruncatedNormal:
             return ng.var.Scalar().bounded(param.lower, param.upper)
-        if type(param) == IntLogNormal:
+        if type(param) == distributions.IntLogNormal:
             return ng.var.Log(param.lower, param.upper, width=2.0, dtype=int)
-        if type(param) == IntNormal:
+        if type(param) == distributions.IntNormal:
             return ng.var.Scalar(int).bounded(param.lower, param.upper)
-        if type(param) == NumericalDistribution:
+        if type(param) == distributions.NumericalDistribution:
             return ng.var.Scalar()
-        if type(param) == Discrete:
+        if type(param) == distributions.Discrete:
             return ng.var.OrderedDiscrete(param.option_list)
         raise ValueError('Invalid Distribution')
 
@@ -291,12 +289,12 @@ class NGOptimizer(Optimizer):
         if -1 in self.candidates.keys():
             raise ValueError("There is already one unassociated candidate!")
         self.candidates[-1] = candidate
-        nested_items = [(param_name.split(OBJECT_SEPARATOR), value)
+        nested_items = [(param_name.split(constants.OBJECT_SEPARATOR), value)
                         for param_name, value in candidate.kwargs.items()]
         return nested_to_dict(nested_items)
 
     def add_candidate(self, job_id):
-        if not -1 in self.candidates.keys():
+        if -1 not in self.candidates.keys():
             raise ValueError("There is no unassociated candidate!")
         self.candidates[job_id] = self.candidates[-1]
         del self.candidates[-1]
@@ -342,9 +340,9 @@ class NGOptimizer(Optimizer):
         return .1
 
     def save_data_and_self(self, directory):
-        self.full_df.to_csv(os.path.join(directory, FULL_DF_FILE))
-        self.minimal_df.to_csv(os.path.join(directory, REDUCED_DF_FILE))
-        self_file = os.path.join(directory, STATUS_PICKLE_FILE)
+        self.full_df.to_csv(os.path.join(directory, constants.FULL_DF_FILE))
+        self.minimal_df.to_csv(os.path.join(directory, constants.REDUCED_DF_FILE))
+        self_file = os.path.join(directory, constants.STATUS_PICKLE_FILE)
         with open(self_file, 'wb') as f:
             pickle.dump(self, f)
 
@@ -352,15 +350,17 @@ class NGOptimizer(Optimizer):
 class GridSearchOptimizer(Optimizer):
     def __init__(self, *, restarts, **kwargs):
         super().__init__(**kwargs)
+
         def maybe_list_to_tuple(names):
             return tuple(names) if isinstance(names, list) else names
+
         self.parameter_dicts = {maybe_list_to_tuple(param.param_name): param.values for param in self.optimized_params}
         self.set_setting_generator()
         self.restarts = restarts
 
     def set_setting_generator(self):
-        self.setting_generator = get_sample_generator(self.number_of_samples, self.parameter_dicts, distribution_list=None,
-                                                      extra_settings=None)
+        self.setting_generator = get_sample_generator(self.number_of_samples, self.parameter_dicts,
+                                                      distribution_list=None, extra_settings=None)
 
     def ask(self):
         settings = next(self.setting_generator, None)
