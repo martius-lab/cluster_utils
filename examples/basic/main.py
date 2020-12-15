@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import time
-from cluster import save_metrics_params, update_params_from_cmdline, exit_for_resume
+from cluster import save_metrics_params, read_params_from_cmdline, exit_for_resume
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     if np.random.rand() < 0.05:
         raise ValueError("5 percent of all jobs die early for testing")
 
-    params = update_params_from_cmdline()
+    params = read_params_from_cmdline()
 
     # simulate that the jobs take some time
     time.sleep(np.random.randint(0, 10))

@@ -19,14 +19,16 @@ from .constants import *
 from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
 from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
-def cluster_main(main_func):
+def cluster_main(main_func=None, **read_params_args):
+    if main_func is None:
+        return functools.partial(cluster_main, **read_params_args)
 
     @functools.wraps(main_func)
     def wrapper():
         """ Saves settings file on beginning, calls wrapped function with params from cmd and saves metrics to working_dir
         :return:
         """
-        params = update_params_from_cmdline()
+        params = read_params_from_cmdline(**read_params_args)
         metrics = main_func(**params)
         save_metrics_params(metrics, params)
         return metrics
@@ -95,7 +97,7 @@ def save_metrics_params(metrics, params):
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
-    time_elapsed = time.time() - update_params_from_cmdline.start_time
+    time_elapsed = time.time() - read_params_from_cmdline.start_time
     if 'time_elapsed' not in metrics.keys():
         metrics['time_elapsed'] = time_elapsed
     else:
@@ -159,8 +161,8 @@ def add_cmd_line_params(base_dict, extra_flags):
 
 
 
-def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, dynamic=True, pre_unpack_hooks=None,
-                               post_unpack_hooks=None, save_params=True):
+def read_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, dynamic=True, pre_unpack_hooks=None,
+                             post_unpack_hooks=None, save_params=True):
     """ Updates default settings based on command line input.
 
     :param cmd_line: Expecting (same format as) sys.argv
@@ -219,7 +221,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
         sys.excepthook = report_error_at_server
         atexit.register(report_exit_at_server)
         submission_state.connection_active = True
-    update_params_from_cmdline.start_time = time.time()
+    read_params_from_cmdline.start_time = time.time()
 
     if save_params and 'working_dir' in final_params:
         os.makedirs(final_params.working_dir, exist_ok=True)
@@ -228,7 +230,7 @@ def update_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True,
     return final_params
 
 
-update_params_from_cmdline.start_time = None
+read_params_from_cmdline.start_time = None
 
 optimizer_dict = {'cem_metaoptimizer': Metaoptimizer,
                   'nevergrad': NGOptimizer,

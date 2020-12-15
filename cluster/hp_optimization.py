@@ -7,7 +7,7 @@ from .distributions import *
 from .git_utils import make_git_params
 from .latex_utils import *
 from .utils import mkdtemp, check_import_in_fixed_params, rename_import_promise
-from . import update_params_from_cmdline
+from . import read_params_from_cmdline
 
 
 def get_distribution(distribution, **kwargs):
@@ -33,8 +33,8 @@ def get_distribution(distribution, **kwargs):
 
 
 if __name__ == '__main__':
-    params = update_params_from_cmdline(verbose=False, pre_unpack_hooks=[check_import_in_fixed_params],
-                                        post_unpack_hooks=[rename_import_promise])
+    params = read_params_from_cmdline(verbose=False, pre_unpack_hooks=[check_import_in_fixed_params],
+                                      post_unpack_hooks=[rename_import_promise])
 
     json_full_name = os.path.abspath(sys.argv[1])
     init_plotting()
