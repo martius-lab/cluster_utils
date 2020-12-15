@@ -1,7 +1,6 @@
 {
   "optimization_procedure_name": "constrained_grid",
-  "results_dir": "/is/rg/al/Projects/tmp/example_results",
-
+  "results_dir": "/is/cluster/work/{$USER}/tmp",
   "git_params": {
     "branch": "master",
     "commit": null
@@ -21,7 +20,8 @@
   "fixed_params": {
     "fn_args.v": 20,
     "fn_args.sharp_penalty": "{fn_args.u < 0.2}",
-    "fn_args.x": "{fn_args.y/3}"
+    "fn_args.x": "{fn_args.y/3}",
+    "test_resume": false
   },
   "restarts": 1,
   "samples": null,

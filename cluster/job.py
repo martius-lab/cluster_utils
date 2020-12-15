@@ -4,12 +4,10 @@ import time
 from contextlib import suppress
 from copy import deepcopy
 
-from cluster.constants import CLUSTER_METRIC_FILE
-
-from .utils import dict_to_dirname, flatten_nested_string_dict
-from .constants import WORKING_DIR, ID
-from cluster.utils import update_recursive
 import pandas as pd
+
+from cluster import constants
+from cluster.utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
 
 
 class JobStatus():
@@ -37,7 +35,7 @@ class Job():
         self.start_time = None
         self.estimated_end = None
         self.iteration = iteration
-        self.comm_server_info = {ID: id,
+        self.comm_server_info = {constants.ID: id,
                                  'ip': connection_info['ip'],
                                  'port': connection_info['port']}
         self.status = JobStatus.INITIAL_STATUS
@@ -53,7 +51,7 @@ class Job():
         current_setting = deepcopy(self.settings)
         update_recursive(current_setting, self.other_params)
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
-        current_setting[WORKING_DIR] = os.path.join(paths['current_result_dir'], job_res_dir)
+        current_setting[constants.WORKING_DIR] = os.path.join(paths['current_result_dir'], job_res_dir)
         return current_setting
 
     def generate_execution_cmd(self, paths):
@@ -65,7 +63,6 @@ class Job():
             pre_job_script = f'./{paths["pre_job_script"]}'
         else:
             pre_job_script = ''
-
 
         if 'virtual_env_path' in paths:
             virtual_env_activate = 'source {}'.format(os.path.join(paths['virtual_env_path'], 'bin/activate'))
@@ -81,7 +78,8 @@ class Job():
             raise NotImplementedError('Setting custom pythonpath was deprecated. Set \"virtual_env_path\" instead.')
 
         if 'custom_python_executable_path' in paths:
-            logger.warning('Setting custom_python_executable_path not recommended. Better set \"virtual_env_path\" instead.')
+            logger.warning('Setting custom_python_executable_path not recommended. '
+                           'Better set \"virtual_env_path\" instead.')
 
         python_executor = paths.get('custom_python_executable_path', 'python3')
         is_python_script = paths.get('is_python_script', True)
@@ -94,11 +92,12 @@ class Job():
             comm_info_string = '\"' + str(self.comm_server_info) + '\"'
             if run_script_as_module_main:
                 # convert path to module name
-                module_name = paths['script_to_run'].replace('/','.').replace('.py','')
-                exec_cmd = f"cd {paths['main_path']}; {python_executor} -m {module_name} {comm_info_string} {setting_string}"
+                module_name = paths['script_to_run'].replace('/', '.').replace('.py', '')
+                exec_cmd = (f"cd {paths['main_path']}; "
+                            f"{python_executor} -m {module_name} {comm_info_string} {setting_string}")
             else:
                 base_exec_cmd = '{}'.format(python_executor) + ' {} {} {}'
-                exec_cmd = base_exec_cmd.format(os.path.join(paths['main_path'],paths['script_to_run']),
+                exec_cmd = base_exec_cmd.format(os.path.join(paths['main_path'], paths['script_to_run']),
                                                 comm_info_string,
                                                 setting_string)
         else:
@@ -112,7 +111,7 @@ class Job():
 
     def set_results(self):
         flattened_params = dict(flatten_nested_string_dict(self.final_settings))
-        flattened_params[ID] = self.id
+        flattened_params[constants.ID] = self.id
         self.param_df = pd.DataFrame([flattened_params])
         self.metric_df = pd.DataFrame([self.metrics])
         self.resulting_df = pd.concat([self.param_df, self.metric_df], axis=1)
@@ -121,7 +120,7 @@ class Job():
         logger = logging.getLogger("cluster_utils")
         working_dir = os.path.join(paths['current_result_dir'], str(self.id))
 
-        possible_metric_file = os.path.join(working_dir, CLUSTER_METRIC_FILE)
+        possible_metric_file = os.path.join(working_dir, constants.CLUSTER_METRIC_FILE)
         if os.path.isfile(possible_metric_file):
             metric_df = pd.read_csv(possible_metric_file)
             self.metrics = {column: metric_df[column].iloc[0] for column in metric_df.columns}
@@ -129,7 +128,6 @@ class Job():
             self.final_settings = self.generate_final_setting(paths)
             self.set_results()
             self.status = JobStatus.CONCLUDED
-
 
     def get_results(self):
         if self.resulting_df is None or self.param_df is None or self.metric_df is None:

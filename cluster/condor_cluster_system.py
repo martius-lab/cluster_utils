@@ -1,14 +1,12 @@
 import logging
 import os
 import subprocess
-
-from .cluster_system import ClusterSubmission
 from collections import namedtuple
 from copy import copy
-from subprocess import run, PIPE
-from .constants import *
-from threading import Thread
-import time
+from subprocess import PIPE, run
+
+from cluster import constants
+from cluster.cluster_system import ClusterSubmission
 
 CondorRecord = namedtuple('CondorRecord',
                           ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
@@ -28,15 +26,16 @@ class Condor_ClusterSubmission(ClusterSubmission):
         submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
         while True:
             try:
-                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0).stdout.decode('utf-8')
+                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0)
+                submit_output = result.stdout.decode('utf-8')
                 break
             except subprocess.TimeoutExpired:
                 logger.warning(f"Job submission for id {job.id} hangs. Retrying...")
 
         logger.info(f"Job with id {job.id} submitted.")
 
-        good_lines = [line for line in result.split('\n') if 'submitted' in line]
-        bad_lines = [line for line in result.split('\n') if 'WARNING' in line or 'ERROR' in line]
+        good_lines = [line for line in submit_output.split('\n') if 'submitted' in line]
+        bad_lines = [line for line in submit_output.split('\n') if 'WARNING' in line or 'ERROR' in line]
         if not good_lines or bad_lines:
             print(bad_lines)
             self.close()
@@ -60,11 +59,11 @@ class Condor_ClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, 'w') as script_file:
-            script_file.write(MPI_CLUSTER_RUN_SCRIPT % namespace)
+            script_file.write(constants.MPI_CLUSTER_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0O755)  # Make executable
 
         with open(job_spec_file_path, 'w') as spec_file:
-            spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
+            spec_file.write(constants.MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
         job.job_spec_file_path = job_spec_file_path
         job.run_script_path = run_script_file_path

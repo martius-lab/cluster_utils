@@ -1,13 +1,15 @@
+import concurrent.futures
 import logging
 import os
-from copy import copy
-from .cluster_system import ClusterSubmission
-from multiprocessing import cpu_count
-import concurrent.futures
-from subprocess import run, PIPE
-from .constants import *
 import random
+from copy import copy
+from multiprocessing import cpu_count
+from subprocess import PIPE, run
+
 import numpy as np
+
+from cluster import constants
+from cluster.cluster_system import ClusterSubmission
 
 
 class Dummy_ClusterSubmission(ClusterSubmission):
@@ -54,7 +56,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, 'w') as script_file:
-            script_file.write(LOCAL_RUN_SCRIPT % namespace)
+            script_file.write(constants.LOCAL_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0O755)  # Make executable
 
         job.run_script_path = run_script_file_path
@@ -92,15 +94,3 @@ class Dummy_ClusterSubmission(ClusterSubmission):
             logger.warning('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
             self.concurrent_jobs = self.available_cpus
         assert self.concurrent_jobs > 0
-
-"""
-    def check_error_msgs(self):
-        failed = [future for _, future in self.futures_tuple if
-                  future.done() and future.result().__dict__['returncode'] == 1]
-        errs = set([future.result().stderr.decode() for future in failed])
-        for err in errs:
-            if err not in self.exceptions_seen:
-                self.exceptions_seen.add(err)
-                logger.warning(err)
-        return len(errs) > 0
-"""

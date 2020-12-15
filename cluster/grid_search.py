@@ -4,12 +4,11 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from cluster import read_params_from_cmdline
-from cluster.latex_utils import SectionFromJsonHook
-from cluster.report import produce_basic_report, init_plotting
+from cluster import grid_search, read_params_from_cmdline
 from cluster.git_utils import make_git_params
-from cluster.utils import mkdtemp, check_import_in_fixed_params, rename_import_promise
-from . import grid_search
+from cluster.latex_utils import SectionFromJsonHook
+from cluster.report import init_plotting, produce_basic_report
+from cluster.utils import check_import_in_fixed_params, mkdtemp, rename_import_promise
 
 if __name__ == '__main__':
     params = read_params_from_cmdline(verbose=False, pre_unpack_hooks=[check_import_in_fixed_params],
@@ -65,7 +64,8 @@ if __name__ == '__main__':
         remove_jobs_dir=params.get("remove_jobs_dir", True),
         remove_working_dirs=params.get("remove_working_dirs", False),
         load_existing_results=params.get("load_existing_results", False),
-        run_local=params.get("local_run", None)
+        run_local=params.get("local_run", None),
+        no_user_interaction=params.get('no_user_interaction', False)
     )
 
     if df is None:

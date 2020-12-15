@@ -1,22 +1,23 @@
+import logging
 import os
 import shutil
-
-from cluster.progress_bars import redirect_stdout_to_tqdm, SubmittedJobsBar, RunningJobsBar, CompletedJobsBar
-from .user_interaction import InteractiveMode
-from .cluster_system import get_cluster_type
-from .constants import *
-from .settings import optimizer_dict
-from .utils import process_other_params, rm_dir_full, make_red, log_and_print
-from .git_utils import ClusterSubmissionGitHook
-from .job import Job, JobStatus
-import time
-import pandas as pd
-import numpy as np
-import logging
 import signal
 import sys
-from .communication_server import CommunicationServer
-from .optimizers import NGOptimizer
+import time
+
+import numpy as np
+import pandas as pd
+
+from cluster import constants
+from cluster.cluster_system import get_cluster_type
+from cluster.communication_server import CommunicationServer
+from cluster.git_utils import ClusterSubmissionGitHook
+from cluster.job import Job, JobStatus
+from cluster.optimizers import NGOptimizer
+from cluster.progress_bars import CompletedJobsBar, RunningJobsBar, SubmittedJobsBar, redirect_stdout_to_tqdm
+from cluster.settings import optimizer_dict
+from cluster.user_interaction import InteractiveMode, NonInteractiveMode
+from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
 
 
 def init_logging(working_dir):
@@ -84,11 +85,12 @@ def update_best_job_datadirs(result_dir, working_dirs, remove_working_dirs=True)
 
     logger.info(f"Best jobs in directory {datadir} updated.")
 
+
 def initialize_hp_optimizer(result_dir, optimizer_str, optimized_params, metric_to_optimize, minimize, report_hooks,
                             number_of_samples, **optimizer_settings):
     logger = logging.getLogger('cluster_utils')
 
-    possible_pickle = os.path.join(result_dir, STATUS_PICKLE_FILE)
+    possible_pickle = os.path.join(result_dir, constants.STATUS_PICKLE_FILE)
     hp_optimizer = optimizer_dict[optimizer_str].try_load_from_pickle(possible_pickle, optimized_params,
                                                                       metric_to_optimize,
                                                                       minimize, report_hooks, **optimizer_settings)
@@ -191,8 +193,9 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 def hp_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
                     number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
                     early_killing_params, optimizer_str='cem_metaoptimizer',
-                    remove_jobs_dir=True, remove_working_dirs=True, git_params=None, run_local=None, num_best_jobs_whose_data_is_kept=0,
-                    report_hooks=None, optimizer_settings=None, n_completed_jobs_before_resubmit=1):
+                    remove_jobs_dir=True, remove_working_dirs=True, git_params=None, run_local=None,
+                    num_best_jobs_whose_data_is_kept=0, report_hooks=None, optimizer_settings=None,
+                    n_completed_jobs_before_resubmit=1, no_user_interaction=False):
     if not (1 <= n_completed_jobs_before_resubmit <= n_jobs_per_iteration):
         raise ValueError(f'n_completed_jobs_before_resubmit must be in [1, {n_jobs_per_iteration}]')
 
@@ -201,21 +204,21 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
 
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
-                                                                                  submission_requirements,
-                                                                                  optimized_params,
-                                                                                  other_params,
-                                                                                  number_of_samples,
-                                                                                  metric_to_optimize,
-                                                                                  minimize, optimizer_str,
-                                                                                  remove_jobs_dir,
-                                                                                  git_params, run_local,
-                                                                                  report_hooks,
-                                                                                  optimizer_settings,
-                                                                                  )
-    iteration_offset = hp_optimizer.iteration
+                                                                                   submission_requirements,
+                                                                                   optimized_params,
+                                                                                   other_params,
+                                                                                   number_of_samples,
+                                                                                   metric_to_optimize,
+                                                                                   minimize, optimizer_str,
+                                                                                   remove_jobs_dir,
+                                                                                   git_params, run_local,
+                                                                                   report_hooks,
+                                                                                   optimizer_settings)
+    start_iteration = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 
-    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+    interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
+    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
         with redirect_stdout_to_tqdm():
             submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
             running_bar = RunningJobsBar(total_jobs=number_of_samples)
@@ -226,13 +229,14 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 time.sleep(0.2)
                 jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
                 hp_optimizer.tell(jobs_to_tell)
+                current_iteration = hp_optimizer.iteration - start_iteration
                 n_jobs_completed_cur_iteration = (cluster_interface.n_completed_jobs
-                                                  - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
+                                                  - n_jobs_per_iteration * current_iteration)
                 n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs
-                                                  - n_jobs_per_iteration * (hp_optimizer.iteration - iteration_offset))
+                                                  - n_jobs_per_iteration * current_iteration)
                 max_job_submissions = ((n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit)
                                        * n_completed_jobs_before_resubmit + n_jobs_per_iteration)
-                iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > hp_optimizer.iteration - iteration_offset
+                iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > current_iteration
                 if (n_jobs_submitted_cur_iteration < max_job_submissions
                         and cluster_interface.n_submitted_jobs < number_of_samples
                         and not iteration_finished):
@@ -246,8 +250,8 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     cluster_interface.add_jobs(new_job)
                     cluster_interface.submit(new_job)
                 if iteration_finished:
-                    post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files, metric_to_optimize,
-                                       num_best_jobs_whose_data_is_kept, remove_working_dirs)
+                    post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_and_files,
+                                       metric_to_optimize, num_best_jobs_whose_data_is_kept, remove_working_dirs)
                     logger.info(f'starting new iteration: {hp_optimizer.iteration}')
                     pre_iteration_opt(base_paths_and_files)
 
@@ -256,7 +260,8 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                         job.check_filesystem_for_errors()
                 cluster_interface.check_error_msgs()
 
-                if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
+                max_failed_jobs = cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5
+                if cluster_interface.n_failed_jobs > max_failed_jobs:
                     cluster_interface.close()
                     raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
 
@@ -318,10 +323,11 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
             job.set_results()
             cluster_interface.stop_fn(job.cluster_id)
 
+
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
                 restarts, remove_jobs_dir=True, remove_working_dirs=False, samples=None,
                 git_params=None, run_local=None, report_hooks=None,
-                load_existing_results=False):
+                load_existing_results=False, no_user_interaction=False):
 
     base_paths_and_files['current_result_dir'] = os.path.join(base_paths_and_files['result_dir'], 'working_directories')
     hp_optimizer, cluster_interface, comm_server, processed_other_params = pre_opt(base_paths_and_files,
@@ -353,7 +359,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
         for job in jobs:
             job.try_load_results_from_filesystem(base_paths_and_files)
 
-    with InteractiveMode(cluster_interface, comm_server) as check_for_keyboard_input:
+    interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
+    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
         with redirect_stdout_to_tqdm():
             submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
             running_bar = RunningJobsBar(total_jobs=len(jobs))
@@ -375,7 +382,8 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
                 successful_jobs_bar.update(cluster_interface.n_successful_jobs)
                 successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
 
-                if cluster_interface.n_failed_jobs > cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5:
+                max_failed_jobs = cluster_interface.n_successful_jobs + cluster_interface.n_running_jobs + 5
+                if cluster_interface.n_failed_jobs > max_failed_jobs:
                     cluster_interface.close()
                     raise RuntimeError(f"Too many ({cluster_interface.n_failed_jobs}) jobs failed. Ending procedure.")
                 check_for_keyboard_input()

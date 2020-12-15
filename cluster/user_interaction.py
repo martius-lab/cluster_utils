@@ -1,7 +1,7 @@
-import sys
 import select
-import tty
+import sys
 import termios
+import tty
 
 
 class InteractiveMode():
@@ -47,30 +47,32 @@ class InteractiveMode():
             id = int(input())
             job = self.cluster_interface.get_job(id)
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__.keys()]
-        except:
+        except Exception:
             self.print("Error encountered, maybe invalid ID?")
 
     def stop_remaining_jobs(self):
         try:
             self.print('Are you sure you want to stop remaining jobs?')
-            jobs_to_cancel = [job.id for job in self.cluster_interface.jobs if
-                              not job in self.cluster_interface.successful_jobs]
+            jobs_to_cancel = [job.id for job in self.cluster_interface.jobs
+                              if job not in self.cluster_interface.successful_jobs]
             self.print(jobs_to_cancel)
             answer = input()
             if answer.lower() in ['y', 'yes']:
                 msg = "Job cancelled by cluster utils"
                 [self.comm_server.handle_error_encountered((id, msg)) for id in jobs_to_cancel]
                 print("Cancelled all remaining jobs.")
-        except:
+        except Exception:
             self.print("Error encountered")
 
     def keyboard_input_available(self):
-        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])  # checks if theres sth to read from stdin
+        # checks if theres sth to read from stdin
+        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
     def check_for_input(self):
         if self.keyboard_input_available():
             esc_key_pushed = False
-            while self.keyboard_input_available():  # check for key push and empty stdin (in case several keys were pushed)
+            # check for key push and empty stdin (in case several keys were pushed)
+            while self.keyboard_input_available():
                 c = sys.stdin.read(1)
                 if c == '\x1b':  # x1b is ESC
                     esc_key_pushed = True
@@ -85,3 +87,14 @@ class InteractiveMode():
                     self.input_to_fn_dict[fn_string]()
 
                 tty.setcbreak(sys.stdin.fileno())
+
+
+class NonInteractiveMode:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self):
+        return lambda: None
+
+    def __exit__(self, type, value, traceback):
+        pass

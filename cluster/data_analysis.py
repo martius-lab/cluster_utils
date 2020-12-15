@@ -1,14 +1,14 @@
 import logging
 
-from sklearn.ensemble import RandomForestRegressor
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.ensemble import RandomForestRegressor
 
-from .constants import *
-from .utils import shorten_string
+from cluster import constants
+from cluster.utils import shorten_string
+
 
 def performance_summary(df, metrics):
     perf = {}
@@ -22,13 +22,14 @@ def performance_summary(df, metrics):
     return pd.DataFrame.from_dict(perf, orient='index')
 
 
-def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True):
+def average_out(df, metrics, params_to_keep, std_ending=constants.STD_ENDING, add_std=True):
     logger = logging.getLogger('cluster_utils')
     if not metrics:
         raise ValueError('Empty set of metrics not accepted.')
     new_df = df[params_to_keep + metrics]
     result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
-    result[RESTART_PARAM_NAME] = new_df.groupby(params_to_keep, as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
+    result[constants.RESTART_PARAM_NAME] = new_df.groupby(params_to_keep,
+                                                          as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
     if not add_std:
         return result
     for metric in metrics:
@@ -49,15 +50,13 @@ def darker(color, factor=0.85):
 
 def color_scheme():
     while True:
-        for color in DISTR_BASE_COLORS:
-            for i in range(5):
+        for color in constants.DISTR_BASE_COLORS:
+            for _ in range(5):
                 yield color
                 color = darker(color)
 
 
 def distribution(df, param, metric, filename=None, metric_logscale=None, x_bounds=None):
-
-
     logger = logging.getLogger('cluster_utils')
     smaller_df = df[[param, metric]]
     unique_vals = smaller_df[param].unique()
@@ -145,7 +144,7 @@ def detect_scale(arr):
 
 def plot_opt_progress(df, metric, filename=None):
     fig = plt.figure()
-    ax = sns.boxplot(x=ITERATION, y=metric, data=df)
+    ax = sns.boxplot(x=constants.ITERATION, y=metric, data=df)
     ax.set_yscale(detect_scale(df[metric]))
     plt.title('Optimization progress')
 
@@ -199,7 +198,7 @@ def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
 
     ys_base = df[metric]
     if df[params].shape[0] == 0:
-        for param in params:
+        for _ in params:
             yield 0
     else:
         ys = clf.predict(df[params])
@@ -221,8 +220,8 @@ def compute_performance_gains(df, params, metric, minimum):
 
     forest = fit_forest(normalize(df), params, metric)
 
-    max_iteration = df[ITERATION].max()
-    dfs = [normalize(df[df[ITERATION] == 1 + i]) for i in range(max_iteration)]
+    max_iteration = df[constants.ITERATION].max()
+    dfs = [normalize(df[df[constants.ITERATION] == 1 + i]) for i in range(max_iteration)]
 
     names = [f'iteration {1 + i}' for i in range(max_iteration)]
     importances = [list(performance_gain_for_iteration(forest, df_, params, metric, minimum)) for df_ in dfs]
@@ -245,6 +244,31 @@ def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
     ax.set_title('Influence of hyperparameters on performance')
     if filename:
         fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
+
+
+def metric_correlation_plot(df, metrics, filename=None):
+    corr = df[list(metrics)].rank().corr(method='spearman')
+
+    print(df[list(metrics)].rank())
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(10, 150, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    ax = sns.heatmap(corr, cmap=cmap, vmin=-1.0, vmax=1.0, center=0,
+                     square=True, linewidths=.5, cbar_kws={"shrink": .5})
+    plt.xticks(rotation=90)
+
+    ax.set_title('Spearman correlation of metrics')
+    ax.figure.tight_layout()
+    fig = plt.gcf()
+
+    if filename:
+        fig.savefig(filename, format='pdf', dpi=1200)
     else:
         plt.show()
     plt.close(fig)

@@ -1,10 +1,11 @@
-import tqdm
-from time import sleep
-from random import random
-from colorama import Fore
+import inspect
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-import inspect
+from random import random
+from time import sleep
+
+import tqdm
+from colorama import Fore
 
 
 @contextmanager
@@ -55,7 +56,7 @@ class ProgressBar(ABC):
 class SubmittedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
         new_rbar = '| {n_fmt}/{total_fmt}'
-        #bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
+        # bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs',
                               bar_format=bar_format+new_rbar, dynamic_ncols=True, position=2)
@@ -64,7 +65,7 @@ class SubmittedJobsBar(ProgressBar):
 class RunningJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
         new_rbar = '| {n_fmt}/{total_fmt}{postfix}'
-        #bar_format = '{l_bar}%s{bar}%s' % (Fore.YELLOW, Fore.RESET)
+        # bar_format = '{l_bar}%s{bar}%s' % (Fore.YELLOW, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Started execution', total=total_jobs, unit='jobs',
                               bar_format=bar_format+new_rbar, dynamic_ncols=True, position=1)
@@ -76,7 +77,7 @@ class RunningJobsBar(ProgressBar):
 class CompletedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs, minimize):
         new_rbar = ('| {n_fmt}/{total_fmt}{postfix}')
-        #bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
+        # bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
         bar_format = '{l_bar}{bar}'
         self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs',
                               bar_format=bar_format+new_rbar, dynamic_ncols=True, position=0)

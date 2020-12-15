@@ -1,23 +1,22 @@
 import ast
 import atexit
+import functools
 import json
 import os
 import pickle
+import socket
 import sys
 import time
 import traceback
-import socket
-import functools
 
 import pyuv
-
 import smart_settings
 
-import cluster.submission_state as submission_state
-from .communication_server import MessageTypes
-from .constants import *
-from .optimizers import Metaoptimizer, NGOptimizer, GridSearchOptimizer
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+from cluster import constants, submission_state
+from cluster.communication_server import MessageTypes
+from cluster.optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
+from cluster.utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+
 
 def cluster_main(main_func=None, **read_params_args):
     if main_func is None:
@@ -37,7 +36,7 @@ def cluster_main(main_func=None, **read_params_args):
 
 
 def save_settings_to_json(setting_dict, working_dir):
-    filename = os.path.join(working_dir, JSON_SETTINGS_FILE)
+    filename = os.path.join(working_dir, constants.JSON_SETTINGS_FILE)
     with open(filename, 'w') as file:
         file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
 
@@ -84,7 +83,8 @@ def exit_for_resume():
 
 
 def sanitize_numpy_torch(possibly_np_or_tensor):
-    if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":  # Hacky check for torch tensors without importing torch
+    # Hacky check for torch tensors without importing torch
+    if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":
         return possibly_np_or_tensor.item()  # silently convert to float
     if str(type(possibly_np_or_tensor)) == "<class 'numpy.ndarray'>":
         return float(possibly_np_or_tensor)
@@ -92,8 +92,7 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
 
 
 def save_metrics_params(metrics, params):
-
-    param_file = os.path.join(params.working_dir, CLUSTER_PARAM_FILE)
+    param_file = os.path.join(params.working_dir, constants.CLUSTER_PARAM_FILE)
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
@@ -102,7 +101,7 @@ def save_metrics_params(metrics, params):
         metrics['time_elapsed'] = time_elapsed
     else:
         print('WARNING: \'time_elapsed\' metric already taken. Automatic time saving failed.')
-    metric_file = os.path.join(params.working_dir, CLUSTER_METRIC_FILE)
+    metric_file = os.path.join(params.working_dir, constants.CLUSTER_METRIC_FILE)
 
     for key, value in metrics.items():
         metrics[key] = sanitize_numpy_torch(value)
@@ -148,6 +147,7 @@ def report_exit_at_server():
           (submission_state.communication_server_ip, submission_state.communication_server_port))
     send_message(MessageTypes.JOB_CONCLUDED, message=(submission_state.job_id,))
 
+
 def add_cmd_line_params(base_dict, extra_flags):
     for extra_flag in extra_flags:
         lhs, eq, rhs = extra_flag.rpartition('=')
@@ -156,9 +156,8 @@ def add_cmd_line_params(base_dict, extra_flags):
         cmd = new_lhs + eq + rhs
         try:
             exec(cmd)
-        except:
+        except Exception:
             raise RuntimeError(f"Command {cmd} failed")
-
 
 
 def read_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, dynamic=True, pre_unpack_hooks=None,
@@ -181,17 +180,17 @@ def read_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, d
         connection_details = {}
         pass
 
-    if set(connection_details.keys()) == {ID, 'ip', 'port'}:
+    if set(connection_details.keys()) == {constants.ID, 'ip', 'port'}:
         submission_state.communication_server_ip = connection_details['ip']
         submission_state.communication_server_port = connection_details['port']
-        submission_state.job_id = connection_details[ID]
+        submission_state.job_id = connection_details[constants.ID]
         del cmd_line[1]
         submission_state.connection_details_available = True
         submission_state.connection_active = False
 
     def check_reserved_params(orig_dict):
         for key in orig_dict:
-            if key in RESERVED_PARAMS:
+            if key in constants.RESERVED_PARAMS:
                 raise ValueError(f"{key} is a reserved param name")
 
     if len(cmd_line) < 2:
@@ -201,15 +200,17 @@ def read_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, d
             add_cmd_line_params(orig_dict, cmd_line[2:])
 
         final_params = smart_settings.load(cmd_line[1], make_immutable=make_immutable, dynamic=dynamic,
-                                           post_unpack_hooks=[add_cmd_params, check_reserved_params] + post_unpack_hooks,
+                                           post_unpack_hooks=([add_cmd_params, check_reserved_params]
+                                                              + post_unpack_hooks),
                                            pre_unpack_hooks=pre_unpack_hooks)
 
     elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
         final_params = ast.literal_eval(cmd_line[1])
-        final_params = smart_settings.loads(json.dumps(final_params), make_immutable=make_immutable,
-                                        dynamic=dynamic,
-                                        post_unpack_hooks=[check_reserved_params] + post_unpack_hooks,
-                                        pre_unpack_hooks=pre_unpack_hooks)
+        final_params = smart_settings.loads(json.dumps(final_params),
+                                            make_immutable=make_immutable,
+                                            dynamic=dynamic,
+                                            post_unpack_hooks=[check_reserved_params] + post_unpack_hooks,
+                                            pre_unpack_hooks=pre_unpack_hooks)
     else:
         raise ValueError('Failed to parse command line')
 
