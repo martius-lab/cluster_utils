@@ -1,3 +1,4 @@
+import errno
 import logging
 
 
@@ -273,7 +274,7 @@ def is_command_available(cmd):
     try:
         run(cmd, stderr=DEVNULL, stdout=DEVNULL)
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             return False
         else:
             logger.warning('Found command, but ' + cmd + ' could not be executed')
