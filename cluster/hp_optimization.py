@@ -82,5 +82,6 @@ if __name__ == '__main__':
         kill_bad_jobs_early=params.get('kill_bad_jobs_early', False),
         early_killing_params=params.get('early_killing_params', {}),
         no_user_interaction=params.get('no_user_interaction', False),
+        opt_procedure_name=opt_procedure_name,
         **params.optimization_setting,
     )

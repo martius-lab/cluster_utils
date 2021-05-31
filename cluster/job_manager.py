@@ -192,7 +192,7 @@ def post_iteration_opt(cluster_interface, hp_optimizer, comm_server, base_paths_
 
 def hp_optimization(base_paths_and_files, submission_requirements, optimized_params, other_params,
                     number_of_samples, metric_to_optimize, minimize, n_jobs_per_iteration, kill_bad_jobs_early,
-                    early_killing_params, optimizer_str='cem_metaoptimizer',
+                    early_killing_params, opt_procedure_name, optimizer_str='cem_metaoptimizer',
                     remove_jobs_dir=True, remove_working_dirs=True, git_params=None, run_local=None,
                     num_best_jobs_whose_data_is_kept=0, report_hooks=None, optimizer_settings=None,
                     n_completed_jobs_before_resubmit=1, no_user_interaction=False):
@@ -244,7 +244,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                     new_job = Job(id=cluster_interface.inc_job_id, settings=new_settings,
                                   other_params=processed_other_params, paths=base_paths_and_files,
                                   iteration=hp_optimizer.iteration + 1, connection_info=comm_server.connection_info,
-                                  metric_to_watch=metric_to_optimize)
+                                  metric_to_watch=metric_to_optimize, opt_procedure_name=opt_procedure_name)
                     if isinstance(hp_optimizer, NGOptimizer):
                         hp_optimizer.add_candidate(new_job.id)
                     cluster_interface.add_jobs(new_job)
@@ -325,7 +325,7 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
 
 
 def grid_search(base_paths_and_files, submission_requirements, optimized_params, other_params,
-                restarts, remove_jobs_dir=True, remove_working_dirs=False, samples=None,
+                restarts, opt_procedure_name, remove_jobs_dir=True, remove_working_dirs=False, samples=None,
                 git_params=None, run_local=None, report_hooks=None,
                 load_existing_results=False, no_user_interaction=False):
 
@@ -350,7 +350,7 @@ def grid_search(base_paths_and_files, submission_requirements, optimized_params,
     settings = hp_optimizer.ask_all()
     jobs = [Job(id=cluster_interface.inc_job_id, settings=setting,
                 other_params=processed_other_params, paths=base_paths_and_files, iteration=hp_optimizer.iteration,
-                connection_info=comm_server.connection_info)
+                connection_info=comm_server.connection_info, opt_procedure_name=opt_procedure_name)
             for setting in settings]
     cluster_interface.add_jobs(jobs)
 

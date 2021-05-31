@@ -20,7 +20,7 @@ class JobStatus():
 
 
 class Job():
-    def __init__(self, id, settings, other_params, paths, iteration, connection_info, metric_to_watch=None):
+    def __init__(self, id, settings, other_params, paths, iteration, connection_info, opt_procedure_name, metric_to_watch=None):
         self.metric_to_watch = metric_to_watch
         self.paths = paths
         self.id = id
@@ -46,6 +46,7 @@ class Job():
         self.metric_df = None
         self.reported_metric_values = None
         self.futures_object = None
+        self.opt_procedure_name = opt_procedure_name
 
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)

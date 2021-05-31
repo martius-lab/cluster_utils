@@ -54,6 +54,7 @@ on_exit_hold_reason = "Checkpointed, will resume"
 on_exit_hold_subcode = 2
 periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
 getenv=True
+JobBatchName=%(opt_procedure_name)s
 queue
 '''
 

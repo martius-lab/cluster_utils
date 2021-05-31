@@ -65,7 +65,8 @@ if __name__ == '__main__':
         remove_working_dirs=params.get("remove_working_dirs", False),
         load_existing_results=params.get("load_existing_results", False),
         run_local=params.get("local_run", None),
-        no_user_interaction=params.get('no_user_interaction', False)
+        no_user_interaction=params.get('no_user_interaction', False),
+        opt_procedure_name=opt_procedure_name,
     )
 
     if df is None:
