@@ -111,8 +111,8 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
         value = list_to_tuple(value)
         if not any([isinstance(value, allowed_type) for allowed_type in constants.PARAM_TYPES]):
-            raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES,
-                                                                                        type(value)))
+            raise TypeError('Settings must from the following types: {}, not {} for setting {}:{}'.format(constants.PARAM_TYPES,
+                                                                                        type(value), name, value))
     nested_items = [(list(filter(lambda x: x, name.split('.'))), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
