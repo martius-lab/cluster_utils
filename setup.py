@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='cluster',
-      version='2.1',
+      version='2.2',
       description='Cluster utilities',
       url='https://github.com/martius-lab',
       author='Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning',
@@ -11,7 +11,7 @@ setup(name='cluster',
       python_requires='>=3.6',
       install_requires=['gitpython>=3.0.5', 'seaborn>=0.11.0', 'pandas', 'matplotlib', 'sklearn', 'numpy',
                         'nevergrad', 'tqdm', 'colorama', 'pyuv', 'cloudpickle',
-                        'smart_settings @ git+ssh://git@gitlab.tuebingen.mpg.de/mrolinek/smart-json.git'],
+                        'smart_settings @ git+https://github.com/martius-lab/smart-settings.git'],
       extras_require={'dev': ['flake8',
                               'flake8-bugbear',
                               'flake8-isort',
