@@ -77,3 +77,29 @@ This depends on the number of jobs and number of parallely running jobs. For 5x1
 
 You can keep the best validation error achieved over the epochs and report this instead of the error achieved in the last epoch.
 
+## Usage
+
+### Condor Cluster system
+
+#### Concurrency
+
+Limit the number of concurrent jobs
+
+You can assign a ressource (tag) to your jobs and specify how many tokens each jobs consumes. There is a total of 10,000 tokes per ressource.
+
+If you want to run 10 concurrent jobs, each job has to consume 1,000 tokens.
+
+To use this feature, it is as easy as adding
+```
+...
+"cluster_requirements": {
+   ...
+  "concurrency_limit_tag": "gpu",
+  "concurrency_limit": 10,
+  ...
+}
+```
+to the settings.
+
+You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
+
