@@ -22,6 +22,8 @@ RESERVED_PARAMS = (ID, ITERATION, RESTART_PARAM_NAME)
 
 DISTR_BASE_COLORS = [(0.99, 0.7, 0.18), (0.7, 0.7, 0.9), (0.56, 0.692, 0.195), (0.923, 0.386, 0.209)]
 
+MPI_CLUSTER_MAX_NUM_TOKENS = 10000
+
 MPI_CLUSTER_RUN_SCRIPT = '''
 #!/bin/bash
 # %(id)d
@@ -55,6 +57,7 @@ on_exit_hold_subcode = 2
 periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
 getenv=True
 JobBatchName=%(opt_procedure_name)s
+%(concurrent_line)s
 queue
 '''
 

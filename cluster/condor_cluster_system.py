@@ -110,6 +110,14 @@ class Condor_ClusterSubmission(ClusterSubmission):
             single_reqs = [f'UtsnameNodename =!= \"{hostname}\"' for hostname in forbidden_hostnames]
             other_requirements.extend(single_reqs)
 
+        concurrency_limit_tag = requirements.get('concurrency_limit_tag', None)
+        concurrency_limit = requirements.get('concurrency_limit', None)
+
+        self.concurrent_line = ''
+        if concurrency_limit_tag is not None and concurrency_limit is not None:
+            concurrency_limit = constants.MPI_CLUSTER_MAX_NUM_TOKENS // concurrency_limit
+            self.concurrent_line = f'concurrency_limits=user.{concurrency_limit_tag}:{concurrency_limit}'
+
         if other_requirements:
             concat_requirements = ' && '.join(other_requirements)
             self.requirements_line = f"requirements={concat_requirements}"
