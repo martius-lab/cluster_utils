@@ -253,8 +253,6 @@ def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
 def metric_correlation_plot(df, metrics, filename=None):
     corr = df[list(metrics)].rank().corr(method='spearman')
 
-    print(df[list(metrics)].rank())
-
     # Generate a custom diverging colormap
     cmap = sns.diverging_palette(10, 150, as_cmap=True)
 
