@@ -69,7 +69,6 @@ if __name__ == '__main__':
             # htcondor internally restarts the job in the same cluster_utils model_dir
             # you will not see this in the utils progress bar, check /working_directories/0/log.txt after the job
             print(f'Exit job at iteration {iteration}')
-            exit()
             exit_for_resume()
 
         if iteration >= total_iterations:
