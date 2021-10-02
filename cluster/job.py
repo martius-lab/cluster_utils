@@ -53,6 +53,7 @@ class Job():
         update_recursive(current_setting, self.other_params)
         job_res_dir = dict_to_dirname(current_setting, self.id, smart_naming=False)
         current_setting[constants.WORKING_DIR] = os.path.join(paths['current_result_dir'], job_res_dir)
+        current_setting['id'] = self.id
         return current_setting
 
     def generate_execution_cmd(self, paths):
