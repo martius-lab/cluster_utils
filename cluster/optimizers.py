@@ -39,6 +39,14 @@ class Optimizer(ABC):
             job.results_used_for_update = True
         df['iteration'] = self.iteration + 1
 
+        if self.metric_to_optimize not in df:
+            # raise a more understandable error
+            raise KeyError(
+                "Trying to optimize metric '{}' but it is not provided by the job.".format(
+                    self.metric_to_optimize
+                )
+            )
+
         self.full_df = pd.concat([self.full_df, df], ignore_index=True, sort=True)
         self.full_df = self.full_df.sort_values([self.metric_to_optimize], ascending=self.minimize)
 
