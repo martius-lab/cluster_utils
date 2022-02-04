@@ -88,10 +88,10 @@ class GitConnector(object):
         repo = None
         try:
             repo = git.Repo(path=local_path, search_parent_directories=True)
-        except git.exc.InvalidGitRepositoryError:
+        except git.exc.InvalidGitRepositoryError as e:
             path = os.getcwd() if self._local_path is None else self._local_path
-            raise git.exc.InvalidGitRepositoryError(
-                'Could not find git repository at localtion {} or any of the parent directories'.format(path))
+            msg = 'Could not find git repository at localtion {} or any of the parent directories'.format(path)
+            raise git.exc.InvalidGitRepositoryError(msg) from e
         except Exception:
             raise
 
@@ -174,8 +174,9 @@ class GitConnector(object):
 
             try:
                 remote = local_repo.remote('origin')
-            except ValueError:
-                raise ValueError('Remote \'origin\' does not exists in repo at {}'.format(self._orig_url))
+            except ValueError as e:
+                msg = 'Remote \'origin\' does not exists in repo at {}'.format(self._orig_url)
+                raise ValueError(msg) from e
 
             remote_url = remote.url
 

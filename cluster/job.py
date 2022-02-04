@@ -20,7 +20,8 @@ class JobStatus():
 
 
 class Job():
-    def __init__(self, id, settings, other_params, paths, iteration, connection_info, opt_procedure_name, metric_to_watch=None):
+    def __init__(self, id, settings, other_params, paths, iteration, connection_info,
+                 opt_procedure_name, metric_to_watch=None):
         self.metric_to_watch = metric_to_watch
         self.paths = paths
         self.id = id

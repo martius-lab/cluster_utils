@@ -110,7 +110,7 @@ class TruncatedNormal(NumericalDistribution):
 
     def prepare_samples(self, howmany):
         howmany = max(10, howmany)  # HACK: for smart rounding a reasonable sample size is needed
-        mean_to_use = self.mean if self.last_mean is None else 4*self.mean - 3*self.last_mean  # a momentum term 3/4
+        mean_to_use = self.mean if self.last_mean is None else 4 * self.mean - 3 * self.last_mean  # a momentum term 3/4
         if not (self.lower <= mean_to_use <= self.upper):
             mean_to_use = self.mean
         self.samples = np.random.normal(size=howmany) * self.std + mean_to_use

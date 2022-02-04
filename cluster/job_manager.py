@@ -230,12 +230,16 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
                 jobs_to_tell = [job for job in cluster_interface.successful_jobs if not job.results_used_for_update]
                 hp_optimizer.tell(jobs_to_tell)
                 current_iteration = hp_optimizer.iteration - start_iteration
-                n_jobs_completed_cur_iteration = (cluster_interface.n_completed_jobs
-                                                  - n_jobs_per_iteration * current_iteration)
-                n_jobs_submitted_cur_iteration = (cluster_interface.n_submitted_jobs
-                                                  - n_jobs_per_iteration * current_iteration)
-                max_job_submissions = ((n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit)
-                                       * n_completed_jobs_before_resubmit + n_jobs_per_iteration)
+                n_jobs_completed_cur_iteration = (
+                    cluster_interface.n_completed_jobs - n_jobs_per_iteration * current_iteration
+                )
+                n_jobs_submitted_cur_iteration = (
+                    cluster_interface.n_submitted_jobs - n_jobs_per_iteration * current_iteration
+                )
+                max_job_submissions = (
+                    (n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit)
+                    * n_completed_jobs_before_resubmit + n_jobs_per_iteration
+                )
                 iteration_finished = cluster_interface.n_completed_jobs // n_jobs_per_iteration > current_iteration
                 if (n_jobs_submitted_cur_iteration < max_job_submissions
                         and cluster_interface.n_submitted_jobs < number_of_samples
@@ -267,7 +271,7 @@ def hp_optimization(base_paths_and_files, submission_requirements, optimized_par
 
                 submitted_bar.update(cluster_interface.n_submitted_jobs)
                 running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
-                running_bar.update(cluster_interface.n_running_jobs+cluster_interface.n_completed_jobs)
+                running_bar.update(cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs)
                 successful_jobs_bar.update(cluster_interface.n_successful_jobs)
                 successful_jobs_bar.update_median_time_left(cluster_interface.median_time_left)
 
@@ -305,19 +309,19 @@ def kill_bad_looking_jobs(cluster_interface, metric_to_optimize, minimize, targe
 
     intermediate_results_np = np.array(intermediate_results)
     sign = 1 if minimize else -1
-    intermediate_ranks = np.argsort(np.argsort(intermediate_results_np*sign, axis=0), axis=0)
+    intermediate_ranks = np.argsort(np.argsort(intermediate_results_np * sign, axis=0), axis=0)
     rank_deviations = np.sqrt(np.mean((intermediate_ranks - intermediate_ranks[:, -1:]) ** 2, axis=0))
 
     for job in cluster_interface.running_jobs:
         if not job.reported_metric_values:
             continue
-        if len(job.reported_metric_values) > intermediate_results_np.shape[1]//2:
+        if len(job.reported_metric_values) > intermediate_results_np.shape[1] // 2:
             # If a job runs more than half of its runtime, don't kill it
             continue
-        index, value = len(job.reported_metric_values)-1, np.array(job.reported_metric_values[-1])
+        index, value = len(job.reported_metric_values) - 1, np.array(job.reported_metric_values[-1])
         all_values = np.concatenate([intermediate_results_np[:, index], value.reshape(1)])
-        rank_of_current_job = np.argsort(np.argsort(all_values*sign))[-1]
-        if rank_of_current_job - how_many_stds*rank_deviations[index] > target_rank:
+        rank_of_current_job = np.argsort(np.argsort(all_values * sign))[-1]
+        if rank_of_current_job - how_many_stds * rank_deviations[index] > target_rank:
             job.metrics = {metric_to_optimize: float(value)}
             job.status = JobStatus.CONCLUDED
             job.set_results()

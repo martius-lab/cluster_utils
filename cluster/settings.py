@@ -156,8 +156,8 @@ def add_cmd_line_params(base_dict, extra_flags):
         cmd = new_lhs + eq + rhs
         try:
             exec(cmd)
-        except Exception:
-            raise RuntimeError(f"Command {cmd} failed")
+        except Exception as e:
+            raise RuntimeError(f"Command {cmd} failed") from e
 
 
 def read_params_from_cmdline(cmd_line=None, make_immutable=True, verbose=True, dynamic=True, pre_unpack_hooks=None,

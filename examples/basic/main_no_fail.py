@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 
-from cluster import exit_for_resume, save_metrics_params, read_params_from_cmdline
+from cluster import exit_for_resume, read_params_from_cmdline, save_metrics_params
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
@@ -22,8 +22,8 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     """
     tuple_input = tuple_input or tuple()
     tuple_len = len(tuple_input)
-    y_log = np.log(np.abs(y+1e-7))
-    v_log = np.log(np.abs(v+1e-7))
+    y_log = np.log(np.abs(y + 1e-7))
+    v_log = np.log(np.abs(v + 1e-7))
     assert (type(w) == type(v) == int), "w and v have to be integers"
 
     result = (x - 3.14) ** 2 + (y_log - 2.78) ** 2 + (u * v_log * w + 1) ** 2 + (u + v_log + w - 5 + tuple_len) ** 2

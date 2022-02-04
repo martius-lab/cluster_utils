@@ -38,7 +38,7 @@ def main(working_dir, optimizer, optimizer_params, iterations):
         if torch.isnan(loss) or loss > 1e5:
             raise ValueError("Optimization failed")
 
-        announce_fraction_finished((i+1) / iterations)
+        announce_fraction_finished((i + 1) / iterations)
         announce_early_results({'final_value': loss})
 
     metrics = {'final_value': loss}

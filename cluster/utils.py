@@ -110,9 +110,9 @@ def process_other_params(other_params, hyperparam_dict, distribution_list):
         if name in name_list:
             raise ValueError('Duplicate setting \'{}\' in other params!'.format(name))
         value = list_to_tuple(value)
-        if not any([isinstance(value, allowed_type) for allowed_type in constants.PARAM_TYPES]):
-            raise TypeError('Settings must from the following types: {}, not {} for setting {}:{}'.format(constants.PARAM_TYPES,
-                                                                                        type(value), name, value))
+        if not isinstance(value, constants.PARAM_TYPES):
+            raise TypeError((f'Settings must from the following types: {constants.PARAM_TYPES}, '
+                             f'not {type(value)} for setting {name}: {value}'))
     nested_items = [(list(filter(lambda x: x, name.split('.'))), value) for name, value in other_params.items()]
     return nested_to_dict(nested_items)
 
@@ -124,13 +124,12 @@ def validate_hyperparam_dict(hyperparam_dict):
         else:
             check_valid_param_name(name)
         if type(option_list) is not list:
-            raise TypeError('Entries in hyperparam dict must be type list (not {}: {})'.format(name, type(option_list)))
+            raise TypeError(f'Entries in hyperparam dict must be type list (not {name}: {type(option_list)})')
         option_list = [list_to_tuple(o) for o in option_list]
         hyperparam_dict[name] = option_list
         for item in option_list:
-            if not any([isinstance(item, allowed_type) for allowed_type in constants.PARAM_TYPES]):
-                raise TypeError('Settings must from the following types: {}, not {}'.format(constants.PARAM_TYPES,
-                                                                                            type(item)))
+            if not isinstance(item, constants.PARAM_TYPES):
+                raise TypeError(f'Settings must from the following types: {constants.PARAM_TYPES}, not {type(item)}')
 
 
 def hyperparam_dict_samples(hyperparam_dict, num_samples):
@@ -165,7 +164,9 @@ def default_to_regular(d):
 
 
 def nested_to_dict(nested_items):
-    def nested_dict(): return defaultdict(nested_dict)
+    def nested_dict():
+        return defaultdict(nested_dict)
+
     result = nested_dict()
     for nested_key, value in nested_items:
         ptr = result
