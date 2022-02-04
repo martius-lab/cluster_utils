@@ -86,7 +86,22 @@ class Condor_ClusterSubmission(ClusterSubmission):
         other_requirements = []
 
         if self.gpus > 0 and requirements['cuda_requirement'] is not None:
-            self.cuda_line = 'Requirements=CUDACapability>={}'.format(requirements['cuda_requirement'])
+            cuda_req = requirements['cuda_requirement']
+            try:
+                float(cuda_req)
+                requirement_is_float = True
+            except ValueError:
+                requirement_is_float = False
+
+            if cuda_req.startswith('<') or cuda_req.startswith('>'):
+                self.cuda_line = 'TARGET.CUDACapability{}'.format(cuda_req)
+            elif requirement_is_float:
+                self.cuda_line = 'TARGET.CUDACapability>={}'.format(cuda_req)
+            else:
+                self.cuda_line = '{}'.format(cuda_req)
+
+            other_requirements.append(self.cuda_line)
+            self.cuda_line = ''
             self.partition = 'gpu'
             self.constraint = 'gpu'
         else:
@@ -95,7 +110,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
             self.constraint = ''
 
         if self.gpus > 0 and 'gpu_memory_mb' in requirements:
-            other_requirements.append('TARGET.CUDAGlobalMemoryMb>{}'.format(requirements['gpu_memory_mb']))
+            other_requirements.append('TARGET.CUDAGlobalMemoryMb>={}'.format(requirements['gpu_memory_mb']))
 
         def hostnames_to_requirement(hostnames):
             single_reqs = [f'UtsnameNodename =?= \"{hostname}\"' for hostname in hostnames]

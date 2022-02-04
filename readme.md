@@ -79,11 +79,32 @@ You can keep the best validation error achieved over the epochs and report this 
 
 ## Usage
 
-### Condor Cluster system
+### Condor Cluster System
+
+#### CUDA Requirements
+
+You can specify constraints on the GPUs the jobs should use. This is controlled by the `cuda_requirement` and `gpu_memory_mb` settings in the `cluster_requirements` section. 
+
+- `cuda_requirement` has multiple behaviors. If it is a number, it specifies the *minimum* CUDA capability the GPU should have. If the number is prefixed with `<` or `<=`, it specifies the *maximum* CUDA capability. Otherwise, the value is taken as a full requirement string. This allows to specify complex requirements, see below.
+- `gpu_memory_mb` specifies a minimum memory size the GPU should have, in megabytes.
+
+Example:
+```
+...
+"cluster_requirements": {
+   ...
+  "cuda_requirement": "TARGET.CUDACapability >= 5.0 && TARGET.CUDACapability <= 8.0",
+  "gpu_memory_mb": 12000,
+  ...
+}
+```
+This requires that the GPU has at least 12000MB, and a CUDA capability between 5 and 8.
+
+Remember to prefix the constraints with `TARGET.`. See https://atlas.is.localnet/confluence/display/IT/Specific+GPU+needs for the kind of constraints that are possible.
 
 #### Concurrency
 
-Limit the number of concurrent jobs
+Limit the number of concurrent jobs.
 
 You can assign a ressource (tag) to your jobs and specify how many tokens each jobs consumes. There is a total of 10,000 tokes per ressource.
 
@@ -102,4 +123,3 @@ To use this feature, it is as easy as adding
 to the settings.
 
 You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
-
