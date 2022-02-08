@@ -1,0 +1,34 @@
+{
+  "optimization_procedure_name": "grid_search_checkpointing",
+  "results_dir": "/is/rg/al/Projects/tmp/example_results",
+
+  "git_params": {
+    "branch": "master",
+    "commit": null
+  },
+  "script_relative_path": "examples/checkpointing/checkpoint_example.py",
+  "load_existing_results": false,
+  "run_in_working_dir": true,
+  "environment_setup": {
+  },
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 16000,
+    "bid": 800,
+    "hostname_list": ["g018", "g025", "g026", "g027", "g028", "g029", "g030", "g031", "p001", "p002", "p003", "t001"]
+  },
+  "restarts": 1,
+  "samples": null,
+  "remove_jobs_dir": false,
+  "fixed_params":{
+  },
+  "hyperparam_list": [
+    {
+      "param": "total_iterations",
+      "values": [200] 
+    }
+  ]
+}
+
