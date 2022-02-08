@@ -1,0 +1,3 @@
+[tool.black]
+preview = true
+target-version = ['py36']
