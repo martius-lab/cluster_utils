@@ -25,7 +25,7 @@
   "optimization_setting": {
     "metric_to_optimize": "result",
     "minimize": true,
-    "number_of_samples": 4,
+    "number_of_samples": 3,
     "n_jobs_per_iteration": 2
   },
   "fixed_params": {
