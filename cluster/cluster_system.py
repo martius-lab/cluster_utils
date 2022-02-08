@@ -1,12 +1,11 @@
 import errno
 import logging
-
-
-import os
-from .utils import rm_dir_full
+import subprocess
 from abc import ABC, abstractmethod
-from subprocess import run, DEVNULL
-from .job import JobStatus, Job
+
+from cluster.job import Job, JobStatus
+from cluster.utils import rm_dir_full
+
 
 class ClusterSubmission(ABC):
     def __init__(self, paths, remove_jobs_dir=True):
@@ -23,10 +22,9 @@ class ClusterSubmission(ABC):
     def current_jobs(self):
         return self.jobs
 
-
     @property
     def submission_dir(self):
-        return self.paths['jobs_dir']
+        return self.paths["jobs_dir"]
 
     @property
     def inc_job_id(self):
@@ -38,19 +36,19 @@ class ClusterSubmission(ABC):
         if hook.state > 0:
             return
 
-        logger = logging.getLogger('cluster_utils')
-        logger.info('Register submission hook {}'.format(hook.identifier))
+        logger = logging.getLogger("cluster_utils")
+        logger.info("Register submission hook {}".format(hook.identifier))
         self.submission_hooks[hook.identifier] = hook
         hook.manager = self
 
     def unregister_submission_hook(self, identifier):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         if identifier in self.submission_hooks:
-            logger.info('Unregister submission hook {}'.format(identifier))
+            logger.info("Unregister submission hook {}".format(identifier))
             self.submission_hooks.manager = None
             self.submission_hooks.pop(identifier)
         else:
-            raise HookNotFoundException('Hook not found. Can not unregister')
+            raise HookNotFoundException("Hook not found. Can not unregister")
 
     def exec_pre_run_routines(self):
         for hook in self.submission_hooks.values():
@@ -61,7 +59,9 @@ class ClusterSubmission(ABC):
             hook.post_run_routine()
 
     def collect_stats_from_hooks(self):
-        stats = {hook.identifier: hook.status for hook in self.submission_hooks.values()}
+        stats = {
+            hook.identifier: hook.status for hook in self.submission_hooks.values()
+        }
         return stats
 
     def save_job_info(self, result_dir):
@@ -80,7 +80,7 @@ class ClusterSubmission(ABC):
 
     @property
     def submitted_jobs(self):
-        return [job for job in self.current_jobs if not job.cluster_id is None]
+        return [job for job in self.current_jobs if job.cluster_id is not None]
 
     @property
     def n_submitted_jobs(self):
@@ -88,7 +88,9 @@ class ClusterSubmission(ABC):
 
     @property
     def running_jobs(self):
-        running_jobs = [job for job in self.current_jobs if job.status == JobStatus.RUNNING]
+        running_jobs = [
+            job for job in self.current_jobs if job.status == JobStatus.RUNNING
+        ]
         return running_jobs
 
     @property
@@ -97,8 +99,11 @@ class ClusterSubmission(ABC):
 
     @property
     def completed_jobs(self):
-        completed_jobs = [job for job in self.current_jobs if
-                          job.status == JobStatus.CONCLUDED or job.status == JobStatus.FAILED]
+        completed_jobs = [
+            job
+            for job in self.current_jobs
+            if job.status == JobStatus.CONCLUDED or job.status == JobStatus.FAILED
+        ]
         return completed_jobs
 
     @property
@@ -107,7 +112,11 @@ class ClusterSubmission(ABC):
 
     @property
     def idle_jobs(self):
-        idle_jobs = [job for job in self.current_jobs if job.status in [JobStatus.SUBMITTED, JobStatus.INITIAL_STATUS]]
+        idle_jobs = [
+            job
+            for job in self.current_jobs
+            if job.status in [JobStatus.SUBMITTED, JobStatus.INITIAL_STATUS]
+        ]
         return idle_jobs
 
     @property
@@ -116,7 +125,11 @@ class ClusterSubmission(ABC):
 
     @property
     def successful_jobs(self):
-        return [job for job in self.current_jobs if job.status == JobStatus.CONCLUDED and not job.get_results() is None]
+        return [
+            job
+            for job in self.current_jobs
+            if job.status == JobStatus.CONCLUDED and not job.get_results() is None
+        ]
 
     @property
     def n_successful_jobs(self):
@@ -124,7 +137,11 @@ class ClusterSubmission(ABC):
 
     @property
     def failed_jobs(self):
-        return [job for job in self.completed_jobs if job.status == JobStatus.FAILED or job.get_results() is None]
+        return [
+            job
+            for job in self.completed_jobs
+            if job.status == JobStatus.FAILED or job.get_results() is None
+        ]
 
     @property
     def n_failed_jobs(self):
@@ -146,11 +163,14 @@ class ClusterSubmission(ABC):
         # t.start()
 
     def _submit(self, job):
-        logger = logging.getLogger('cluster_utils')
-        if not job.cluster_id is None:
-            raise RuntimeError('Can not run a job that already ran')
-        if not job in self.jobs:
-            logger.warning('Submitting job that was not yet added to the cluster system interface, will add it now')
+        logger = logging.getLogger("cluster_utils")
+        if job.cluster_id is not None:
+            raise RuntimeError("Can not run a job that already ran")
+        if job not in self.jobs:
+            logger.warning(
+                "Submitting job that was not yet added to the cluster system interface,"
+                " will add it now"
+            )
             self.add_jobs(job)
         cluster_id = self.submit_fn(job)
         job.cluster_id = cluster_id
@@ -158,13 +178,20 @@ class ClusterSubmission(ABC):
 
     def stop(self, job):
         if job.cluster_id is None:
-            raise RuntimeError('Can not close a job unless its cluster_id got specified')
+            raise RuntimeError(
+                "Can not close a job unless its cluster_id got specified"
+            )
         self.stop_fn(job.cluster_id)
 
     def stop_all(self):
-        print('Killing remaining jobs...')
+        print("Killing remaining jobs...")
+        statuses_for_stopping = (
+            JobStatus.SUBMITTED,
+            JobStatus.RUNNING,
+            JobStatus.SENT_RESULTS,
+        )
         for job in self.jobs:
-            if job.cluster_id is not None and job.status in [JobStatus.SUBMITTED, JobStatus.RUNNING, JobStatus.SENT_RESULTS]:
+            if job.cluster_id is not None and job.status in statuses_for_stopping:
                 self.stop(job)
                 # TODO: Add check all are gone
 
@@ -179,7 +206,11 @@ class ClusterSubmission(ABC):
         return Job.time_left_to_str(median)
 
     def get_best_seen_value_of_main_metric(self, minimize):
-        jobs_with_results = [job.reported_metric_values for job in self.running_jobs if job.reported_metric_values]
+        jobs_with_results = [
+            job.reported_metric_values
+            for job in self.running_jobs
+            if job.reported_metric_values
+        ]
         latest = [item[-1] for item in jobs_with_results]
         if not latest:
             return None
@@ -188,14 +219,14 @@ class ClusterSubmission(ABC):
         else:
             return max(latest)
 
-    '''
+    """
   @abstractmethod
   def status(self, job):
     # 0: not submitted (could also mean its done)
     # 1: submitted
     # 2: running
     raise NotImplementedError
-  '''
+  """
 
     @abstractmethod
     def submit_fn(self, job_spec_file_path):
@@ -214,51 +245,56 @@ class ClusterSubmission(ABC):
         raise NotImplementedError
 
     def __enter__(self):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         # TODO: take emergency cleanup to new implementation
         try:
             self.exec_pre_submission_routines()
             self.submit()
-        except:
+        except BaseException:
             self.close()
-            logger.warning('Job killed in emergency mode! Check condor_q!')
+            logger.warning("Job killed in emergency mode! Check condor_q!")
             raise
 
     def close(self):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         self.stop_all()
         if self.remove_jobs_dir:
-            logger.info('Removing jobs dir {}'.format(self.submission_dir))
+            logger.info("Removing jobs dir {}".format(self.submission_dir))
             rm_dir_full(self.submission_dir)
 
-
     def check_error_msgs(self):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         for job in self.failed_jobs:
             if job.error_info not in self.error_msgs:
-                warn_string = f'\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with error:\x1b[0m\n'
+                warn_string = (
+                    f"\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with"
+                    " error:\x1b[0m\n"
+                )
                 full_warning = f"{warn_string}{''.join(job.error_info or '')}"
                 logger.warning(full_warning)
                 print(full_warning)
                 self.error_msgs.add(job.error_info)
 
     def __repr__(self):
-        return ('Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with output: {.n_successful_jobs}, '
-                'Failed: {.n_failed_jobs}, Running: {.n_running_jobs}, Idle: {.n_idle_jobs}').format(*(6 * [self]))
+        return (
+            "Total: {.n_total_jobs}, Submitted: {.n_submitted_jobs}, Completed with"
+            " output: {.n_successful_jobs}, Failed: {.n_failed_jobs}, Running:"
+            " {.n_running_jobs}, Idle: {.n_idle_jobs}"
+        ).format(*(6 * [self]))
 
 
 def get_cluster_type(requirements, run_local=None):
-    logger = logging.getLogger('cluster_utils')
-    from .condor_cluster_system import Condor_ClusterSubmission
-    from .dummy_cluster_system import Dummy_ClusterSubmission
+    logger = logging.getLogger("cluster_utils")
+    from cluster.condor_cluster_system import Condor_ClusterSubmission
+    from cluster.dummy_cluster_system import Dummy_ClusterSubmission
 
-    if is_command_available('condor_q'):
-        logger.info('CONDOR detected, running CONDOR job submission')
+    if is_command_available("condor_q"):
+        logger.info("CONDOR detected, running CONDOR job submission")
         return Condor_ClusterSubmission
     else:
         if run_local is None:
-            answer = input('No cluster detected. Do you want to run locally? [Y/n]: ')
-            if answer.lower() == 'n':
+            answer = input("No cluster detected. Do you want to run locally? [Y/n]: ")
+            if answer.lower() == "n":
                 run_local = False
             else:
                 run_local = True
@@ -266,18 +302,18 @@ def get_cluster_type(requirements, run_local=None):
         if run_local:
             return Dummy_ClusterSubmission
         else:
-            raise OSError('Neither CONDOR nor SLURM was found. Not running locally')
+            raise OSError("Neither CONDOR nor SLURM was found. Not running locally")
 
 
 def is_command_available(cmd):
-    logger = logging.getLogger('cluster_utils')
+    logger = logging.getLogger("cluster_utils")
     try:
-        run(cmd, stderr=DEVNULL, stdout=DEVNULL)
+        subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
         else:
-            logger.warning('Found command, but ' + cmd + ' could not be executed')
+            logger.warning("Found command, but " + cmd + " could not be executed")
             return True
     return True
 

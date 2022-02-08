@@ -1,0 +1,6 @@
+{
+  "__import__": "examples/basic/grid_search.json",
+  "optimization_procedure_name": "decorator_test",
+  "results_dir": "/is/cluster/work/{$USER}/tmp",
+  "script_relative_path": "examples/basic/main_with_decorator.py"
+}

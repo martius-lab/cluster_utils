@@ -27,8 +27,7 @@
   "hyperparam_list": [
     {
       "param": "total_iterations",
-      "values": [200] 
+      "values": [200]
     }
   ]
 }
-

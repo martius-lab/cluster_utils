@@ -1,6 +1,6 @@
 {
   "optimization_procedure_name": "rosenbrock_opt",
-  "results_dir": "/is/rg/al/Projects/tmp",
+ "results_dir": "/is/rg/al/Projects/tmp/example_results",
   "git_params": {
     "branch": "master",
     "commit": null
@@ -32,7 +32,7 @@
     "how_many_stds": 3.0
   },
   "fixed_params": {
-    "default_json": "examples/rosenbrock/params.json"
+    "__import_promise__": "examples/rosenbrock/params.json"
   },
   "optimized_params": [
   {

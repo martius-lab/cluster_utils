@@ -1,15 +1,14 @@
 import logging
 
-from sklearn.ensemble import RandomForestRegressor
-from contextlib import suppress
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.ensemble import RandomForestRegressor
 
-from .constants import *
-from .utils import shorten_string
+from cluster import constants
+from cluster.utils import shorten_string
+
 
 def performance_summary(df, metrics):
     perf = {}
@@ -18,26 +17,37 @@ def performance_summary(df, metrics):
         max_val = df[metric].max()
         mean_val = df[metric].mean()
         std_val = df[metric].std()
-        perf[metric] = {'min': min_val, 'max': max_val, 'mean': mean_val, 'stddev': std_val}
+        perf[metric] = {
+            "min": min_val,
+            "max": max_val,
+            "mean": mean_val,
+            "stddev": std_val,
+        }
 
-    return pd.DataFrame.from_dict(perf, orient='index')
+    return pd.DataFrame.from_dict(perf, orient="index")
 
 
-def average_out(df, metrics, params_to_keep, std_ending=STD_ENDING, add_std=True):
-    logger = logging.getLogger('cluster_utils')
+def average_out(
+    df, metrics, params_to_keep, std_ending=constants.STD_ENDING, add_std=True
+):
+    logger = logging.getLogger("cluster_utils")
     if not metrics:
-        raise ValueError('Empty set of metrics not accepted.')
+        raise ValueError("Empty set of metrics not accepted.")
     new_df = df[params_to_keep + metrics]
     result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
-    result[RESTART_PARAM_NAME] = new_df.groupby(params_to_keep, as_index=False).agg({metrics[0]: 'size'})[metrics[0]]
+    result[constants.RESTART_PARAM_NAME] = new_df.groupby(
+        params_to_keep, as_index=False
+    ).agg({metrics[0]: "size"})[metrics[0]]
     if not add_std:
         return result
     for metric in metrics:
         std_name = metric + std_ending
         if std_name in result.columns:
-            logger.warning('Name {} already used. Skipping ...'.format(std_name))
+            logger.warning("Name {} already used. Skipping ...".format(std_name))
         else:
-            result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg({metric: np.nanstd})[metric]
+            result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg(
+                {metric: np.nanstd}
+            )[metric]
     return result
 
 
@@ -50,41 +60,48 @@ def darker(color, factor=0.85):
 
 def color_scheme():
     while True:
-        for color in DISTR_BASE_COLORS:
-            for i in range(5):
+        for color in constants.DISTR_BASE_COLORS:
+            for _ in range(5):
                 yield color
                 color = darker(color)
 
 
-def distribution(df, param, metric, filename=None, metric_logscale=False, transition_colors=False, x_bounds=None):
-    logger = logging.getLogger('cluster_utils')
+def distribution(df, param, metric, filename=None, metric_logscale=None, x_bounds=None):
+    logger = logging.getLogger("cluster_utils")
     smaller_df = df[[param, metric]]
     unique_vals = smaller_df[param].unique()
     if not len(unique_vals):
         return False
     ax = None
-    if transition_colors:
-        color_gen = color_scheme()
-    for val in sorted(unique_vals):
-        filtered = smaller_df.loc[smaller_df[param] == val][metric]
-        if filtered.nunique() == 1:
-            logger.warning(f'Not enough distinct values, skipping distribution plot for {metric}')
-            continue
-        with suppress(Exception):
-            ax = sns.distplot(filtered, hist=False, label=str(
-                val), color=next(color_gen) if transition_colors else None)
+    metric_logscale = (
+        metric_logscale
+        if metric_logscale is not None
+        else detect_scale(smaller_df[metric]) == "log"
+    )
+    try:
+        ax = sns.kdeplot(
+            data=smaller_df,
+            x=metric,
+            hue=param,
+            palette="crest",
+            fill=True,
+            common_norm=False,
+            alpha=0.5,
+            linewidth=0,
+            log_scale=metric_logscale,
+        )
+    except Exception as e:
+        logger.warning(f"sns.distplot failed for param {param} with exception {e}")
 
     if ax is None:
         return False
-    if metric_logscale:
-        ax.set_xscale("log")
 
     if x_bounds is not None:
         ax.set_xlim(*x_bounds)
-    ax.set_title('Distribution of {} by {}'.format(metric, param))
+    ax.set_title("Distribution of {} by {}".format(metric, param))
     fig = plt.gcf()
     if filename:
-        fig.savefig(filename, format='pdf', dpi=1200)
+        fig.savefig(filename, format="pdf", dpi=1200)
     else:
         plt.show()
     plt.close(fig)
@@ -95,11 +112,12 @@ def heat_map(df, param1, param2, metric, filename=None, annot=False):
     reduced_df = df[[param1, param2, metric]]
     grouped_df = reduced_df.groupby([param1, param2], as_index=False).mean()
     pivoted_df = grouped_df.pivot(index=param1, columns=param2, values=metric)
-    ax = sns.heatmap(pivoted_df, annot=annot)
+    fmt = None if not annot else ".2g"
+    ax = sns.heatmap(pivoted_df, annot=annot, fmt=fmt)
     ax.set_title(metric)
     fig = plt.gcf()
     if filename:
-        fig.savefig(filename, format='pdf', dpi=1200)
+        fig.savefig(filename, format="pdf", dpi=1200)
     else:
         plt.show()
     plt.close(fig)
@@ -120,10 +138,10 @@ def count_plot_horizontal(df, time, count_over, filename=None):
     smaller_df = df[[time, count_over]]
 
     ax = sns.countplot(y=time, hue=count_over, data=smaller_df)
-    ax.set_title('Evolving frequencies of {} over {}'.format(count_over, time))
+    ax.set_title("Evolving frequencies of {} over {}".format(count_over, time))
     fig = plt.gcf()
     if filename:
-        fig.savefig(filename, format='pdf', dpi=1200)
+        fig.savefig(filename, format="pdf", dpi=1200)
     else:
         plt.show()
     plt.close(fig)
@@ -140,21 +158,21 @@ def detect_scale(arr):
     log_densities, _ = np.histogram(log_space_data, bins=bins)
 
     if np.std(norm_densities) < np.std(log_densities):
-        return 'linear'
+        return "linear"
     elif min(array) > 0:
-        return 'log'
+        return "log"
     else:
-        return 'symlog'
+        return "symlog"
 
 
 def plot_opt_progress(df, metric, filename=None):
     fig = plt.figure()
-    ax = sns.boxplot(x="iteration", y=metric, data=df)
+    ax = sns.boxplot(x=constants.ITERATION, y=metric, data=df)
     ax.set_yscale(detect_scale(df[metric]))
-    plt.title('Optimization progress')
+    plt.title("Optimization progress")
 
     if filename:
-        fig.savefig(filename, format='pdf', dpi=1200)
+        fig.savefig(filename, format="pdf", dpi=1200)
     else:
         plt.show()
     plt.close(fig)
@@ -163,7 +181,9 @@ def plot_opt_progress(df, metric, filename=None):
 
 def turn_categorical_to_numerical(df, params):
     res = df.copy()
-    non_numerical = [col for col in params if not np.issubdtype(df[col].dtype, np.number)]
+    non_numerical = [
+        col for col in params if not np.issubdtype(df[col].dtype, np.number)
+    ]
 
     for non_num in non_numerical:
         res[non_num], _ = pd.factorize(res[non_num])
@@ -199,11 +219,11 @@ def fit_forest(df, params, metric):
 
 def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
     df = df_for_iter.sort_values([metric], ascending=minimum)
-    df = df[:-len(df) // 4]
+    df = df[: -len(df) // 4]
 
     ys_base = df[metric]
     if df[params].shape[0] == 0:
-        for param in params:
+        for _ in params:
             yield 0
     else:
         ys = clf.predict(df[params])
@@ -225,11 +245,16 @@ def compute_performance_gains(df, params, metric, minimum):
 
     forest = fit_forest(normalize(df), params, metric)
 
-    max_iteration = df['iteration'].max()
-    dfs = [normalize(df[df['iteration'] == 1 + i]) for i in range(max_iteration)]
+    max_iteration = df[constants.ITERATION].max()
+    dfs = [
+        normalize(df[df[constants.ITERATION] == 1 + i]) for i in range(max_iteration)
+    ]
 
-    names = [f'iteration {1 + i}' for i in range(max_iteration)]
-    importances = [list(performance_gain_for_iteration(forest, df_, params, metric, minimum)) for df_ in dfs]
+    names = [f"iteration {1 + i}" for i in range(max_iteration)]
+    importances = [
+        list(performance_gain_for_iteration(forest, df_, params, metric, minimum))
+        for df_ in dfs
+    ]
 
     data_dict = dict(zip(names, list(importances)))
     feature_imp = pd.DataFrame.from_dict(data_dict)
@@ -239,16 +264,53 @@ def compute_performance_gains(df, params, metric, minimum):
 
 def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
     importances = compute_performance_gains(df, params, metric, minimum)
-    importances.T.plot(kind='bar', stacked=True, legend=False)
-    lgd = plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.55), ncol=2)
+    importances.T.plot(kind="bar", stacked=True, legend=False)
+    lgd = plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.55), ncol=2)
 
     ax = plt.gca()
     fig = plt.gcf()
     ax.set_yscale(detect_scale(importances.mean().values))
-    ax.set_ylabel(f'Potential change in {metric}')
-    ax.set_title('Influence of hyperparameters on performance')
+    ax.set_ylabel(f"Potential change in {metric}")
+    ax.set_title("Influence of hyperparameters on performance")
     if filename:
-        fig.savefig(filename, format='pdf', dpi=1200, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        fig.savefig(
+            filename,
+            format="pdf",
+            dpi=1200,
+            bbox_extra_artists=(lgd,),
+            bbox_inches="tight",
+        )
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
+
+
+def metric_correlation_plot(df, metrics, filename=None):
+    corr = df[list(metrics)].rank().corr(method="spearman")
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(10, 150, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    ax = sns.heatmap(
+        corr,
+        cmap=cmap,
+        vmin=-1.0,
+        vmax=1.0,
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.5},
+    )
+    plt.xticks(rotation=90)
+
+    ax.set_title("Spearman correlation of metrics")
+    ax.figure.tight_layout()
+    fig = plt.gcf()
+
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
     else:
         plt.show()
     plt.close(fig)

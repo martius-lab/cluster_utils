@@ -1,10 +1,9 @@
-"""This is a variant of main.py which does not randomly kill jobs"""
 import os
 import time
 
 import numpy as np
 
-from cluster import exit_for_resume, read_params_from_cmdline, save_metrics_params
+from cluster import cluster_main, exit_for_resume
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
@@ -35,31 +34,34 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     if sharp_penalty and x > 3.20:
         result += 1
 
+    if np.random.rand() < 0.1:
+        raise ValueError("10 percent of all jobs die here on purpose")
+
     return result
 
 
-if __name__ == "__main__":
-    params = read_params_from_cmdline()
+@cluster_main
+def main(working_dir, fn_args, test_resume):
 
     # simulate that the jobs take some time
-    max_sleep_time = params.get("max_sleep_time", 10)
-    time.sleep(np.random.randint(0, max_sleep_time))
-
-    result_file = os.path.join(params.working_dir, "result.npy")
-    os.makedirs(params.working_dir, exist_ok=True)
+    time.sleep(np.random.randint(0, 10))
+    result_file = os.path.join(working_dir, "result.npy")
     # here we do a little simulation for checkpointing and resuming
     if os.path.isfile(result_file):
         # If there is a result to resume
         noiseless_result = np.load(result_file)
     else:
         # Otherwise compute result, checkpoint it and exit
-        noiseless_result = fn_to_optimize(**params.fn_args)
+        noiseless_result = fn_to_optimize(**fn_args)
         print(f"save result to {result_file}")
         np.save(result_file, noiseless_result)
-        if "test_resume" in params and params.test_resume:
+        if test_resume:
             exit_for_resume()
 
     noisy_result = noiseless_result + 0.5 * np.random.normal()
     metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
-    save_metrics_params(metrics, params)
-    print(noiseless_result)
+    return metrics
+
+
+if __name__ == "__main__":
+    main()
