@@ -52,8 +52,8 @@ For `optimizer_str="cem_metaoptimizer"`:
 ## Usage Mindset and Rules of Thumb
 
 Generally, the usage mindset should be *"obtain some interpretable understanding of the influence of the hyperparameters"* rather than *"blackbox optimizer just tells me the best setting"*.
-Usually, early in the project many of the hyperparameters are more like ideas, or strategies. 
-Cluster utils can then tell you which ideas (or their combinations) make sense. 
+Usually, early in the project many of the hyperparameters are more like ideas, or strategies.
+Cluster utils can then tell you which ideas (or their combinations) make sense.
 Later in a project, there only tend to be actual hyperparameters (i.e. transfering a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
 
 Here are some rules of thumbs to set the configuration values that can help you to get started. Keep in mind that following these does not necessarily lead to optimal results on your specific problem.
@@ -64,8 +64,8 @@ Here are some rules of thumbs to set the configuration values that can help you 
 
 **How many jobs should I run? How many concurrently?**
 
-It depends. The number of concurrent jobs (`n_jobs_per_iteration`) should be as high as achievable with the current load on the cluster. 
-For CPU jobs, this could be 100 concurrent jobs; for GPU jobs, maybe around 40. 
+It depends. The number of concurrent jobs (`n_jobs_per_iteration`) should be as high as achievable with the current load on the cluster.
+For CPU jobs, this could be 100 concurrent jobs; for GPU jobs, maybe around 40.
 The total number of jobs (`number_of_samples`) can be lower if you only want to get an initial impression of the behaviour of the hyperparameter; in this case, 3-5 times the number of jobs per iteration is a good number.
 If you want to get a more precise result, or if you have a high number of hyperparameters, up to 10 times the number of jobs per iteration can be used.
 
@@ -83,7 +83,7 @@ You can keep the best validation error achieved over the epochs and report this 
 
 #### CUDA Requirements
 
-You can specify constraints on the GPUs the jobs should use. This is controlled by the `cuda_requirement` and `gpu_memory_mb` settings in the `cluster_requirements` section. 
+You can specify constraints on the GPUs the jobs should use. This is controlled by the `cuda_requirement` and `gpu_memory_mb` settings in the `cluster_requirements` section.
 
 - `cuda_requirement` has multiple behaviors. If it is a number, it specifies the *minimum* CUDA capability the GPU should have. If the number is prefixed with `<` or `<=`, it specifies the *maximum* CUDA capability. Otherwise, the value is taken as a full requirement string. This allows to specify complex requirements, see below.
 - `gpu_memory_mb` specifies a minimum memory size the GPU should have, in megabytes.
@@ -123,3 +123,9 @@ To use this feature, it is as easy as adding
 to the settings.
 
 You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
+
+## Development
+
+1. Create a development environment (e.g. using virtualenv): `python3 -m virtualenv .venv`, `source .venv/bin/activate`
+2. Install `cluster_utils` in editable mode: `pip install -e ".[dev]"`
+3. Register the pre-commit hooks: `pre-commit install`

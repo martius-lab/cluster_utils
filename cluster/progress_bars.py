@@ -22,6 +22,7 @@ def redirect_stdout_to_tqdm():
     def new_print(*args, **kwargs):
         to_print = "".join(map(str_or_repr, args))
         tqdm.tqdm.write(Fore.RESET + to_print, **kwargs)
+
     try:
         # Globally replace print with new_print
         inspect.builtins.print = new_print
@@ -51,24 +52,37 @@ class ProgressBar(ABC):
 
 
 # Color disabled until a bug in tqdm is fixed.
-# see https://stackoverflow.com/questions/58328625/tqdm-colored-progress-bar-printing-on-multiple-lines
+# see https://stackoverflow.com/questions/58328625/tqdm-colored-progress-bar-printing-on-multiple-lines  # noqa: B950
+
 
 class SubmittedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
-        new_rbar = '| {n_fmt}/{total_fmt}'
+        new_rbar = "| {n_fmt}/{total_fmt}"
         # bar_format = '{l_bar}%s{bar}%s' % (Fore.RED, Fore.RESET)
-        bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Submitted', total=total_jobs, unit='jobs',
-                              bar_format=bar_format + new_rbar, dynamic_ncols=True, position=2)
+        bar_format = "{l_bar}{bar}"
+        self.tqdm = tqdm.tqdm(
+            desc="Submitted",
+            total=total_jobs,
+            unit="jobs",
+            bar_format=bar_format + new_rbar,
+            dynamic_ncols=True,
+            position=2,
+        )
 
 
 class RunningJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs):
-        new_rbar = '| {n_fmt}/{total_fmt}{postfix}'
+        new_rbar = "| {n_fmt}/{total_fmt}{postfix}"
         # bar_format = '{l_bar}%s{bar}%s' % (Fore.YELLOW, Fore.RESET)
-        bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Started execution', total=total_jobs, unit='jobs',
-                              bar_format=bar_format + new_rbar, dynamic_ncols=True, position=1)
+        bar_format = "{l_bar}{bar}"
+        self.tqdm = tqdm.tqdm(
+            desc="Started execution",
+            total=total_jobs,
+            unit="jobs",
+            bar_format=bar_format + new_rbar,
+            dynamic_ncols=True,
+            position=1,
+        )
 
     def update_failed_jobs(self, failed_jobs):
         self.tqdm.set_postfix(Failed=failed_jobs)
@@ -76,20 +90,29 @@ class RunningJobsBar(ProgressBar):
 
 class CompletedJobsBar(ProgressBar):
     def start_tqdm(self, total_jobs, minimize):
-        new_rbar = ('| {n_fmt}/{total_fmt}{postfix}')
+        new_rbar = "| {n_fmt}/{total_fmt}{postfix}"
         # bar_format = '{l_bar}%s{bar}%s' % (Fore.GREEN, Fore.RESET)
-        bar_format = '{l_bar}{bar}'
-        self.tqdm = tqdm.tqdm(desc='Completed', total=total_jobs, unit='jobs',
-                              bar_format=bar_format + new_rbar, dynamic_ncols=True, position=0)
+        bar_format = "{l_bar}{bar}"
+        self.tqdm = tqdm.tqdm(
+            desc="Completed",
+            total=total_jobs,
+            unit="jobs",
+            bar_format=bar_format + new_rbar,
+            dynamic_ncols=True,
+            position=0,
+        )
         self.bestval = None
         self.minimize = minimize
-        self.postfix_dict = {"MedianETA": None,
-                             "best_value": None}
+        self.postfix_dict = {"MedianETA": None, "best_value": None}
 
     def update_median_time_left(self, time_left):
         if time_left:
             self.postfix_dict["MedianETA"] = time_left
-            dict_to_use = {key: value for key, value in self.postfix_dict.items() if value is not None}
+            dict_to_use = {
+                key: value
+                for key, value in self.postfix_dict.items()
+                if value is not None
+            }
 
             self.tqdm.set_postfix(**dict_to_use)
 
@@ -101,7 +124,9 @@ class CompletedJobsBar(ProgressBar):
             self.bestval = max(self.bestval, new_val)
 
         self.postfix_dict["best_value"] = self.bestval
-        dict_to_use = {key: value for key, value in self.postfix_dict.items() if value is not None}
+        dict_to_use = {
+            key: value for key, value in self.postfix_dict.items() if value is not None
+        }
 
         self.tqdm.set_postfix(**dict_to_use)
 

@@ -23,9 +23,14 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     tuple_len = len(tuple_input)
     y_log = np.log(np.abs(y + 1e-7))
     v_log = np.log(np.abs(v + 1e-7))
-    assert (type(w) == type(v) == int), "w and v have to be integers"
+    assert type(w) == type(v) == int, "w and v have to be integers"
 
-    result = (x - 3.14) ** 2 + (y_log - 2.78) ** 2 + (u * v_log * w + 1) ** 2 + (u + v_log + w - 5 + tuple_len) ** 2
+    result = (
+        (x - 3.14) ** 2
+        + (y_log - 2.78) ** 2
+        + (u * v_log * w + 1) ** 2
+        + (u + v_log + w - 5 + tuple_len) ** 2
+    )
     if sharp_penalty and x > 3.20:
         result += 1
 
@@ -54,7 +59,7 @@ def main(working_dir, fn_args, test_resume):
             exit_for_resume()
 
     noisy_result = noiseless_result + 0.5 * np.random.normal()
-    metrics = {'result': noisy_result, 'noiseless_result': noiseless_result}
+    metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
     return metrics
 
 

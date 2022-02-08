@@ -23,9 +23,14 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     tuple_len = len(tuple_input)
     y_log = np.log(np.abs(y + 1e-7))
     v_log = np.log(np.abs(v + 1e-7))
-    assert (type(w) == type(v) == int), "w and v have to be integers"
+    assert type(w) == type(v) == int, "w and v have to be integers"
 
-    result = (x - 3.14) ** 2 + (y_log - 2.78) ** 2 + (u * v_log * w + 1) ** 2 + (u + v_log + w - 5 + tuple_len) ** 2
+    result = (
+        (x - 3.14) ** 2
+        + (y_log - 2.78) ** 2
+        + (u * v_log * w + 1) ** 2
+        + (u + v_log + w - 5 + tuple_len) ** 2
+    )
     if sharp_penalty and x > 3.20:
         result += 1
 
@@ -35,7 +40,7 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Error before update_params (has separate handling)
     if np.random.rand() < 0.05:
@@ -44,7 +49,7 @@ if __name__ == '__main__':
     params = read_params_from_cmdline()
 
     # simulate that the jobs take some time
-    max_sleep_time = params.get('max_sleep_time', 10)
+    max_sleep_time = params.get("max_sleep_time", 10)
     time.sleep(np.random.randint(0, max_sleep_time))
 
     result_file = os.path.join(params.working_dir, "result.npy")
@@ -62,6 +67,6 @@ if __name__ == '__main__':
             exit_for_resume()
 
     noisy_result = noiseless_result + 0.5 * np.random.normal()
-    metrics = {'result': noisy_result, 'noiseless_result': noiseless_result}
+    metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
     save_metrics_params(metrics, params)
     print(noiseless_result)

@@ -28,13 +28,16 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         return cluster_id
 
     def submit_fn(self, job):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         self.generate_job_spec_file(job)
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
-        free_cpus_str = ','.join(map(str, free_cpus))
-        cmd = 'taskset --cpu-list {} bash {}'.format(free_cpus_str, job.run_script_path)
+        free_cpus_str = ",".join(map(str, free_cpus))
+        cmd = "taskset --cpu-list {} bash {}".format(free_cpus_str, job.run_script_path)
         cluster_id = self.generate_cluster_id()
-        new_futures_tuple = (cluster_id, self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True))
+        new_futures_tuple = (
+            cluster_id,
+            self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True),
+        )
         logger.info(f"Job with id {job.id} submitted locally.")
         job.futures_object = new_futures_tuple[1]
         self.futures_tuple.append(new_futures_tuple)
@@ -47,7 +50,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         concurrent.futures.wait(self.futures)
 
     def generate_job_spec_file(self, job):
-        job_file_name = '{}_{}.sh'.format(job.iteration, job.id)
+        job_file_name = "{}_{}.sh".format(job.iteration, job.id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
         cmd = job.generate_execution_cmd(self.paths)
         # Prepare namespace for string formatting (class vars + locals)
@@ -55,14 +58,18 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         namespace.update(vars(job))
         namespace.update(locals())
 
-        with open(run_script_file_path, 'w') as script_file:
+        with open(run_script_file_path, "w") as script_file:
             script_file.write(constants.LOCAL_RUN_SCRIPT % namespace)
-        os.chmod(run_script_file_path, 0O755)  # Make executable
+        os.chmod(run_script_file_path, 0o755)  # Make executable
 
         job.run_script_path = run_script_file_path
 
     def status(self, job):
-        future = [future for cluster_id, future in self.futures_tuple if cluster_id == job.cluster_id]
+        future = [
+            future
+            for cluster_id, future in self.futures_tuple
+            if cluster_id == job.cluster_id
+        ]
         if len(future) == 0:
             return 0
         future = future[0]
@@ -70,7 +77,7 @@ class Dummy_ClusterSubmission(ClusterSubmission):
             return 2
         else:
             if future.done():
-                if future.result().__dict__['returncode'] == 1:
+                if future.result().__dict__["returncode"] == 1:
                     return 4
                 return 3
             return 1
@@ -83,14 +90,19 @@ class Dummy_ClusterSubmission(ClusterSubmission):
         return [future for _, future in self.futures_tuple]
 
     def _process_requirements(self, requirements):
-        logger = logging.getLogger('cluster_utils')
-        self.cpus_per_job = requirements['request_cpus']
-        self.max_cpus = requirements.get('max_cpus', cpu_count())
+        logger = logging.getLogger("cluster_utils")
+        self.cpus_per_job = requirements["request_cpus"]
+        self.max_cpus = requirements.get("max_cpus", cpu_count())
         if self.max_cpus <= 0:
-            raise ValueError('CPU limit must be positive. Not {}.'.format(self.max_cpus))
+            raise ValueError(
+                "CPU limit must be positive. Not {}.".format(self.max_cpus)
+            )
         self.available_cpus = min(self.max_cpus, cpu_count())
         self.concurrent_jobs = self.available_cpus // self.cpus_per_job
         if self.concurrent_jobs == 0:
-            logger.warning('Total number of CPUs is smaller than requested CPUs per job. Resorting to 1 CPU per job')
+            logger.warning(
+                "Total number of CPUs is smaller than requested CPUs per job. Resorting"
+                " to 1 CPU per job"
+            )
             self.concurrent_jobs = self.available_cpus
         assert self.concurrent_jobs > 0

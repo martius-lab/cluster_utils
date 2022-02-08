@@ -16,7 +16,7 @@ EOF
 python -m cluster.hp_optimization tests/hp_opt.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
-    <<EOF  
+    <<EOF
 y
 y
 EOF

@@ -8,61 +8,85 @@ from subprocess import PIPE, run
 from cluster import constants
 from cluster.cluster_system import ClusterSubmission
 
-CondorRecord = namedtuple('CondorRecord',
-                          ['ID', 'owner', 'sub_date', 'sub_time', 'run_time', 'status', 'priority', 'size', 'cmd'])
+CondorRecord = namedtuple(
+    "CondorRecord",
+    [
+        "ID",
+        "owner",
+        "sub_date",
+        "sub_time",
+        "run_time",
+        "status",
+        "priority",
+        "size",
+        "cmd",
+    ],
+)
 
 
 class Condor_ClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True):
         super().__init__(paths, remove_jobs_dir)
 
-        os.environ["MPLBACKEND"] = 'agg'
+        os.environ["MPLBACKEND"] = "agg"
         self._process_requirements(requirements)
         self.exceptions_seen = set({})
 
     def submit_fn(self, job):
-        logger = logging.getLogger('cluster_utils')
+        logger = logging.getLogger("cluster_utils")
         self.generate_job_spec_file(job)
-        submit_cmd = 'condor_submit_bid {} {}\n'.format(self.bid, job.job_spec_file_path)
+        submit_cmd = "condor_submit_bid {} {}\n".format(
+            self.bid, job.job_spec_file_path
+        )
         while True:
             try:
-                result = run([submit_cmd], cwd=str(self.submission_dir), shell=True, stdout=PIPE, timeout=5.0)
-                submit_output = result.stdout.decode('utf-8')
+                result = run(
+                    [submit_cmd],
+                    cwd=str(self.submission_dir),
+                    shell=True,
+                    stdout=PIPE,
+                    timeout=5.0,
+                )
+                submit_output = result.stdout.decode("utf-8")
                 break
             except subprocess.TimeoutExpired:
                 logger.warning(f"Job submission for id {job.id} hangs. Retrying...")
 
         logger.info(f"Job with id {job.id} submitted.")
 
-        good_lines = [line for line in submit_output.split('\n') if 'submitted' in line]
-        bad_lines = [line for line in submit_output.split('\n') if 'WARNING' in line or 'ERROR' in line]
+        good_lines = [line for line in submit_output.split("\n") if "submitted" in line]
+        bad_lines = [
+            line
+            for line in submit_output.split("\n")
+            if "WARNING" in line or "ERROR" in line
+        ]
         if not good_lines or bad_lines:
             print(bad_lines)
             self.close()
-            raise RuntimeError('Cluster submission failed')
+            raise RuntimeError("Cluster submission failed")
         assert len(good_lines) == 1
-        new_cluster_id = good_lines[0].split(' ')[-1][:-1]
+        new_cluster_id = good_lines[0].split(" ")[-1][:-1]
         return new_cluster_id
 
     def stop_fn(self, cluster_id):
-        cmd = 'condor_rm {}'.format(cluster_id)
+        cmd = "condor_rm {}".format(cluster_id)
         return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
     def generate_job_spec_file(self, job):
-        job_file_name = 'job_{}_{}.sh'.format(job.iteration, job.id)
+        job_file_name = "job_{}_{}.sh".format(job.iteration, job.id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
-        job_spec_file_path = os.path.join(self.submission_dir, job_file_name + '.sub')
+        job_spec_file_path = os.path.join(self.submission_dir, job_file_name + ".sub")
         cmd = job.generate_execution_cmd(self.paths)
         # Prepare namespace for string formatting (class vars + locals)
         namespace = copy(vars(self))
         namespace.update(vars(job))
         namespace.update(locals())
 
-        with open(run_script_file_path, 'w') as script_file:
+        with open(run_script_file_path, "w") as script_file:
             script_file.write(constants.MPI_CLUSTER_RUN_SCRIPT % namespace)
-        os.chmod(run_script_file_path, 0O755)  # Make executable
+        os.chmod(run_script_file_path, 0o755)  # Make executable
 
-        with open(job_spec_file_path, 'w') as spec_file:
+        with open(job_spec_file_path, "w") as spec_file:
             spec_file.write(constants.MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
         job.job_spec_file_path = job_spec_file_path
@@ -78,63 +102,73 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
     def _process_requirements(self, requirements):
         # Job requirements
-        self.mem = requirements['memory_in_mb']
-        self.cpus = requirements['request_cpus']
-        self.gpus = requirements['request_gpus']
-        self.bid = requirements['bid']
+        self.mem = requirements["memory_in_mb"]
+        self.cpus = requirements["request_cpus"]
+        self.gpus = requirements["request_gpus"]
+        self.bid = requirements["bid"]
 
         other_requirements = []
 
-        if self.gpus > 0 and requirements['cuda_requirement'] is not None:
-            cuda_req = requirements['cuda_requirement']
+        if self.gpus > 0 and requirements["cuda_requirement"] is not None:
+            cuda_req = requirements["cuda_requirement"]
             try:
                 float(cuda_req)
                 requirement_is_float = True
             except ValueError:
                 requirement_is_float = False
 
-            if cuda_req.startswith('<') or cuda_req.startswith('>'):
-                self.cuda_line = 'TARGET.CUDACapability{}'.format(cuda_req)
+            if cuda_req.startswith("<") or cuda_req.startswith(">"):
+                self.cuda_line = "TARGET.CUDACapability{}".format(cuda_req)
             elif requirement_is_float:
-                self.cuda_line = 'TARGET.CUDACapability>={}'.format(cuda_req)
+                self.cuda_line = "TARGET.CUDACapability>={}".format(cuda_req)
             else:
-                self.cuda_line = '{}'.format(cuda_req)
+                self.cuda_line = "{}".format(cuda_req)
 
             other_requirements.append(self.cuda_line)
-            self.cuda_line = ''
-            self.partition = 'gpu'
-            self.constraint = 'gpu'
+            self.cuda_line = ""
+            self.partition = "gpu"
+            self.constraint = "gpu"
         else:
-            self.cuda_line = ''
-            self.partition = 'general'
-            self.constraint = ''
+            self.cuda_line = ""
+            self.partition = "general"
+            self.constraint = ""
 
-        if self.gpus > 0 and 'gpu_memory_mb' in requirements:
-            other_requirements.append('TARGET.CUDAGlobalMemoryMb>={}'.format(requirements['gpu_memory_mb']))
+        if self.gpus > 0 and "gpu_memory_mb" in requirements:
+            other_requirements.append(
+                "TARGET.CUDAGlobalMemoryMb>={}".format(requirements["gpu_memory_mb"])
+            )
 
         def hostnames_to_requirement(hostnames):
-            single_reqs = [f'UtsnameNodename =?= \"{hostname}\"' for hostname in hostnames]
-            return '(' + ' || '.join(single_reqs) + ')'
+            single_reqs = [
+                f'UtsnameNodename =?= "{hostname}"' for hostname in hostnames
+            ]
+            return "(" + " || ".join(single_reqs) + ")"
 
-        hostname_list = requirements.get('hostname_list', [])
+        hostname_list = requirements.get("hostname_list", [])
         if hostname_list:
             other_requirements.append(hostnames_to_requirement(hostname_list))
 
-        forbidden_hostnames = requirements.get('forbidden_hostnames', [])
+        forbidden_hostnames = requirements.get("forbidden_hostnames", [])
         if forbidden_hostnames:
-            single_reqs = [f'UtsnameNodename =!= \"{hostname}\"' for hostname in forbidden_hostnames]
+            single_reqs = [
+                f'UtsnameNodename =!= "{hostname}"' for hostname in forbidden_hostnames
+            ]
             other_requirements.extend(single_reqs)
 
-        concurrency_limit_tag = requirements.get('concurrency_limit_tag', None)
-        concurrency_limit = requirements.get('concurrency_limit', None)
+        concurrency_limit_tag = requirements.get("concurrency_limit_tag", None)
+        concurrency_limit = requirements.get("concurrency_limit", None)
 
-        self.concurrent_line = ''
+        self.concurrent_line = ""
         if concurrency_limit_tag is not None and concurrency_limit is not None:
-            concurrency_limit = constants.MPI_CLUSTER_MAX_NUM_TOKENS // concurrency_limit
-            self.concurrent_line = f'concurrency_limits=user.{concurrency_limit_tag}:{concurrency_limit}'
+            concurrency_limit = (
+                constants.MPI_CLUSTER_MAX_NUM_TOKENS // concurrency_limit
+            )
+            self.concurrent_line = (
+                f"concurrency_limits=user.{concurrency_limit_tag}:{concurrency_limit}"
+            )
 
         if other_requirements:
-            concat_requirements = ' && '.join(other_requirements)
+            concat_requirements = " && ".join(other_requirements)
             self.requirements_line = f"requirements={concat_requirements}"
         else:
-            self.requirements_line = ''
+            self.requirements_line = ""
