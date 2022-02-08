@@ -112,5 +112,8 @@ def produce_basic_report(
         for hook in report_hooks:
             hook.write_section(latex, file_gen, hook_args)
         logger.info("Calling pdflatex on prepared report")
-        latex.produce_pdf(output_file)
-        log_and_print(logger, f"Report saved at {output_file}")
+        try:
+            latex.produce_pdf(output_file)
+            log_and_print(logger, f"Report saved at {output_file}")
+        except Exception:
+            logging.warning("Could not generate PDF report", exc_info=True)
