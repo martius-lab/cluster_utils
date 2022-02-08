@@ -139,7 +139,7 @@ You can run the tests using `nox -s tests`.
 This will setup a new virtual environment, install cluster_utils and its dependencies, and run the tests.
 As this is quite a slow process, you can reuse the virtual environment after you set it up once, using the `-r` flag: `nox -r -s tests`.
 
-Any merge request to master has to pass the continuous integration pipeline, which basically runs `nox -s lint tests`.
+Any merge request to master has to pass the continuous integration pipeline, which basically runs `nox`.
 In order to make sure continuous integration passes, you can thus run this command locally.
 
 ### Workflow with pre-commit

@@ -25,12 +25,8 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  - pip install nox==2022.1.7
 
-lint:
+lint_and_test:
   script:
-    - nox -s lint
-
-test:
-  script:
-    - nox -s tests
+    - pip install nox==2022.1.7
+    - nox
