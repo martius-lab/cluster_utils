@@ -126,6 +126,24 @@ You can assign different tags to different runs. In that way you can limit only 
 
 ## Development
 
+### Setting Up a Development Environment
+
 1. Create a development environment (e.g. using virtualenv): `python3 -m virtualenv .venv`, `source .venv/bin/activate`
 2. Install `cluster_utils` in editable mode: `pip install -e ".[dev]"`
 3. Register the pre-commit hooks: `pre-commit install`
+
+### Running Tests
+
+cluster_utils currently only has simple tests that just run some of the examples.
+You can run the tests using `nox -s tests`.
+This will setup a new virtual environment, install cluster_utils and its dependencies, and run the tests.
+As this is quite a slow process, you can reuse the virtual environment after you set it up once, using the `-r` flag: `nox -r -s tests`.
+
+Any merge request to master has to pass the continuous integration pipeline, which basically runs `nox -s lint tests`.
+In order to make sure continuous integration passes, you can thus run this command locally.
+
+### Workflow with pre-commit
+
+When you commit, pre-commit will run some checks on the files you are changing. If one of them fails a check, the commit will be aborted. In this case, you should fix and git add the file again, then repeat the commit. pre-commit also runs some automatic formatting on the files (using black). When files are changed this way, you can inspect the changes using git diff, and when everything is okay, run git add to accept the formatted files.
+
+You can also run the pre-commit checks manually on all files in the repository using `pre-commit run -a`. In fact, this is useful to make sure a commit runs through without any checks failing.
