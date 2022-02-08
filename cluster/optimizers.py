@@ -116,7 +116,11 @@ class Optimizer(ABC):
 
             for hook in self.report_hooks:
                 hook.write_section(latex, file_gen, hook_args)
-            latex.produce_pdf(output_file)
+
+            try:
+                latex.produce_pdf(output_file)
+            except Exception:
+                logging.warning("Could not generate PDF report", exc_info=True)
 
     def distribution_plots(self, filename_generator):
         for distr in self.optimized_params:
