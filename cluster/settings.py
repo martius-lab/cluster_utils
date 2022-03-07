@@ -11,7 +11,7 @@ import socket
 import sys
 import time
 import traceback
-from typing import Any
+from typing import Any, NamedTuple
 
 import pyuv
 import smart_settings
@@ -60,6 +60,36 @@ class GenerateReportSetting(enum.Enum):
             ) from None
 
         settings[key] = value_enum
+
+
+class SingularitySettings(NamedTuple):
+    #: Path to time Singularity image
+    image: str
+
+    #: Singularity executable.  Defaults to "singularity" but can, for example, be used
+    #: to explicitly use Apptainer instead.
+    executable: str = "singularity"
+
+    #: Per default the container is run with `singularity exec`.  Set this to True to
+    #: use `singularity run` instead (for images that use a run script for environment
+    #: setup before executing the given command).
+    use_run: bool = False
+
+    #: List of additional arguments to Singularity.
+    args: list[str] = []
+
+    @classmethod
+    def from_settings(cls, settings: dict[str, Any]) -> SingularitySettings:
+        try:
+            obj = cls(**settings)
+        except TypeError as e:
+            raise ValueError(f"Failed to process Singularity settings: {e}") from e
+
+        # some additional checks
+        if not os.path.exists(os.path.expanduser(obj.image)):
+            raise FileNotFoundError(f"Singularity image {obj.image} not found.")
+
+        return obj
 
 
 class SettingsJsonEncoder(json.JSONEncoder):

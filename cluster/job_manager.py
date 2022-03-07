@@ -290,6 +290,7 @@ def post_iteration_opt(
 
 
 def hp_optimization(
+    *,
     base_paths_and_files: dict[str, str],
     submission_requirements,
     optimized_params,
@@ -301,6 +302,7 @@ def hp_optimization(
     kill_bad_jobs_early,
     early_killing_params,
     opt_procedure_name,
+    singularity_settings,
     optimizer_str="cem_metaoptimizer",
     remove_jobs_dir=True,
     remove_working_dirs=True,
@@ -400,6 +402,7 @@ def hp_optimization(
                     connection_info=comm_server.connection_info,
                     metric_to_watch=metric_to_optimize,
                     opt_procedure_name=opt_procedure_name,
+                    singularity_settings=singularity_settings,
                 )
                 if isinstance(hp_optimizer, NGOptimizer):
                     hp_optimizer.add_candidate(new_job.id)
@@ -542,12 +545,14 @@ def kill_bad_looking_jobs(
 
 
 def grid_search(
+    *,
     base_paths_and_files,
     submission_requirements,
     optimized_params,
     other_params,
     restarts,
     opt_procedure_name,
+    singularity_settings,
     remove_jobs_dir=True,
     remove_working_dirs=False,
     samples=None,
@@ -592,6 +597,7 @@ def grid_search(
             iteration=hp_optimizer.iteration,
             connection_info=comm_server.connection_info,
             opt_procedure_name=opt_procedure_name,
+            singularity_settings=singularity_settings,
         )
         for setting in settings
     ]

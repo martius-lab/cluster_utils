@@ -1,13 +1,21 @@
+from __future__ import annotations
+
 import logging
 import os
+import pathlib
 import time
+import typing
 from contextlib import suppress
 from copy import deepcopy
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 
 from cluster import constants
 from cluster.utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
+
+if TYPE_CHECKING:
+    from cluster.settings import SingularitySettings
 
 
 class JobStatus:
@@ -23,6 +31,7 @@ class JobStatus:
 class Job:
     def __init__(
         self,
+        *,
         id,  # noqa: A002
         settings,
         other_params,
@@ -30,6 +39,7 @@ class Job:
         iteration,
         connection_info,
         opt_procedure_name,
+        singularity_settings: Optional[SingularitySettings],
         metric_to_watch=None,
     ):
         self.metric_to_watch = metric_to_watch
@@ -60,6 +70,7 @@ class Job:
         self.reported_metric_values = None
         self.futures_object = None
         self.opt_procedure_name = opt_procedure_name
+        self.singularity_settings = singularity_settings
 
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
@@ -153,6 +164,14 @@ class Job:
                 '"' + str(current_setting) + '"',
             )
 
+        if self.singularity_settings:
+            exec_cmd = self.singularity_wrap(
+                exec_cmd,
+                self.singularity_settings,
+                paths["main_path"],
+                current_setting["working_dir"],
+            )
+
         res = "\n".join(
             [
                 set_cwd,
@@ -164,6 +183,48 @@ class Job:
             ]
         )
         return res
+
+    def singularity_wrap(
+        self,
+        exec_cmd: str,
+        singularity_settings: SingularitySettings,
+        exec_dir: typing.Union[str, os.PathLike],
+        working_dir: typing.Union[str, os.PathLike],
+    ) -> str:
+        """Wrap the given command to execute it in a Singularity container.
+
+        Args:
+            exec_cmd: The command that shall be executed in the container.
+        """
+        logger = logging.getLogger("cluster_utils")
+
+        singularity_image = pathlib.Path(singularity_settings.image).expanduser()
+        working_dir = pathlib.Path(working_dir)
+
+        if not singularity_image.exists():
+            raise FileNotFoundError(
+                f"Singularity image '{singularity_image}' does not exist"
+            )
+
+        # create model directory (so it can be bound into the container)
+        working_dir.mkdir(exist_ok=True)
+
+        # construct singularity command
+        cwd = os.fspath(exec_dir)
+        bind_dirs = ["/tmp", os.fspath(working_dir), cwd]
+        singularity_cmd = [
+            singularity_settings.executable,
+            "run" if singularity_settings.use_run else "exec",
+            "--bind=%s" % ",".join(bind_dirs),
+            "--pwd=%s" % cwd,
+            *singularity_settings.args,
+            os.fspath(singularity_image),
+        ]
+
+        full_cmd = "{} {}".format(" ".join(singularity_cmd), exec_cmd)
+        logger.debug("Singularity-wrapped command: %s", full_cmd)
+
+        return full_cmd
 
     def set_results(self):
         flattened_params = dict(flatten_nested_string_dict(self.final_settings))
