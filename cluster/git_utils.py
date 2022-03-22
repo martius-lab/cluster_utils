@@ -156,7 +156,8 @@ class GitConnector(object):
     Working dir: & {working_dir}\\\\
     Origin: & {origin_url}\\\\
     Active branch: & {active_branch}\\\\
-    Commit: & {checkout_commit_hexsha_short} (from {checkout_commit_author} on {checkout_commit_date})\\\\  # noqa: B950
+    Commit: & {checkout_commit_hexsha_short}
+        (from {checkout_commit_author} on {checkout_commit_date})\\\\
     ~ & {checkout_commit_msg}
 \\end{{tabular}}"""
 
