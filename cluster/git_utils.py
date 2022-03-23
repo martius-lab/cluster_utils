@@ -10,7 +10,26 @@ from cluster.utils import rm_dir_full
 
 
 def sanitize_for_latex(string):
-    return string.replace("_", "-").replace("\\", "")
+    """Escape characters that have special meaning in latex."""
+    # first replace backslashes, so we don't mess up the following escapes
+    sanitized = string.replace("\\", r"\textbackslash ")
+
+    # list of replacements is based on https://tex.stackexchange.com/a/34586
+    replacements = {
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde ",
+        "^": r"\textasciicircum ",
+    }
+    for old, new in replacements.items():
+        sanitized = sanitized.replace(old, new)
+
+    return sanitized
 
 
 def get_git_url():
