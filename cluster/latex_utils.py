@@ -3,7 +3,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from shutil import copyfile
-from subprocess import PIPE, run
+from subprocess import PIPE, CalledProcessError, run
 from tempfile import TemporaryDirectory
 
 
@@ -92,7 +92,23 @@ class LatexFile(object):
             with open(latex_file, "w") as f:
                 f.write(whole_latex)
             logger.info(f"pdflatex call started on {latex_file}")
-            run(["pdflatex", latex_file], cwd=tmpdir, check=True, stdout=PIPE)
+            try:
+                run(
+                    ["pdflatex", "-interaction=nonstopmode", latex_file],
+                    cwd=tmpdir,
+                    check=True,
+                    stdout=PIPE,
+                )
+            except CalledProcessError as e:
+                # save the log and tex for debugging
+                logger.error("pdflatex failed.  Save log and tex file for debugging.")
+                latex_log_file = os.path.join(tmpdir, "latex.log")
+                copyfile(latex_file, output_file + ".tex")
+                copyfile(latex_log_file, output_file + ".log")
+
+                # re-raise the error
+                raise e
+
             logger.info(f"pdflatex call produced output file {output_file}")
             output_tmp = os.path.join(tmpdir, "latex.pdf")
             copyfile(output_tmp, output_file)
