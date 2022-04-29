@@ -28,7 +28,7 @@ def list_to_tuple(maybe_list):
 
 
 def check_valid_param_name(string):
-    pat = "[A-Za-z0-9_.-:]*$"
+    pat = "[A-Za-z0-9_.:-]*$"
     if type(string) is not str:
         raise TypeError("Parameter '{}' not valid. String expected.".format(string))
     if string in constants.RESERVED_PARAMS + (constants.WORKING_DIR,):
