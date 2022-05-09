@@ -45,7 +45,7 @@ def check_valid_param_name(string):
         )
     if not bool(re.compile(pat).match(string)):
         raise ValueError(
-            "Parameter name '{}' not valid. Only '[0-9][a-z][A-Z]_-.' allowed.".format(
+            "Parameter name '{}' not valid. Only '[0-9][a-z][A-Z]_-.:' allowed.".format(
                 string
             )
         )
