@@ -26,6 +26,7 @@ class JobStatus(enum.Enum):
     FAILED = 2
     RUNNING = 3
     SUBMITTED = 4
+    CLUSTER_UTILS_EXIT = 5
 
 
 class JobRun(typing.NamedTuple):
@@ -55,6 +56,7 @@ def parse_cluster_run_log(
     """
     jobs: typing.DefaultDict[int, typing.List[JobRun]] = collections.defaultdict(list)
     job_start = {}
+    end_time = None
 
     with open(log_file_path, "r") as f:
         for i, line in enumerate(f):
@@ -69,6 +71,11 @@ def parse_cluster_run_log(
                 end_reason = JobStatus.FAILED
             elif line.endswith("submitted.\n"):
                 end_reason = JobStatus.SUBMITTED
+            elif line.endswith("INFO - Exiting now\n"):
+                # this is not about a specific job, just get the timestamp and continue
+                date_str = line.split(" - ", 1)[0]
+                end_time = dateutil.parser.parse(date_str)
+                continue
             else:
                 # ignore this line
                 continue
@@ -98,15 +105,21 @@ def parse_cluster_run_log(
                         )
                     )
 
+    # handle jobs that are not listed as ended in the log
     if job_start:
-        logging.warning(
-            "The following jobs have start times without end: {}".format(
-                job_start.keys()
+        if end_time is None:
+            logging.warning(
+                "The following jobs have start times without end: {}".format(
+                    job_start.keys()
+                )
             )
-        )
-        end_time = datetime.datetime.now()
+            end_time = datetime.datetime.now()
+            job_status = JobStatus.RUNNING
+        else:
+            job_status = JobStatus.CLUSTER_UTILS_EXIT
+
         for job_id, start_time in job_start.items():
-            jobs[job_id].append(JobRun(start_time, end_time, JobStatus.RUNNING))
+            jobs[job_id].append(JobRun(start_time, end_time, job_status))
 
     return jobs
 
@@ -123,6 +136,7 @@ def plot_timeline(jobs: typing.Dict[int, typing.List[JobRun]]):
         JobStatus.FINISHED: "s",
         JobStatus.FAILED: "X",
         JobStatus.RUNNING: ">",
+        JobStatus.CLUSTER_UTILS_EXIT: "|",
     }
     for job_id, intervals in jobs.items():
         color = colors[job_id % len(colors)]
