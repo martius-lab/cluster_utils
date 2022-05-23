@@ -1,7 +1,7 @@
 import datetime
 import pathlib
 
-import pytest
+import pytest  # type: ignore
 
 from cluster.scripts.plot_job_timeline import JobStatus, parse_cluster_run_log
 
@@ -13,7 +13,7 @@ def cluster_run_logfile():
 
 
 def test_parse_cluster_run_log(cluster_run_logfile):
-    log = parse_cluster_run_log(cluster_run_logfile)
+    log = parse_cluster_run_log(cluster_run_logfile, cap_running_jobs_length=True)
 
     dt = datetime.datetime
     expected_log = {
@@ -79,7 +79,8 @@ def test_parse_cluster_run_log(cluster_run_logfile):
             ),
             (
                 dt(2022, 4, 20, 19, 22, 51, 599000),
-                dt(2022, 5, 19, 9, 5, 10, 715145),
+                # end time of this is end_of_log + 0.4*log_duration
+                dt(2022, 4, 20, 20, 42, 13, 16000),
                 JobStatus.RUNNING,
             ),
         ],
@@ -133,13 +134,7 @@ def test_parse_cluster_run_log(cluster_run_logfile):
 
     assert log[0] == expected_log[0]
     assert log[1] == expected_log[1]
+    assert log[2] == expected_log[2]
     assert log[3] == expected_log[3]
     assert log[4] == expected_log[4]
     assert log[5] == expected_log[5]
-
-    # job 2 needs special handling, as it is still running, so the last timestamp
-    # depends on when the function was called (i.e. roughly now)
-    assert log[2][:3] == expected_log[2][:3]
-    assert log[2][3][0] == dt(2022, 4, 20, 19, 22, 51, 599000)
-    assert (dt.now() - log[2][3][1]) < datetime.timedelta(seconds=10)
-    assert log[2][3][2] == JobStatus.RUNNING

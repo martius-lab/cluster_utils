@@ -41,12 +41,16 @@ class JobRun(typing.NamedTuple):
 
 
 def parse_cluster_run_log(
-    log_file_path: typing.Union[str, os.PathLike]
+    log_file_path: typing.Union[str, os.PathLike], cap_running_jobs_length: bool = False
 ) -> typing.DefaultDict[int, typing.List[JobRun]]:
     """Parse job submission/start/end-times from log.
 
     Args:
-        log_file_path: Path to the "cluster_run.log" file.
+        log_file_path:  Path to the "cluster_run.log" file.
+        cap_running_jobs_length:  If false the end point of jobs that are still running
+            is set to the current time. If true, it is limited to not increase the plot
+            period too much.  This is useful when viewing old logs where the timestamps
+            are far away from now.
 
     Returns:
         Dictionary mapping job id to a list of runs of that job.
@@ -57,6 +61,9 @@ def parse_cluster_run_log(
     jobs: typing.DefaultDict[int, typing.List[JobRun]] = collections.defaultdict(list)
     job_start = {}
     end_time = None
+
+    first_timestamp = None
+    timestamp = None
 
     with open(log_file_path, "r") as f:
         for i, line in enumerate(f):
@@ -88,6 +95,10 @@ def parse_cluster_run_log(
             timestamp = dateutil.parser.parse(m.group(1))
             if end_reason is None:
                 job_start[job_id] = timestamp
+
+                # get start of first job (use it as start of the whole run)
+                if first_timestamp is None:
+                    first_timestamp = timestamp
             else:
                 # special handling for 'SUBMITTED' which starts and ends here
                 if end_reason == JobStatus.SUBMITTED:
@@ -113,7 +124,22 @@ def parse_cluster_run_log(
                     job_start.keys()
                 )
             )
+
             end_time = datetime.datetime.now()
+
+            if cap_running_jobs_length:
+                # get difference between last and first timestamp that was read from the
+                # log to get the time span of the plot
+                assert first_timestamp is not None
+                assert timestamp is not None
+                log_duration = timestamp - first_timestamp
+
+                # Set the end time of running jobs to now, but cap it if it exceeds the
+                # log duration by more than 40%
+                max_end_time = timestamp + 0.4 * log_duration
+                if end_time > max_end_time:
+                    end_time = max_end_time
+
             job_status = JobStatus.RUNNING
         else:
             job_status = JobStatus.CLUSTER_UTILS_EXIT
@@ -176,10 +202,19 @@ def main():
     parser.add_argument(
         "cluster_utils_log_file", type=str, help="Path to the cluster_run.log file."
     )
+    parser.add_argument(
+        "--cap-running-jobs",
+        action="store_true",
+        help="""If set, limit the end point of running jobs in the plot.  Useful for
+            older logs.
+        """,
+    )
     args = parser.parse_args()
 
     try:
-        jobs = parse_cluster_run_log(args.cluster_utils_log_file)
+        jobs = parse_cluster_run_log(
+            args.cluster_utils_log_file, cap_running_jobs_length=args.cap_running_jobs
+        )
     except Exception as e:
         logging.fatal(e)
         return 1
