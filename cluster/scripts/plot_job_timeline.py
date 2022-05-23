@@ -150,7 +150,10 @@ def parse_cluster_run_log(
     return jobs
 
 
-def plot_timeline(jobs: typing.Dict[int, typing.List[JobRun]]):
+def plot_timeline(
+    jobs: typing.Dict[int, typing.List[JobRun]],
+    save_to_file: typing.Optional[str] = None,
+):
     fig, ax = plt.subplots()
     # ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(1))
@@ -194,7 +197,10 @@ def plot_timeline(jobs: typing.Dict[int, typing.List[JobRun]]):
     ax.set_xlabel("Time")
     ax.set_ylabel("Job ID")
 
-    plt.show()
+    if save_to_file:
+        plt.savefig(save_to_file)
+    else:
+        plt.show()
 
 
 def main():
@@ -209,6 +215,12 @@ def main():
             older logs.
         """,
     )
+    parser.add_argument(
+        "--save",
+        type=str,
+        metavar="FILE",
+        help="Do not show plot but save to the specified file.",
+    )
     args = parser.parse_args()
 
     try:
@@ -219,7 +231,7 @@ def main():
         logging.fatal(e)
         return 1
 
-    plot_timeline(jobs)
+    plot_timeline(jobs, save_to_file=args.save)
 
     return 0
 
