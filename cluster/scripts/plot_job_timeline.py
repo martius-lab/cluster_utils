@@ -200,9 +200,10 @@ def plot_timeline(
     yticks_len = len(ax.get_yticks())
     xticks_len = len(ax.get_xticks())
     size = plt.gcf().get_size_inches()
-    plt.gcf().set_size_inches(
-        size[0] * int(xticks_len // 3), size[1] * int(yticks_len // 20)
-    )
+    if xticks_len > 3 and yticks_len > 20:
+        plt.gcf().set_size_inches(
+            size[0] * int(xticks_len // 3), size[1] * int(yticks_len // 20)
+        )
 
     if save_to_file:
         plt.savefig(save_to_file)
