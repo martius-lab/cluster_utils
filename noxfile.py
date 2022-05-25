@@ -2,7 +2,7 @@ import tempfile
 
 import nox
 
-nox.options.sessions = ("lint", "tests")
+nox.options.sessions = ("lint", "tests", "pytest")
 LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
 
 
@@ -20,6 +20,13 @@ def lint(session):
 def black(session):
     session.install("black")
     session.run("black", *LOCATIONS)
+
+
+@nox.session(python="3.6")
+def pytest(session):
+    session.install(".")
+    session.install("pytest")
+    session.run("pytest")
 
 
 @nox.session(python=["3.6"])

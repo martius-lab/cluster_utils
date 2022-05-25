@@ -1,0 +1,63 @@
+2022-04-20 17:14:01,228 - cluster_utils - INFO - Creating directory /home/felixwidmaier/tmp/lttfs_2022-04-20/working_directories
+2022-04-20 17:14:01,230 - cluster_utils - INFO - Logs of individual jobs stored at /home/felixwidmaier/.cache/cluster_utils-lttfs_2022-04-20-jobs-sidr0tsj
+2022-04-20 17:14:01,231 - cluster_utils - INFO - No earlier optimization status found. Starting new optimization
+2022-04-20 17:14:06,408 - cluster_utils - INFO - CONDOR detected, running CONDOR job submission
+2022-04-20 17:14:06,409 - cluster_utils - INFO - Register submission hook GitConnector
+2022-04-20 17:14:06,411 - cluster_utils - INFO - Create local git clone of https://github.com/intelligent-soft-robots/learning_table_tennis_from_scratch.git in /home/felixwidmaier/.cache/cluster_utils-lttfs_2022-04-20-project-93l8t09k using branch master, full depth and commit latest ... 
+2022-04-20 17:14:07,925 - cluster_utils - INFO - Using commit 95d333a in each iteration
+2022-04-20 17:14:07,974 - cluster_utils - INFO - Master script running on IP: 10.15.1.6
+2022-04-20 17:14:07,975 - cluster_utils - INFO - Communication happening on port: 58384
+2022-04-20 17:14:08,442 - cluster_utils - INFO - Job with id 0 submitted.
+2022-04-20 17:14:08,863 - cluster_utils - INFO - Job with id 1 submitted.
+2022-04-20 17:14:09,513 - cluster_utils - INFO - Job with id 2 submitted.
+2022-04-20 17:14:09,936 - cluster_utils - INFO - Job with id 3 submitted.
+2022-04-20 17:14:10,609 - cluster_utils - INFO - Job with id 4 submitted.
+2022-04-20 17:14:11,149 - cluster_utils - INFO - Job with id 5 submitted.
+2022-04-20 17:14:26,961 - cluster_utils - INFO - Job 0 started on hostname g051
+2022-04-20 17:14:28,503 - cluster_utils - INFO - Job 4 started on hostname g022
+2022-04-20 17:14:28,503 - cluster_utils - INFO - Job 1 started on hostname g022
+2022-04-20 17:14:29,650 - cluster_utils - INFO - Job 3 started on hostname g020
+2022-04-20 17:14:32,215 - cluster_utils - INFO - Job 2 started on hostname g058
+2022-04-20 17:15:43,694 - cluster_utils - INFO - Job 4 announced it is 0% done.
+2022-04-20 17:15:43,695 - cluster_utils - INFO - Job 4 exited to be resumed.
+2022-04-20 17:16:33,933 - cluster_utils - INFO - Job 4 started on hostname g051
+2022-04-20 17:17:49,105 - cluster_utils - WARNING - Job 4 died with error ['RuntimeError: Maximum number of retries is reached.  Exit with failure.\n'].
+2022-04-20 17:17:49,105 - cluster_utils - INFO - Job 4 announced it end but no results were sent.
+2022-04-20 17:17:50,946 - cluster_utils - WARNING - [1;31m Job: 4 on hostname g051 failed with error:[0m
+Traceback (most recent call last):
+  File "/lustre/home/felixwidmaier/.cache/cluster_utils-lttfs_2022-04-20-project-93l8t09k/hp_optim/run_learning.py", line 434, in <module>
+    sys.exit(main())
+  File "/lustre/home/felixwidmaier/.cache/cluster_utils-lttfs_2022-04-20-project-93l8t09k/hp_optim/run_learning.py", line 399, in main
+    raise RuntimeError("Maximum number of retries is reached.  Exit with failure.")
+RuntimeError: Maximum number of retries is reached.  Exit with failure.
+
+2022-04-20 17:56:44,141 - cluster_utils - INFO - Job 0 announced it is 33% done.
+2022-04-20 17:56:44,141 - cluster_utils - INFO - Job 0 exited to be resumed.
+2022-04-20 17:57:36,341 - cluster_utils - INFO - Job 0 started on hostname g018
+2022-04-20 18:04:36,028 - cluster_utils - INFO - Job 1 announced it is 33% done.
+2022-04-20 18:04:36,028 - cluster_utils - INFO - Job 1 exited to be resumed.
+2022-04-20 18:05:32,693 - cluster_utils - INFO - Job 1 started on hostname g051
+2022-04-20 18:06:57,447 - cluster_utils - INFO - Job 3 announced it is 33% done.
+2022-04-20 18:06:57,448 - cluster_utils - INFO - Job 3 exited to be resumed.
+2022-04-20 18:07:31,944 - cluster_utils - INFO - Job 3 started on hostname g051
+2022-04-20 18:12:50,330 - cluster_utils - INFO - Job 2 announced it is 33% done.
+2022-04-20 18:12:50,330 - cluster_utils - INFO - Job 2 exited to be resumed.
+2022-04-20 18:13:34,271 - cluster_utils - INFO - Job 2 started on hostname g051
+2022-04-20 18:46:28,807 - cluster_utils - INFO - Job 0 announced it is 66% done.
+2022-04-20 18:46:28,808 - cluster_utils - INFO - Job 0 exited to be resumed.
+2022-04-20 18:47:04,790 - cluster_utils - INFO - Job 1 announced it is 66% done.
+2022-04-20 18:47:04,790 - cluster_utils - INFO - Job 1 exited to be resumed.
+2022-04-20 18:47:43,030 - cluster_utils - INFO - Job 0 started on hostname g051
+2022-04-20 18:47:44,598 - cluster_utils - INFO - Job 1 started on hostname g018
+2022-04-20 18:57:24,665 - cluster_utils - INFO - Job 3 announced it is 66% done.
+2022-04-20 18:57:24,666 - cluster_utils - INFO - Job 3 exited to be resumed.
+2022-04-20 18:57:43,862 - cluster_utils - INFO - Job 3 started on hostname g051
+2022-04-20 19:21:47,809 - cluster_utils - INFO - Job 2 announced it is 66% done.
+2022-04-20 19:21:47,810 - cluster_utils - INFO - Job 2 exited to be resumed.
+2022-04-20 19:22:51,599 - cluster_utils - INFO - Job 2 started on hostname g051
+2022-04-20 19:29:45,209 - cluster_utils - INFO - Job 0 sent results.
+2022-04-20 19:29:45,364 - cluster_utils - INFO - Job 0 finished successfully.
+2022-04-20 19:41:52,310 - cluster_utils - INFO - Job 1 sent results.
+2022-04-20 19:41:52,446 - cluster_utils - INFO - Job 1 finished successfully.
+2022-04-20 19:42:51,274 - cluster_utils - INFO - Job 3 sent results.
+2022-04-20 19:42:51,286 - cluster_utils - INFO - Job 3 finished successfully.

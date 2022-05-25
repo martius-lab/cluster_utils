@@ -23,6 +23,7 @@ setup(
         "pyuv",
         "cloudpickle",
         "smart_settings @ git+https://github.com/martius-lab/smart-settings.git",
+        "python-dateutil",
     ],
     extras_require={
         "dev": [
@@ -32,6 +33,11 @@ setup(
             "flake8-isort",
             "nox",
             "pre-commit",
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "cluster_utils_plot_timeline=cluster.scripts.plot_job_timeline:main",
         ]
     },
     zip_safe=False,
