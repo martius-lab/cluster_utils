@@ -15,6 +15,7 @@ class InteractiveMode:
             "list_idle_jobs": self.list_idle_jobs,
             "show_job": self.show_job,
             "stop_remaining_jobs": self.stop_remaining_jobs,
+            "stop_job": self.stop_job,
         }
 
     def __enter__(self):
@@ -68,6 +69,28 @@ class InteractiveMode:
                     for id in jobs_to_cancel
                 ]
                 print("Cancelled all remaining jobs.")
+        except Exception:
+            self.print("Error encountered")
+
+    def stop_job(self):
+        """Stop a single job (asking user to enter the ID)."""
+        self.print("List of running jobs:")
+        running_jobs = [job.id for job in self.cluster_interface.running_jobs]
+        self.print(running_jobs)
+        try:
+            self.print("Which job to stop?  Leave empty to abort.")
+            job_id_str = input()
+            if not job_id_str:
+                return
+            job_id = int(job_id_str)
+        except Exception:
+            self.print("Invalid ID")
+            return
+
+        try:
+            msg = "Job cancelled by cluster utils"
+            self.comm_server.handle_error_encountered((job_id, msg))
+            print("Cancelled job {}.".format(job_id))
         except Exception:
             self.print("Error encountered")
 
