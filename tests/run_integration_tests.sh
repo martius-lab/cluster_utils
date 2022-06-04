@@ -20,4 +20,12 @@ python -m cluster.hp_optimization tests/hp_opt.json \
 y
 y
 EOF
+
+python -m cluster.hp_optimization tests/hp_opt_nevergrad.json \
+    "no_user_interaction=True" \
+    "results_dir=\"$test_dir\"" \
+    <<EOF
+y
+y
+EOF
 # ^This is a temporary crutch because we need to say Yes to the questions cluster_utils asks

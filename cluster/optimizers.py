@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 
 import cloudpickle as pickle
 import nevergrad as ng
+import nevergrad.parametrization.parameter as par
 import numpy as np
 import pandas as pd
 
@@ -369,26 +370,28 @@ class NGOptimizer(Optimizer):
             param.param_name: self.get_ng_instrumentation(param)
             for param in self.optimized_params
         }
-        self.instrumentation = ng.Instrumentation(**self.instrumentation)
+        self.instrumentation = par.Instrumentation(**self.instrumentation)
         self.optimizer = ng_optimizer_dict[opt_alg](
-            instrumentation=self.instrumentation
+            parametrization=self.instrumentation
         )
         self.with_restarts = False
         self.candidates = {}
 
     def get_ng_instrumentation(self, param):
         if type(param) == distributions.TruncatedLogNormal:
-            return ng.var.Log(param.lower, param.upper, width=2.0)
+            return par.Log(lower=param.lower, upper=param.upper)
         if type(param) == distributions.TruncatedNormal:
-            return ng.var.Scalar().bounded(param.lower, param.upper)
+            return par.Scalar(lower=param.lower, upper=param.upper)
         if type(param) == distributions.IntLogNormal:
-            return ng.var.Log(param.lower, param.upper, width=2.0, dtype=int)
+            return par.Log(lower=param.lower, upper=param.upper).set_integer_casting()
         if type(param) == distributions.IntNormal:
-            return ng.var.Scalar(int).bounded(param.lower, param.upper)
+            return par.Scalar(
+                lower=param.lower, upper=param.upper
+            ).set_integer_casting()
         if type(param) == distributions.NumericalDistribution:
-            return ng.var.Scalar()
+            return par.Scalar()
         if type(param) == distributions.Discrete:
-            return ng.var.OrderedDiscrete(param.option_list)
+            return par.TransitionChoice(param.option_list)
         raise ValueError("Invalid Distribution")
 
     def ask(self):
