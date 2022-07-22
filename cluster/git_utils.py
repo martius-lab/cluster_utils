@@ -200,7 +200,6 @@ class GitConnector(object):
 
         # if url is local path, get url of origin from repo
         if os.path.exists(self._orig_url):
-
             try:
                 local_repo = self._connect_local_repo(self._orig_url)
             except git.exc.InvalidGitRepositoryError:

@@ -41,7 +41,6 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
 
 
 if __name__ == "__main__":
-
     # Error before update_params (has separate handling)
     if np.random.rand() < 0.05:
         raise ValueError("5 percent of all jobs die early for testing")

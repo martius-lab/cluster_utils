@@ -254,7 +254,6 @@ class Metaoptimizer(Optimizer):
         report_hooks,
         **optimizer_settings,
     ):
-
         if not os.path.exists(file):
             return None
 
