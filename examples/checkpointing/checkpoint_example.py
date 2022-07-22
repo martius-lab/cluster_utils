@@ -36,7 +36,6 @@ def load_checkpoint(load_path, model, optim):
 
 
 if __name__ == "__main__":
-
     # parameters are loaded from json file
     params = update_params_from_cmdline()
     # a folder for each run is created

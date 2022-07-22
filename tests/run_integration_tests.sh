@@ -5,6 +5,7 @@ test_dir=$1
 set -e
 set -x
 
+
 python -m cluster.grid_search tests/grid_search.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
@@ -12,6 +13,7 @@ python -m cluster.grid_search tests/grid_search.json \
 y
 y
 EOF
+
 
 python -m cluster.hp_optimization tests/hp_opt.json \
     "no_user_interaction=True" \
@@ -21,7 +23,17 @@ y
 y
 EOF
 
+
 python -m cluster.hp_optimization tests/hp_opt_nevergrad.json \
+    "no_user_interaction=True" \
+    "results_dir=\"$test_dir\"" \
+    <<EOF
+y
+y
+EOF
+
+
+python -m cluster.grid_search tests/grid_search_main_w_decorator.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF

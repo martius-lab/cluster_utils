@@ -513,7 +513,6 @@ def grid_search(
     load_existing_results=False,
     no_user_interaction=False,
 ):
-
     base_paths_and_files["current_result_dir"] = os.path.join(
         base_paths_and_files["result_dir"], "working_directories"
     )
