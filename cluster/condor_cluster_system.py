@@ -38,14 +38,20 @@ class Condor_ClusterSubmission(ClusterSubmission):
         submit_cmd = "condor_submit_bid {} {}\n".format(
             self.bid, job.job_spec_file_path
         )
-        while True:
+        for try_number in range(10):
+            if try_number == 9:
+                logging.exception("Job aborted, cluster unstable.")
+                raise Exception(
+                    "Too many submission timeouts, cluster seems to be too unstable to"
+                    " submit jobs"
+                )
             try:
                 result = run(
                     [submit_cmd],
                     cwd=str(self.submission_dir),
                     shell=True,
                     stdout=PIPE,
-                    timeout=5.0,
+                    timeout=15.0,
                 )
                 submit_output = result.stdout.decode("utf-8")
                 break
