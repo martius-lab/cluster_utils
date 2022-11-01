@@ -2,6 +2,7 @@ import select
 import sys
 import termios
 import tty
+import time
 
 
 class InteractiveMode:
@@ -15,6 +16,7 @@ class InteractiveMode:
             "list_idle_jobs": self.list_idle_jobs,
             "show_job": self.show_job,
             "stop_remaining_jobs": self.stop_remaining_jobs,
+            "stop_list_of_jobs": self.stop_list_of_jobs,
         }
 
     def __enter__(self):
@@ -50,6 +52,32 @@ class InteractiveMode:
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__.keys()]
         except Exception:
             self.print("Error encountered, maybe invalid ID?")
+
+    def stop_list_of_jobs(self):
+        """
+        Stop a user-provided list of jobs.
+        """
+        try:
+            self.print("Which jobs do you want to kill? Provide comma-separated numbers, e.g. 1, 2, 3. Press N to abort.")
+            available_jobs = [job.id for job in self.cluster_interface.running_jobs]
+            self.print(f'Available jobs: {available_jobs}')
+            answer = input()
+            if not answer == 'N':
+                try:
+                    job_ids = [int(id_str) for id_str in answer.split(',')]
+                except Exception as e:
+                    self.print("Wrong format. Use a comma-separated list: 1, 2, 3 or press N to abort.")
+                    self.stop_list_of_jobs()
+                    return
+                # Checking if there is overlap between the specified job ids and the running jobs
+                jobs_to_cancel = set(job_ids) & set(available_jobs)
+                # Actually cancelling the jobs c.f. stop_remaining_jobs
+                msg = "Job cancelled by cluster utils"
+                for id in jobs_to_cancel:
+                    self.comm_server.handle_error_encountered((id, msg))
+                    time.sleep(0.2)
+        except Exception as e:
+            self.print(f'Error encountered: {e}')
 
     def stop_remaining_jobs(self):
         try:
