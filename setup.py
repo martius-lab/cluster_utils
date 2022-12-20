@@ -15,7 +15,7 @@ setup(
         "seaborn>=0.11.0",
         "pandas",
         "matplotlib",
-        "sklearn",
+        "scikit-learn",
         "numpy",
         "nevergrad",
         "tqdm",
