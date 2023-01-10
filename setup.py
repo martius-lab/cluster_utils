@@ -28,6 +28,7 @@ setup(
     extras_require={
         "dev": [
             "absolufy-imports",
+            "black",
             "flake8",
             "flake8-bugbear",
             "flake8-isort",
