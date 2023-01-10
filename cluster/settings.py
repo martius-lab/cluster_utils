@@ -142,9 +142,13 @@ def save_metrics_params(metrics, params):
 
 
 def is_settings_file(cmd_line):
-    if cmd_line.endswith(".json") or cmd_line.endswith(".yaml"):
+    if (
+        cmd_line.endswith(".json")
+        or cmd_line.endswith(".yml")
+        or cmd_line.endswith(".yaml")
+    ):
         if not os.path.isfile(cmd_line):
-            raise FileNotFoundError(f"{cmd_line}: No such JSON script found")
+            raise FileNotFoundError(f"{cmd_line}: No such settings file found")
         return True
     else:
         return False
