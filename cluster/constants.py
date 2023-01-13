@@ -31,7 +31,7 @@ MPI_CLUSTER_MAX_NUM_TOKENS = 10000
 
 MPI_CLUSTER_RUN_SCRIPT = """
 #!/bin/bash
-# %(id)d
+# Submission ID %(id)d
 
 %(cmd)s
 rc=$?
@@ -46,23 +46,32 @@ elif [[ $rc == 1 ]]; then
 fi
 """
 
-MPI_CLUSTER_JOB_SPEC_FILE = """
+MPI_CLUSTER_JOB_SPEC_FILE = """# Submission ID %(id)d
+JobBatchName=%(opt_procedure_name)s
 executable = %(run_script_file_path)s
+
 error = %(run_script_file_path)s.err
 output = %(run_script_file_path)s.out
 log = %(run_script_file_path)s.log
-request_memory=%(mem)s
+
 request_cpus=%(cpus)s
 request_gpus=%(gpus)s
-%(cuda_line)s
+request_memory=%(mem)s
+
 %(requirements_line)s
+
 on_exit_hold = (ExitCode =?= 3)
 on_exit_hold_reason = "Checkpointed, will resume"
 on_exit_hold_subcode = 2
 periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
+
+# Inherit environment variables at submission time in job script
 getenv=True
-JobBatchName=%(opt_procedure_name)s
+
 %(concurrent_line)s
+
+%(extra_submission_lines)s
+
 queue
 """
 

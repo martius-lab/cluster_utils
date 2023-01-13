@@ -113,34 +113,33 @@ class Condor_ClusterSubmission(ClusterSubmission):
         self.gpus = requirements["request_gpus"]
         self.bid = requirements["bid"]
 
-        other_requirements = []
-
-        if self.gpus > 0 and requirements["cuda_requirement"] is not None:
-            cuda_req = requirements["cuda_requirement"]
-            try:
-                float(cuda_req)
-                requirement_is_float = True
-            except ValueError:
-                requirement_is_float = False
-
-            if cuda_req.startswith("<") or cuda_req.startswith(">"):
-                self.cuda_line = "TARGET.CUDACapability{}".format(cuda_req)
-            elif requirement_is_float:
-                self.cuda_line = "TARGET.CUDACapability>={}".format(cuda_req)
-            else:
-                self.cuda_line = "{}".format(cuda_req)
-
-            other_requirements.append(self.cuda_line)
-            self.cuda_line = ""
+        condor_requirements = []
+        if self.gpus > 0:
             self.partition = "gpu"
             self.constraint = "gpu"
+
+            if requirements["cuda_requirement"] is not None:
+                cuda_req = requirements["cuda_requirement"]
+                try:
+                    float(cuda_req)
+                    requirement_is_float = True
+                except ValueError:
+                    requirement_is_float = False
+
+                if cuda_req.startswith("<") or cuda_req.startswith(">"):
+                    cuda_line = "TARGET.CUDACapability{}".format(cuda_req)
+                elif requirement_is_float:
+                    cuda_line = "TARGET.CUDACapability>={}".format(cuda_req)
+                else:
+                    cuda_line = "{}".format(cuda_req)
+
+                condor_requirements.append(cuda_line)
         else:
-            self.cuda_line = ""
             self.partition = "general"
             self.constraint = ""
 
         if self.gpus > 0 and "gpu_memory_mb" in requirements:
-            other_requirements.append(
+            condor_requirements.append(
                 "TARGET.CUDAGlobalMemoryMb>={}".format(requirements["gpu_memory_mb"])
             )
 
@@ -152,14 +151,20 @@ class Condor_ClusterSubmission(ClusterSubmission):
 
         hostname_list = requirements.get("hostname_list", [])
         if hostname_list:
-            other_requirements.append(hostnames_to_requirement(hostname_list))
+            condor_requirements.append(hostnames_to_requirement(hostname_list))
 
         forbidden_hostnames = requirements.get("forbidden_hostnames", [])
         if forbidden_hostnames:
             single_reqs = [
                 f'UtsnameNodename =!= "{hostname}"' for hostname in forbidden_hostnames
             ]
-            other_requirements.extend(single_reqs)
+            condor_requirements.extend(single_reqs)
+
+        if len(condor_requirements) > 0:
+            concat_requirements = " && ".join(condor_requirements)
+            self.requirements_line = f"requirements={concat_requirements}"
+        else:
+            self.requirements_line = ""
 
         concurrency_limit_tag = requirements.get("concurrency_limit_tag", None)
         concurrency_limit = requirements.get("concurrency_limit", None)
@@ -173,8 +178,14 @@ class Condor_ClusterSubmission(ClusterSubmission):
                 f"concurrency_limits=user.{concurrency_limit_tag}:{concurrency_limit}"
             )
 
-        if other_requirements:
-            concat_requirements = " && ".join(other_requirements)
-            self.requirements_line = f"requirements={concat_requirements}"
+        if "extra_submission_options" in requirements:
+            extra_options = requirements["extra_submission_options"]
+            if isinstance(extra_options, dict):
+                extra_options = [
+                    f"{key}={value}" for key, value in extra_options.items()
+                ]
+            if isinstance(extra_options, list):
+                extra_options = "\n".join(extra_options)
+            self.extra_submission_lines = f"# Extra options\n{extra_options}"
         else:
-            self.requirements_line = ""
+            self.extra_submission_lines = ""
