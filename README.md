@@ -42,7 +42,7 @@ A nonexhaustive list of features is the following:
 
 ### Environment Setup
 
-The simplest way to specify your Python environment is to activate it (using virtualenv, pipenv, conda, etc.) before calling `python -m cluster.grid_search` or `python -m cluster.hp_optimization`. 
+The simplest way to specify your Python environment is to activate it (using virtualenv, pipenv, conda, etc.) before calling `python -m cluster.grid_search` or `python -m cluster.hp_optimization`.
 The jobs will automatically inherit this environment.
 A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
 
@@ -80,10 +80,7 @@ Remember to prefix the constraints with `TARGET.`. See https://atlas.is.localnet
 
 #### Concurrency
 
-Limit the number of concurrent jobs.
-
-You can assign a ressource (tag) to your jobs and specify how many tokens each jobs consumes. There is a total of 10,000 tokes per ressource.
-
+Limit the number of concurrent jobs. You can assign a ressource (tag) to your jobs and specify how many tokens each jobs consumes. There is a total of 10,000 tokes per ressource.
 If you want to run 10 concurrent jobs, each job has to consume 1,000 tokens.
 
 To use this feature, it is as easy as adding
@@ -99,6 +96,14 @@ To use this feature, it is as easy as adding
 to the settings.
 
 You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
+
+#### Other Condor Options
+
+All options here are specified in the `cluster_requirements` section.
+
+- `hostname_list` (list of strings): Cluster nodes to exclusively use for running jobs.
+- `forbidden_hostnames` (list of strings): Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
+- `extra_submission_options` (dictionary, list or string): this allows to add additional lines to the `.sub` file used for submitting jobs to the cluster. Note that this setting is normally not needed, as cluster_utils automatically builds the submission file for you.
 
 ### Hyperparameter Optimization Settings
 
