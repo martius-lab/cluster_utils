@@ -10,7 +10,7 @@ To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
 
 ``export MPLBACKEND="agg"``
 
-## Usage
+## Quick Start
 
 There are two basic functionalities:
 
@@ -32,52 +32,28 @@ A nonexhaustive list of features is the following:
 
 * **Integrated with git**. Jobs are run from a `git clone` with customizable branch and commit number.
 
-* **Pdf&csv reporting** Both grid search and optimization produce a pdf report with the specification, basic summaries, and plots.
+* **PDF & CSV reporting**. Both grid search and optimization produce a pdf report with the specification, basic summaries, and plots.
 
-* **Advanced setting handling** Cluster utils offer a customized settings system based on JSON. Pointers within the JSON file and to other JSON files are supported.
+* **Advanced setting handling**. Cluster utils offer a customized settings system based on JSON. Pointers within the JSON file and to other JSON files are supported.
 
-* **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also, read the code ;).
-
-## Settings
-
-Some clarification what some of the optimization settings do:
-
-- `optimization_setting.number_of_samples`: the total number of jobs that will be run
-- `optimization_setting.n_jobs_per_iteration`: the number of jobs submitted to the cluster concurrently, and also the number of finished jobs per report iteration
-
-For `optimizer_str="cem_metaoptimizer"`:
-
-- `optimizer_settings.with_restarts`: whether a specific set of settings can be run multiple times. This can be useful to automatically verify if good runs were just lucky runs because of e.g. the random seed, making the found solutions more robust.
-
-## Usage Mindset and Rules of Thumb
-
-Generally, the usage mindset should be *"obtain some interpretable understanding of the influence of the hyperparameters"* rather than *"blackbox optimizer just tells me the best setting"*.
-Usually, early in the project many of the hyperparameters are more like ideas, or strategies.
-Cluster utils can then tell you which ideas (or their combinations) make sense.
-Later in a project, there only tend to be actual hyperparameters (i.e. transfering a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
-
-Here are some rules of thumbs to set the configuration values that can help you to get started. Keep in mind that following these does not necessarily lead to optimal results on your specific problem.
-
-**Which optimizer should I use for optimizing hyperparameters of neural networks (depth, width, learning rate, etc.)?**
-
-`cem_metaoptimizer` is a good default recommendation for this case.
-
-**How many jobs should I run? How many concurrently?**
-
-It depends. The number of concurrent jobs (`n_jobs_per_iteration`) should be as high as achievable with the current load on the cluster.
-For CPU jobs, this could be 100 concurrent jobs; for GPU jobs, maybe around 40.
-The total number of jobs (`number_of_samples`) can be lower if you only want to get an initial impression of the behaviour of the hyperparameter; in this case, 3-5 times the number of jobs per iteration is a good number.
-If you want to get a more precise result, or if you have a high number of hyperparameters, up to 10 times the number of jobs per iteration can be used.
-
-**How many hyperparameters can I optimize over at the same time?**
-
-This depends on the number of jobs and number of parallely running jobs. For 5x100 jobs, 5-6 hyperparameters are okay to be optimized. For 5x40 jobs, 3-4 are okay. For a larger scale, e.g. 10x200 jobs, it might be reasonable to optimize up to 10 hyperparameters at the same time.
-
-**How to deal with overfitting?**
-
-You can keep the best validation error achieved over the epochs and report this instead of the error achieved in the last epoch.
+* **A LOT OF ADDITIONAL SWEETNESS**. Most are demonstrated in the examples. Also, read the code ;).
 
 ## Usage
+
+### Environment Setup
+
+The simplest way to specify your Python environment is to activate it (using virtualenv, pipenv, conda, etc.) before calling `python -m cluster.grid_search` or `python -m cluster.hp_optimization`. 
+The jobs will automatically inherit this environment.
+A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
+
+There are multiple options to further customize the environment in the `environment_setup` configuration section:
+
+* `pre_job_script` (string): Path to an executable (e.g. bash script) that is executed before the main script runs
+* `virtual_env_path` (string): Path of folder of virtual environment to activate
+* `conda_env_path` (string): Name of conda environment to activate (this option might be broken)
+* `variables` (dictionary of strings): Environment variables to set. Variables are set after a virtual/conda environment is activated, thus override environment variables set before.
+* `is_python_script` (boolean): Whether the target to run is a Python script (default: true)
+* `run_as_module` (boolean): Whether to run the script as a Python module (`python -m my_package.my_module`) or as a script (`python my_package/my_module.py`) (default: false)
 
 ### Condor Cluster System
 
@@ -123,6 +99,45 @@ To use this feature, it is as easy as adding
 to the settings.
 
 You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
+
+### Hyperparameter Optimization Settings
+
+Some clarification what some of the optimization settings do:
+
+- `optimization_setting.number_of_samples`: the total number of jobs that will be run
+- `optimization_setting.n_jobs_per_iteration`: the number of jobs submitted to the cluster concurrently, and also the number of finished jobs per report iteration
+
+For `optimizer_str="cem_metaoptimizer"`:
+
+- `optimizer_settings.with_restarts`: whether a specific set of settings can be run multiple times. This can be useful to automatically verify if good runs were just lucky runs because of e.g. the random seed, making the found solutions more robust.
+
+## Hyperparameter Optimization Mindset and Rules of Thumb
+
+Generally, the usage mindset should be *"obtain some interpretable understanding of the influence of the hyperparameters"* rather than *"blackbox optimizer just tells me the best setting"*.
+Usually, early in the project many of the hyperparameters are more like ideas, or strategies.
+Cluster utils can then tell you which ideas (or their combinations) make sense.
+Later in a project, there only tend to be actual hyperparameters (i.e. transfering a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
+
+Here are some rules of thumbs to set the configuration values that can help you to get started. Keep in mind that following these does not necessarily lead to optimal results on your specific problem.
+
+**Which optimizer should I use for optimizing hyperparameters of neural networks (depth, width, learning rate, etc.)?**
+
+`cem_metaoptimizer` is a good default recommendation for this case.
+
+**How many jobs should I run? How many concurrently?**
+
+It depends. The number of concurrent jobs (`n_jobs_per_iteration`) should be as high as achievable with the current load on the cluster.
+For CPU jobs, this could be 100 concurrent jobs; for GPU jobs, maybe around 40.
+The total number of jobs (`number_of_samples`) can be lower if you only want to get an initial impression of the behaviour of the hyperparameter; in this case, 3-5 times the number of jobs per iteration is a good number.
+If you want to get a more precise result, or if you have a high number of hyperparameters, up to 10 times the number of jobs per iteration can be used.
+
+**How many hyperparameters can I optimize over at the same time?**
+
+This depends on the number of jobs and number of parallely running jobs. For 5x100 jobs, 5-6 hyperparameters are okay to be optimized. For 5x40 jobs, 3-4 are okay. For a larger scale, e.g. 10x200 jobs, it might be reasonable to optimize up to 10 hyperparameters at the same time.
+
+**How to deal with overfitting?**
+
+You can keep the best validation error achieved over the epochs and report this instead of the error achieved in the last epoch.
 
 ## Development
 
