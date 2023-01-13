@@ -74,7 +74,20 @@ class Job:
         logger = logging.getLogger("cluster_utils")
         current_setting = self.generate_final_setting(paths)
 
-        setting_cwd = "cd {}".format(paths["main_path"])
+        set_cwd = "cd {}".format(paths["main_path"])
+
+        if "variables" in paths:
+            if not isinstance(paths, dict):
+                raise ValueError(
+                    'Expected type dict for "variables", but got type'
+                    f' {type(paths["variables"])} instead'
+                )
+            set_env_variables = "\n".join(
+                f"export {name}={value}" for name, value in paths["variables"].items()
+            )
+        else:
+            set_env_variables = ""
+
         if "pre_job_script" in paths:
             pre_job_script = f'./{paths["pre_job_script"]}'
         else:
@@ -141,10 +154,11 @@ class Job:
 
         res = "\n".join(
             [
-                setting_cwd,
+                set_cwd,
                 pre_job_script,
                 virtual_env_activate,
                 conda_env_activate,
+                set_env_variables,
                 exec_cmd,
             ]
         )
