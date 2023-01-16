@@ -10,7 +10,12 @@ from cluster import (
     read_params_from_cmdline,
 )
 from cluster.git_utils import make_git_params
-from cluster.utils import check_import_in_fixed_params, mkdtemp, rename_import_promise
+from cluster.utils import (
+    check_import_in_fixed_params,
+    get_time_string,
+    make_temporary_dir,
+    rename_import_promise,
+)
 
 
 def get_distribution(distribution, **kwargs):
@@ -55,11 +60,13 @@ if __name__ == "__main__":
 
     home = str(Path.home())
     results_path = os.path.join(home, params.results_dir, opt_procedure_name)
-    jobs_path = mkdtemp(suffix=f"{opt_procedure_name}-jobs")
+
+    time = get_time_string()
+    jobs_path = make_temporary_dir(f"{opt_procedure_name}-{time}-jobs")
 
     run_in_working_dir = params.get("run_in_working_dir", False)
     if not run_in_working_dir:
-        main_path = mkdtemp(suffix=f"{opt_procedure_name}-project")
+        main_path = make_temporary_dir(f"{opt_procedure_name}-{time}-project")
         git_params = make_git_params(params.get("git_params"), main_path)
     else:
         main_path = os.getcwd()

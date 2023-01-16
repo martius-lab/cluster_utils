@@ -1,12 +1,12 @@
 import collections
 import csv
+import datetime
 import itertools
 import logging
 import os
 import random
 import re
 import shutil
-import tempfile
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
@@ -232,16 +232,39 @@ def make_red(text):
     return f"\x1b[1;31m{text}\x1b[0m"
 
 
-def mkdtemp(prefix="cluster_utils", suffix=""):
-    new_prefix = prefix + ("" if not suffix else "-" + suffix + "-")
-    return tempfile.mkdtemp(prefix=new_prefix, dir=os.path.join(home, ".cache"))
+def get_time_string() -> str:
+    """Get representation of current time as string"""
+    return f"{datetime.datetime.now():%Y%m%d-%H%M%S}"
 
 
-def temp_directory(prefix="cluster_utils", suffix=""):
-    new_prefix = prefix + ("" if not suffix else "-" + suffix + "-")
-    return tempfile.TemporaryDirectory(
-        prefix=new_prefix, dir=os.path.join(home, ".cache")
-    )
+def get_cache_directory() -> str:
+    """Return path to cache directory used by cluster_utils."""
+    if "CLUSTER_UTILS_CACHE_DIR" in os.environ:
+        cache_dir = os.environ["CLUSTER_UTILS_CACHE_DIR"]
+    else:
+        cache_dir = os.path.join(home, ".cache", "cluster_utils")
+
+    if not os.path.exists(cache_dir):
+        os.mkdir(cache_dir)
+
+    return cache_dir
+
+
+def make_temporary_dir(name: str) -> str:
+    """Make temporary directory with specified name.
+
+    Directory name is made unique by appending an id if the directory already exists.
+    """
+    base_dir = get_cache_directory()
+    run_dir = os.path.join(base_dir, name)
+
+    count = 2
+    while os.path.isdir(run_dir):
+        run_dir = os.path.join(base_dir, f"{name}-{count}")
+        count += 1
+
+    os.mkdir(run_dir, mode=0o700)
+    return run_dir
 
 
 def dict_to_dirname(setting, id, smart_naming=True):
