@@ -58,8 +58,6 @@ class Condor_ClusterSubmission(ClusterSubmission):
             except subprocess.TimeoutExpired:
                 logger.warning(f"Job submission for id {job.id} hangs. Retrying...")
 
-        logger.info(f"Job with id {job.id} submitted.")
-
         good_lines = [line for line in submit_output.split("\n") if "submitted" in line]
         bad_lines = [
             line
@@ -67,11 +65,21 @@ class Condor_ClusterSubmission(ClusterSubmission):
             if "WARNING" in line or "ERROR" in line
         ]
         if not good_lines or bad_lines:
+            logger.error(
+                f"Job with id {job.id} submitted to condor cluster, but job submission"
+                f" failed. Submission output:\n{submit_output}"
+            )
             print(bad_lines)
             self.close()
             raise RuntimeError("Cluster submission failed")
+
         assert len(good_lines) == 1
         new_cluster_id = good_lines[0].split(" ")[-1][:-1]
+        logger.info(
+            f"Job with id {job.id} submitted to condor cluster with cluster id"
+            f" {new_cluster_id}."
+        )
+
         return new_cluster_id
 
     def stop_fn(self, cluster_id):
