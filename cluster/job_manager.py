@@ -163,6 +163,7 @@ def pre_opt(
     log_and_print(
         logger, f'Logs of individual jobs stored at {base_paths_and_files["jobs_dir"]}'
     )
+    log_and_print(logger, f'Using project direcory {base_paths_and_files["main_path"]}')
 
     hp_optimizer = initialize_hp_optimizer(
         base_paths_and_files["result_dir"],
