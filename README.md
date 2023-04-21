@@ -6,6 +6,10 @@ This code has been powering my cluster runs since 2017. It has grown ever since 
 
 ``python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git``
 
+or if `ssh` is configured:
+
+``python3 -m pip install git+ssh://git@gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git``
+
 To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
 
 ``export MPLBACKEND="agg"``
