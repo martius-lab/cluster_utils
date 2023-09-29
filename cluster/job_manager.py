@@ -192,7 +192,7 @@ def pre_opt(
     else:
         msg = (
             "Running without git repository, using local directory "
-            f'{base_paths_and_files["main_path"]}. Make sure this is intentional!'
+            f"{base_paths_and_files['main_path']}. Make sure this is intentional!"
         )
         logger.warning(msg)
         print(make_red(f"Warning: {msg}"))
