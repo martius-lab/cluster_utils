@@ -57,7 +57,7 @@ def average_out(
     if not metrics:
         raise ValueError("Empty set of metrics not accepted.")
     new_df = df[params_to_keep + metrics]
-    result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
+    result = new_df.groupby(params_to_keep, as_index=False).agg("mean")
     result[constants.RESTART_PARAM_NAME] = new_df.groupby(
         params_to_keep, as_index=False
     ).agg({metrics[0]: "size"})[metrics[0]]
@@ -69,7 +69,7 @@ def average_out(
             logger.warning("Name %s already used. Skipping ...", std_name)
         else:
             result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg(
-                {metric: np.nanstd}
+                {metric: "std"}
             )[metric]
     return result
 
