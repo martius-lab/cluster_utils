@@ -41,7 +41,15 @@ setup(
             "flake8-isort",
             "nox",
             "pre-commit",
-        ]
+            "pytest",
+        ],
+        "mypy": [
+            "mypy",
+            "pandas-stubs",
+            "types-colorama",
+            "types-python-dateutil",
+            "types-tqdm",
+        ],
     },
     entry_points={
         "console_scripts": [

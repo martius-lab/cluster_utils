@@ -1,3 +1,17 @@
 [tool.black]
 preview = true
 target-version = ['py36']
+
+[[tool.mypy.overrides]]
+# list all modules for which no type hints are available
+module = [
+    "cloudpickle",
+    "nox",
+    "pyuv",
+    "scipy.*",
+    "seaborn",
+    "setuptools",
+    "sklearn.ensemble",
+    "smart_settings",  # TODO we can add hints there
+]
+ignore_missing_imports = true
