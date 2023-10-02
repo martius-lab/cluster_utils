@@ -1,12 +1,15 @@
+"""Test and lint setup."""
 import tempfile
 
 import nox
+
+PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
 nox.options.sessions = ("lint", "tests", "pytest")
 LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
 
 
-@nox.session(python=["3.6"])
+@nox.session(python=PYTHON_VERSIONS)
 def lint(session):
     session.install("black")
     session.install("flake8")
@@ -16,20 +19,20 @@ def lint(session):
     session.run("flake8", *LOCATIONS)
 
 
-@nox.session(python="3.6")
+@nox.session(python=PYTHON_VERSIONS)
 def black(session):
     session.install("black")
     session.run("black", *LOCATIONS)
 
 
-@nox.session(python="3.6")
+@nox.session(python=PYTHON_VERSIONS)
 def pytest(session):
     session.install(".")
     session.install("pytest")
     session.run("pytest")
 
 
-@nox.session(python=["3.6"])
+@nox.session(python=PYTHON_VERSIONS)
 def tests(session):
     session.install(".")
 
