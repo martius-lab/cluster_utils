@@ -13,7 +13,13 @@ setup(
     install_requires=[
         "gitpython>=3.0.5",
         "seaborn>=0.11.0",
-        "pandas",
+        "pandas[output-formatting]",
+        # TODO: Temporary workaround.  Jinja is included in the "output-formatting"
+        # optional dependencies of pandas but there is currently a problem with the
+        # dependencies that should be fixed in pandas 2.1.2
+        # (https://github.com/pandas-dev/pandas/pull/55275).  So once 2.1.2 is released,
+        # the explicit dependency on jinja2 can be removed.
+        "jinja2",
         "matplotlib",
         "scikit-learn",
         "numpy",
