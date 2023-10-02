@@ -20,7 +20,8 @@ setup(
         "nevergrad",
         "tqdm",
         "colorama",
-        "pyuv",
+        # master of pyuv contains fix needed for Python 3.10
+        "pyuv @ git+https://github.com/saghul/pyuv.git@master",
         "cloudpickle",
         "smart_settings @ git+https://github.com/martius-lab/smart-settings.git",
         "python-dateutil",
