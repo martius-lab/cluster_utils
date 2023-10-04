@@ -9,7 +9,7 @@ setup(
     author_email="michalrolinek@gmail.com",
     license="MIT",
     packages=["cluster"],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
         "gitpython>=3.0.5",
         "seaborn>=0.11.0",
