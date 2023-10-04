@@ -27,9 +27,9 @@ setup(
         "tqdm",
         "colorama",
         # master of pyuv contains fix needed for Python 3.10
-        "pyuv @ git+https://github.com/saghul/pyuv.git@master",
+        "pyuv @ git+https://github.com/saghul/pyuv.git@2a3d42d44c6315ebd73899a35118380d2d5979b5",
         "cloudpickle",
-        "smart_settings @ git+https://github.com/martius-lab/smart-settings.git",
+        "smart_settings @ git+https://github.com/martius-lab/smart-settings.git@abe7101d1099aa00fe856b19b60ba8eefa5496be",
         "python-dateutil",
     ],
     extras_require={
