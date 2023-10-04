@@ -1,8 +1,6 @@
 # Template from:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Python.gitlab-ci.yml
 
-image: ubuntu:22.04
-
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
@@ -13,19 +11,19 @@ cache:
     - .cache/pip
 
 before_script:
-  - export DEBIAN_FRONTEND=noninteractive
-  - apt-get update
-  - apt-get install -y software-properties-common
-  - add-apt-repository ppa:deadsnakes/ppa
-  - apt-get update
-  - apt-get install -y git python3-pip
-      python3.8 python3.8-dev python3.8-distutils
-      python3.9 python3.9-dev python3.9-distutils
-      python3.10 python3.10-dev python3.10-distutils
-      python3.11 python3.11-dev python3.11-distutils
-      python3.12 python3.12-dev python3.12-distutils
+  - pip install nox==2022.1.7
 
-lint_and_test:
+lint_and_test_py38:
+  image: python:3.8
   script:
-    - pip install nox==2022.1.7
-    - nox
+    - nox -p "3.8"
+
+lint_and_test_py310:
+  image: python:3.10
+  script:
+    - nox -p "3.10"
+
+lint_and_test_py312:
+  image: python:3.12
+  script:
+    - nox -p "3.12"
