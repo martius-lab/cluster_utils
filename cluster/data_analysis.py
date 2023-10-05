@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,13 +31,33 @@ def performance_summary(df, metrics):
 
 
 def average_out(
-    df, metrics, params_to_keep, std_ending=constants.STD_ENDING, add_std=True
-):
+    df: pd.DataFrame,
+    metrics: List[str],
+    params_to_keep: List[str],
+    std_ending: str = constants.STD_ENDING,
+    add_std: bool = True,
+) -> pd.DataFrame:
+    """Compute mean metric values over runs that used the same parameters.
+
+    Args:
+        df: Data of the runs including parameters and results.
+        metrics: Column names in df that contain result values (the ones to be
+            averaged).
+        params_to_keep: Parameters by which the runs are grouped (i.e. average is
+            computed over all runs with identical values on these parameters).
+        std_ending: Suffix that is appended to the metric column names when adding
+            standard deviations.
+        add_std: Whether to add columns with the standard deviations of metric columns.
+
+    Returns:
+        DataFrame with columns params_to_keep and mean (and optionally std) values of
+        metrics.
+    """
     logger = logging.getLogger("cluster_utils")
     if not metrics:
         raise ValueError("Empty set of metrics not accepted.")
     new_df = df[params_to_keep + metrics]
-    result = new_df.groupby(params_to_keep, as_index=False).agg(np.mean)
+    result = new_df.groupby(params_to_keep, as_index=False).agg("mean")
     result[constants.RESTART_PARAM_NAME] = new_df.groupby(
         params_to_keep, as_index=False
     ).agg({metrics[0]: "size"})[metrics[0]]
@@ -43,10 +66,10 @@ def average_out(
     for metric in metrics:
         std_name = metric + std_ending
         if std_name in result.columns:
-            logger.warning("Name {} already used. Skipping ...".format(std_name))
+            logger.warning("Name %s already used. Skipping ...", std_name)
         else:
             result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg(
-                {metric: np.nanstd}
+                {metric: "std"}
             )[metric]
     return result
 

@@ -283,7 +283,7 @@ def update_recursive(d, u, defensive=False):
     for k, v in u.items():
         if defensive and k not in d:
             raise KeyError("Updating a non-existing key")
-        if isinstance(v, collections.Mapping):
+        if isinstance(v, collections.abc.Mapping):
             d[k] = update_recursive(d.get(k, {}), v)
         else:
             d[k] = v

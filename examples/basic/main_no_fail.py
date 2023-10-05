@@ -24,7 +24,8 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     tuple_len = len(tuple_input)
     y_log = np.log(np.abs(y + 1e-7))
     v_log = np.log(np.abs(v + 1e-7))
-    assert type(w) == type(v) == int, "w and v have to be integers"
+    assert isinstance(w, int), "w has to be integer"
+    assert isinstance(v, int), "v has to be integer"
 
     result = (
         (x - 3.14) ** 2

@@ -192,7 +192,7 @@ def pre_opt(
     else:
         msg = (
             "Running without git repository, using local directory "
-            f'{base_paths_and_files["main_path"]}. Make sure this is intentional!'
+            f"{base_paths_and_files['main_path']}. Make sure this is intentional!"
         )
         logger.warning(msg)
         print(make_red(f"Warning: {msg}"))
@@ -611,7 +611,7 @@ def grid_search(
         if df is None:
             df, all_params, metrics = job_df, job_all_params, job_metrics
         else:
-            df = pd.concat((df, job_df), 0)
+            df = pd.concat((df, job_df), axis=0)
 
     if remove_working_dirs:
         rm_dir_full(base_paths_and_files["current_result_dir"])

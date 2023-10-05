@@ -377,19 +377,19 @@ class NGOptimizer(Optimizer):
         self.candidates = {}
 
     def get_ng_instrumentation(self, param):
-        if type(param) == distributions.TruncatedLogNormal:
+        if type(param) is distributions.TruncatedLogNormal:
             return par.Log(lower=param.lower, upper=param.upper)
-        if type(param) == distributions.TruncatedNormal:
+        if type(param) is distributions.TruncatedNormal:
             return par.Scalar(lower=param.lower, upper=param.upper)
-        if type(param) == distributions.IntLogNormal:
+        if type(param) is distributions.IntLogNormal:
             return par.Log(lower=param.lower, upper=param.upper).set_integer_casting()
-        if type(param) == distributions.IntNormal:
+        if type(param) is distributions.IntNormal:
             return par.Scalar(
                 lower=param.lower, upper=param.upper
             ).set_integer_casting()
-        if type(param) == distributions.NumericalDistribution:
+        if type(param) is distributions.NumericalDistribution:
             return par.Scalar()
-        if type(param) == distributions.Discrete:
+        if type(param) is distributions.Discrete:
             return par.TransitionChoice(param.option_list)
         raise ValueError("Invalid Distribution")
 

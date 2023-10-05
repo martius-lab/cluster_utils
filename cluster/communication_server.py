@@ -173,7 +173,7 @@ class CommunicationServer:
     def handle_job_progress(self, message):
         logger = logging.getLogger("cluster_utils")
         job_id, percentage_done = message
-        logger.info(f"Job {job_id} announced it is {int(100*percentage_done)}% done.")
+        logger.info(f"Job {job_id} announced it is {int(100 * percentage_done)}% done.")
         job = self.cluster_system.get_job(job_id)
         if 0 < percentage_done <= 1:
             job.estimated_end = (
