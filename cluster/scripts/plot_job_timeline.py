@@ -4,22 +4,28 @@
 Reads a cluster_utils log file ("cluster_run.log") and generates a timeline plot with
 start/interruptions/end of all jobs.
 """
+from __future__ import annotations
+
 import argparse
 import collections
 import datetime
 import enum
 import logging
-import os
 import re
 import sys
 import typing
 
-import matplotlib.pyplot as plt  # type: ignore
-import matplotlib.ticker  # type: ignore
-from matplotlib.lines import Line2D  # type: ignore
+import matplotlib.pyplot as plt
+import matplotlib.ticker
+from matplotlib.lines import Line2D
+
+if typing.TYPE_CHECKING:
+    import os
 
 
 class JobStatus(enum.Enum):
+    """The different statuses a job can have."""
+
     FINISHED = 0
     EXIT_FOR_RESUME = 1
     FAILED = 2
@@ -114,18 +120,17 @@ def parse_cluster_run_log(
                     del job_start[job_id]
                 except KeyError as e:
                     logging.error(
-                        "Job {} ended but no start was detected [line {}: {}]".format(
-                            e, i, line.strip()
-                        )
+                        "Job %s ended but no start was detected [line %d: %s]",
+                        e,
+                        i,
+                        line.strip(),
                     )
 
     # handle jobs that are not listed as ended in the log
     if job_start:
         if end_time is None:
             logging.warning(
-                "The following jobs have start times without end: {}".format(
-                    job_start.keys()
-                )
+                "The following jobs have start times without end: %s", job_start.keys()
             )
 
             end_time = datetime.datetime.now()
@@ -156,9 +161,8 @@ def parse_cluster_run_log(
 def plot_timeline(
     jobs: typing.Dict[int, typing.List[JobRun]],
     save_to_file: typing.Optional[str] = None,
-):
+) -> None:
     fig, ax = plt.subplots()
-    # ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(1))
     prop_cycle = plt.rcParams["axes.prop_cycle"]
     colors = prop_cycle.by_key()["color"]
@@ -214,7 +218,7 @@ def plot_timeline(
         plt.show()
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "cluster_utils_log_file", type=str, help="Path to the cluster_run.log file."
