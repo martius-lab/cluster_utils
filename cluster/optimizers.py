@@ -2,11 +2,11 @@ import datetime
 import itertools
 import logging
 import os
+import pickle
 import random
 from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
 
-import cloudpickle as pickle
 import nevergrad as ng
 import nevergrad.parametrization.parameter as par
 import numpy as np

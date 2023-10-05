@@ -5,7 +5,6 @@ target-version = ['py36']
 [[tool.mypy.overrides]]
 # list all modules for which no type hints are available
 module = [
-    "cloudpickle",
     "matplotlib.*",
     "nox",
     "pyuv",
