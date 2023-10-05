@@ -14,7 +14,6 @@ import re
 import sys
 import typing
 
-import dateutil.parser
 import matplotlib.pyplot as plt  # type: ignore
 import matplotlib.ticker  # type: ignore
 from matplotlib.lines import Line2D  # type: ignore
@@ -81,7 +80,9 @@ def parse_cluster_run_log(
             elif line.endswith("INFO - Exiting now\n"):
                 # this is not about a specific job, just get the timestamp and continue
                 date_str = line.split(" - ", 1)[0]
-                end_time = dateutil.parser.parse(date_str)
+                # the log uses "," instead of "." which datetime doesn't expect
+                date_str = date_str.replace(",", ".")
+                end_time = datetime.datetime.fromisoformat(date_str)
                 continue
             else:
                 # ignore this line
@@ -92,7 +93,9 @@ def parse_cluster_run_log(
                 raise RuntimeError("Failed to parse the following line: %s" % line)
 
             job_id = int(m.group(3))
-            timestamp = dateutil.parser.parse(m.group(1))
+            # the log uses "," instead of "." which datetime doesn't expect
+            datetime_str = m.group(1).replace(",", ".")
+            timestamp = datetime.datetime.fromisoformat(datetime_str)
             if end_reason is None:
                 job_start[job_id] = timestamp
 
