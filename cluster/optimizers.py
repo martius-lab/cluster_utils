@@ -259,7 +259,8 @@ class Metaoptimizer(Optimizer):
 
         _, with_restarts = optimizer_settings
 
-        metaopt = pickle.load(open(file, "rb"))
+        with open(file, "rb") as f:
+            metaopt = pickle.load(f)
         if (metric_to_optimize, minimize) != (
             metaopt.metric_to_optimize,
             metaopt.minimize,
@@ -447,7 +448,8 @@ class NGOptimizer(Optimizer):
         if not os.path.exists(file):
             return None
 
-        ngopt = pickle.load(open(file, "rb"))
+        with open(file, "rb") as f:
+            ngopt = pickle.load(f)
         if (metric_to_optimize, minimize) != (ngopt.metric_to_optimize, ngopt.minimize):
             raise ValueError("Attempted to continue but optimizes a different metric!")
 

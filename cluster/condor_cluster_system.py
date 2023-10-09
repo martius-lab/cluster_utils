@@ -24,7 +24,7 @@ CondorRecord = namedtuple(
 )
 
 
-class Condor_ClusterSubmission(ClusterSubmission):
+class CondorClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True):
         super().__init__(paths, remove_jobs_dir)
 

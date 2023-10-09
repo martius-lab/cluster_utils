@@ -12,7 +12,7 @@ from cluster import constants
 from cluster.cluster_system import ClusterSubmission
 
 
-class Dummy_ClusterSubmission(ClusterSubmission):
+class DummyClusterSubmission(ClusterSubmission):
     def __init__(self, requirements, paths, remove_jobs_dir=True):
         super().__init__(paths, remove_jobs_dir)
         self._process_requirements(requirements)

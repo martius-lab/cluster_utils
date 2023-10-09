@@ -23,7 +23,7 @@ class InteractiveMode:
         tty.setcbreak(sys.stdin.fileno())
         return self.check_for_input
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, _value, _traceback):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
 
     def list_jobs(self):
@@ -45,8 +45,8 @@ class InteractiveMode:
     def show_job(self):
         try:
             self.print("Enter ID")
-            id = int(input())
-            job = self.cluster_interface.get_job(id)
+            job_id = int(input())
+            job = self.cluster_interface.get_job(job_id)
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__]
         except Exception:
             self.print("Error encountered, maybe invalid ID?")
@@ -64,8 +64,8 @@ class InteractiveMode:
             if answer.lower() in ["y", "yes"]:
                 msg = "Job cancelled by cluster utils"
                 [
-                    self.comm_server.handle_error_encountered((id, msg))
-                    for id in jobs_to_cancel
+                    self.comm_server.handle_error_encountered((job_id, msg))
+                    for job_id in jobs_to_cancel
                 ]
                 print("Cancelled all remaining jobs.")
         except Exception:
@@ -105,5 +105,5 @@ class NonInteractiveMode:
     def __enter__(self):
         return lambda: None
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, _value, _traceback):
         pass

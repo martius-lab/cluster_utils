@@ -57,16 +57,16 @@ def ensure_empty_dir(dir_name, defensive=False):
         logger.info(f"Directory {dir_name} created")
 
 
-def dict_to_dirname(setting, id, smart_naming=True):
+def dict_to_dirname(setting, job_id, smart_naming=True):
     vals = [
         "{}={}".format(str(key)[:3], str(value)[:6])
         for key, value in setting.items()
         if not isinstance(value, dict)
     ]
-    res = "{}_{}".format(id, "_".join(vals))
+    res = "{}_{}".format(job_id, "_".join(vals))
     if len(res) < 35 and smart_naming:
         return res
-    return str(id)
+    return str(job_id)
 
 
 def update_best_job_datadirs(result_dir, working_dirs, remove_working_dirs=True):
@@ -318,123 +318,123 @@ def hp_optimization(
     pre_iteration_opt(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
-        with redirect_stdout_to_tqdm():
-            submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
-            running_bar = RunningJobsBar(total_jobs=number_of_samples)
-            successful_jobs_bar = CompletedJobsBar(
-                total_jobs=number_of_samples, minimize=minimize
+    with interaction_mode(
+        cluster_interface, comm_server
+    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
+        submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
+        running_bar = RunningJobsBar(total_jobs=number_of_samples)
+        successful_jobs_bar = CompletedJobsBar(
+            total_jobs=number_of_samples, minimize=minimize
+        )
+
+        while cluster_interface.n_completed_jobs < number_of_samples:
+            check_for_keyboard_input()
+            time.sleep(0.2)
+            jobs_to_tell = [
+                job
+                for job in cluster_interface.successful_jobs
+                if not job.results_used_for_update
+            ]
+            hp_optimizer.tell(jobs_to_tell)
+            current_iteration = hp_optimizer.iteration - start_iteration
+            n_jobs_completed_cur_iteration = (
+                cluster_interface.n_completed_jobs
+                - n_jobs_per_iteration * current_iteration
+            )
+            n_jobs_submitted_cur_iteration = (
+                cluster_interface.n_submitted_jobs
+                - n_jobs_per_iteration * current_iteration
+            )
+            max_job_submissions = (
+                n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit
+            ) * n_completed_jobs_before_resubmit + n_jobs_per_iteration
+            iteration_finished = (
+                cluster_interface.n_completed_jobs // n_jobs_per_iteration
+                > current_iteration
+            )
+            if (
+                n_jobs_submitted_cur_iteration < max_job_submissions
+                and cluster_interface.n_submitted_jobs < number_of_samples
+                and not iteration_finished
+            ):
+                new_settings = hp_optimizer.ask()
+                new_job = Job(
+                    id=cluster_interface.inc_job_id,
+                    settings=new_settings,
+                    other_params=processed_other_params,
+                    paths=base_paths_and_files,
+                    iteration=hp_optimizer.iteration + 1,
+                    connection_info=comm_server.connection_info,
+                    metric_to_watch=metric_to_optimize,
+                    opt_procedure_name=opt_procedure_name,
+                )
+                if isinstance(hp_optimizer, NGOptimizer):
+                    hp_optimizer.add_candidate(new_job.id)
+                cluster_interface.add_jobs(new_job)
+                cluster_interface.submit(new_job)
+            if iteration_finished:
+                post_iteration_opt(
+                    cluster_interface,
+                    hp_optimizer,
+                    comm_server,
+                    base_paths_and_files,
+                    metric_to_optimize,
+                    num_best_jobs_whose_data_is_kept,
+                    remove_working_dirs,
+                )
+                logger.info(f"starting new iteration: {hp_optimizer.iteration}")
+                pre_iteration_opt(base_paths_and_files)
+
+            for job in cluster_interface.submitted_jobs:
+                if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                    job.check_filesystem_for_errors()
+            cluster_interface.check_error_msgs()
+
+            max_failed_jobs = (
+                cluster_interface.n_successful_jobs
+                + cluster_interface.n_running_jobs
+                + 5
+            )
+            if cluster_interface.n_failed_jobs > max_failed_jobs:
+                cluster_interface.close()
+                raise RuntimeError(
+                    f"Too many ({cluster_interface.n_failed_jobs}) jobs failed."
+                    " Ending procedure."
+                )
+
+            submitted_bar.update(cluster_interface.n_submitted_jobs)
+            running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
+            running_bar.update(
+                cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs
+            )
+            successful_jobs_bar.update(cluster_interface.n_successful_jobs)
+            successful_jobs_bar.update_median_time_left(
+                cluster_interface.median_time_left
             )
 
-            while cluster_interface.n_completed_jobs < number_of_samples:
-                check_for_keyboard_input()
-                time.sleep(0.2)
-                jobs_to_tell = [
-                    job
-                    for job in cluster_interface.successful_jobs
-                    if not job.results_used_for_update
+            best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(
+                minimize=minimize
+            )
+            if len(hp_optimizer.full_df) > 0:
+                best_value = hp_optimizer.full_df[hp_optimizer.metric_to_optimize].iloc[
+                    0
                 ]
-                hp_optimizer.tell(jobs_to_tell)
-                current_iteration = hp_optimizer.iteration - start_iteration
-                n_jobs_completed_cur_iteration = (
-                    cluster_interface.n_completed_jobs
-                    - n_jobs_per_iteration * current_iteration
-                )
-                n_jobs_submitted_cur_iteration = (
-                    cluster_interface.n_submitted_jobs
-                    - n_jobs_per_iteration * current_iteration
-                )
-                max_job_submissions = (
-                    n_jobs_completed_cur_iteration // n_completed_jobs_before_resubmit
-                ) * n_completed_jobs_before_resubmit + n_jobs_per_iteration
-                iteration_finished = (
-                    cluster_interface.n_completed_jobs // n_jobs_per_iteration
-                    > current_iteration
-                )
-                if (
-                    n_jobs_submitted_cur_iteration < max_job_submissions
-                    and cluster_interface.n_submitted_jobs < number_of_samples
-                    and not iteration_finished
-                ):
-                    new_settings = hp_optimizer.ask()
-                    new_job = Job(
-                        id=cluster_interface.inc_job_id,
-                        settings=new_settings,
-                        other_params=processed_other_params,
-                        paths=base_paths_and_files,
-                        iteration=hp_optimizer.iteration + 1,
-                        connection_info=comm_server.connection_info,
-                        metric_to_watch=metric_to_optimize,
-                        opt_procedure_name=opt_procedure_name,
-                    )
-                    if isinstance(hp_optimizer, NGOptimizer):
-                        hp_optimizer.add_candidate(new_job.id)
-                    cluster_interface.add_jobs(new_job)
-                    cluster_interface.submit(new_job)
-                if iteration_finished:
-                    post_iteration_opt(
-                        cluster_interface,
-                        hp_optimizer,
-                        comm_server,
-                        base_paths_and_files,
-                        metric_to_optimize,
-                        num_best_jobs_whose_data_is_kept,
-                        remove_working_dirs,
-                    )
-                    logger.info(f"starting new iteration: {hp_optimizer.iteration}")
-                    pre_iteration_opt(base_paths_and_files)
+            else:
+                best_value = None
 
-                for job in cluster_interface.submitted_jobs:
-                    if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
-                        job.check_filesystem_for_errors()
-                cluster_interface.check_error_msgs()
-
-                max_failed_jobs = (
-                    cluster_interface.n_successful_jobs
-                    + cluster_interface.n_running_jobs
-                    + 5
+            estimates = [
+                item for item in [best_seen_metric, best_value] if item is not None
+            ]
+            if estimates:
+                best_estimate = min(estimates) if minimize else max(estimates)
+                successful_jobs_bar.update_best_val(best_estimate)
+            if kill_bad_jobs_early:
+                kill_bad_looking_jobs(
+                    cluster_interface,
+                    metric_to_optimize,
+                    minimize,
+                    **early_killing_params,
                 )
-                if cluster_interface.n_failed_jobs > max_failed_jobs:
-                    cluster_interface.close()
-                    raise RuntimeError(
-                        f"Too many ({cluster_interface.n_failed_jobs}) jobs failed."
-                        " Ending procedure."
-                    )
-
-                submitted_bar.update(cluster_interface.n_submitted_jobs)
-                running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
-                running_bar.update(
-                    cluster_interface.n_running_jobs
-                    + cluster_interface.n_completed_jobs
-                )
-                successful_jobs_bar.update(cluster_interface.n_successful_jobs)
-                successful_jobs_bar.update_median_time_left(
-                    cluster_interface.median_time_left
-                )
-
-                best_seen_metric = cluster_interface.get_best_seen_value_of_main_metric(
-                    minimize=minimize
-                )
-                if len(hp_optimizer.full_df) > 0:
-                    best_value = hp_optimizer.full_df[
-                        hp_optimizer.metric_to_optimize
-                    ].iloc[0]
-                else:
-                    best_value = None
-
-                estimates = [
-                    item for item in [best_seen_metric, best_value] if item is not None
-                ]
-                if estimates:
-                    best_estimate = min(estimates) if minimize else max(estimates)
-                    successful_jobs_bar.update_best_val(best_estimate)
-                if kill_bad_jobs_early:
-                    kill_bad_looking_jobs(
-                        cluster_interface,
-                        metric_to_optimize,
-                        minimize,
-                        **early_killing_params,
-                    )
 
     post_iteration_opt(
         cluster_interface,
@@ -557,48 +557,46 @@ def grid_search(
             job.try_load_results_from_filesystem(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(cluster_interface, comm_server) as check_for_keyboard_input:
-        with redirect_stdout_to_tqdm():
-            submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
-            running_bar = RunningJobsBar(total_jobs=len(jobs))
-            successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+    with interaction_mode(
+        cluster_interface, comm_server
+    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
+        submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
+        running_bar = RunningJobsBar(total_jobs=len(jobs))
+        successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
-            while cluster_interface.n_completed_jobs != len(jobs):
-                to_submit = [
-                    job for job in jobs if job.status == JobStatus.INITIAL_STATUS
-                ]
-                for job in to_submit[:5]:
-                    cluster_interface.submit(job)
+        while cluster_interface.n_completed_jobs != len(jobs):
+            to_submit = [job for job in jobs if job.status == JobStatus.INITIAL_STATUS]
+            for job in to_submit[:5]:
+                cluster_interface.submit(job)
 
-                for job in cluster_interface.submitted_jobs:
-                    if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
-                        job.check_filesystem_for_errors()
-                cluster_interface.check_error_msgs()
+            for job in cluster_interface.submitted_jobs:
+                if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                    job.check_filesystem_for_errors()
+            cluster_interface.check_error_msgs()
 
-                submitted_bar.update(cluster_interface.n_submitted_jobs)
-                running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
-                running_bar.update(
-                    cluster_interface.n_running_jobs
-                    + cluster_interface.n_completed_jobs
+            submitted_bar.update(cluster_interface.n_submitted_jobs)
+            running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)
+            running_bar.update(
+                cluster_interface.n_running_jobs + cluster_interface.n_completed_jobs
+            )
+            successful_jobs_bar.update(cluster_interface.n_successful_jobs)
+            successful_jobs_bar.update_median_time_left(
+                cluster_interface.median_time_left
+            )
+
+            max_failed_jobs = (
+                cluster_interface.n_successful_jobs
+                + cluster_interface.n_running_jobs
+                + 5
+            )
+            if cluster_interface.n_failed_jobs > max_failed_jobs:
+                cluster_interface.close()
+                raise RuntimeError(
+                    f"Too many ({cluster_interface.n_failed_jobs}) jobs failed."
+                    " Ending procedure."
                 )
-                successful_jobs_bar.update(cluster_interface.n_successful_jobs)
-                successful_jobs_bar.update_median_time_left(
-                    cluster_interface.median_time_left
-                )
-
-                max_failed_jobs = (
-                    cluster_interface.n_successful_jobs
-                    + cluster_interface.n_running_jobs
-                    + 5
-                )
-                if cluster_interface.n_failed_jobs > max_failed_jobs:
-                    cluster_interface.close()
-                    raise RuntimeError(
-                        f"Too many ({cluster_interface.n_failed_jobs}) jobs failed."
-                        " Ending procedure."
-                    )
-                check_for_keyboard_input()
-                time.sleep(0.2)
+            check_for_keyboard_input()
+            time.sleep(0.2)
 
     post_opt(cluster_interface)
 

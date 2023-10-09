@@ -83,9 +83,12 @@ class NumericalDistribution(BoundedDistribution):
 class DistributionOverIntegers(Distribution):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if hasattr(self, "lower") and hasattr(self, "upper"):
-            if not (isinstance(self.lower, int) and isinstance(self.upper, int)):
-                raise TypeError("Bounds for integer distribution must be integral")
+        if (
+            hasattr(self, "lower")
+            and hasattr(self, "upper")
+            and not (isinstance(self.lower, int) and isinstance(self.upper, int))
+        ):
+            raise TypeError("Bounds for integer distribution must be integral")
 
     def prepare_samples(self, howmany):
         self.samples = [int(sample + 0.5) for sample in self.samples]
@@ -231,12 +234,12 @@ class Discrete(Distribution):
             (1.0 / (len(samples) + len(self.option_list))) * (1.0 + frequencies[val])
             for val in self.option_list
         ]
-        sum = np.sum(self.probs)
-        if not np.isclose(sum, 1.0):
+        probs_sum = np.sum(self.probs)
+        if not np.isclose(probs_sum, 1.0):
             logger.warning(
                 "Probabilities of '{}' do not sum up to one.".format(self.param_name)
             )
-            self.probs = list(np.array(self.probs) / sum)
+            self.probs = list(np.array(self.probs) / probs_sum)
 
     def prepare_samples(self, howmany):
         howmany = min(

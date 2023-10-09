@@ -21,8 +21,8 @@ class MessageTypes:
 
 
 class MinJob:
-    def __init__(self, id, settings, status):
-        self.id = id
+    def __init__(self, job_id, settings, status):
+        self.id = job_id
         self.settings = settings
         self.status = status
         self.metrics = None
@@ -58,19 +58,20 @@ class CommunicationServer:
         try:
             # doesn't even have to be reachable
             s.connect(("10.255.255.255", 1))
-            IP = s.getsockname()[0]
+            ip = s.getsockname()[0]
         except Exception:
-            IP = "127.0.0.1"
+            ip = "127.0.0.1"
         finally:
             s.close()
-        return IP
+        return ip
 
     def start_listening(self):
         logger = logging.getLogger("cluster_utils")
 
         def on_read(handle, ip_port, flags, data, error):
             if data is not None:
-                # handle.send(ip_port, data) This would be a way to ensure messaging worked well
+                # handle.send(ip_port, data) This would be a way to ensure messaging
+                # worked well
                 msg_type_idx, message = pickle.loads(data)
                 if msg_type_idx not in self.handlers:
                     self.handle_unidentified_message(data, msg_type_idx, message)

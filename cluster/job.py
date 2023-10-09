@@ -22,7 +22,7 @@ class JobStatus:
 class Job:
     def __init__(
         self,
-        id,
+        id,  # noqa: A002
         settings,
         other_params,
         paths,
@@ -219,13 +219,13 @@ class Job:
             self.status = JobStatus.FAILED
             self.error_info = exception
 
-        if self.futures_object is not None:  # Local run
-            if (
-                self.futures_object.done()
-                and self.futures_object.result().__dict__["returncode"] == 1
-            ):
-                self.status = JobStatus.FAILED
-                self.error_info = self.futures_object.result().stderr.decode()
+        # Local run
+        if self.futures_object is not None and (
+            self.futures_object.done()
+            and self.futures_object.result().__dict__["returncode"] == 1
+        ):
+            self.status = JobStatus.FAILED
+            self.error_info = self.futures_object.result().stderr.decode()
 
     @property
     def time_left(self):
