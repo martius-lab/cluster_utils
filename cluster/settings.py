@@ -306,7 +306,9 @@ def read_params_from_cmdline(
     return final_params
 
 
-read_params_from_cmdline.start_time = None
+# TODO This doesn't look like a good use case for a function attribute. Maybe it should
+# be done differently?
+read_params_from_cmdline.start_time = None  # type: ignore[attr-defined]
 
 optimizer_dict = {
     "cem_metaoptimizer": Metaoptimizer,
