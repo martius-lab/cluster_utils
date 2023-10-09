@@ -2,6 +2,39 @@
 preview = true
 target-version = ['py38']
 
+[tool.ruff]
+target-version = "py38"
+
+# for a complete list of available rules see https://docs.astral.sh/ruff/rules/
+# TODO commented-out rules below should be enabled but currently result in quite
+# a lot of warnings, which need to be fixed first.
+select = [
+    "F", # pyflakes
+    "E", # pycodestyle
+    "W", # pycodestyle
+    "B", # bugbear
+    "I", # isort
+    "N", # naming
+    # "UP", # pyupgrade
+    "A", # builtins
+    "FA", # future-annotations
+    # "G", # logging-format
+    "PT", # pytest-style
+    "SIM", # simplify
+    # "ARG", # unused-arguments
+    # "PD", # pandas-vet
+    # "PL", # pylint
+    # "NPY", # numpy
+    "RUF100",  # unused 'noqa' directive
+]
+ignore = [
+    "E501",  # line too long (mostly handled by black)
+    # E731: Do not use a lambda expression use a def (local def is often ugly)
+    "E731",
+    "PT011",  # pytest-raises-too-broad (use `match` parameter)
+    "SIM108",  # Use ternary operator instead of if-else-block
+]
+
 [tool.mypy]
 exclude = ["build/", "examples/"]
 
