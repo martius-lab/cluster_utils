@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import itertools
 import logging
@@ -6,6 +8,7 @@ import pickle
 import random
 from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
+from typing import Any, Iterator, Mapping, Union
 
 import nevergrad as ng
 import nevergrad.parametrization.parameter as par
@@ -68,7 +71,12 @@ class Optimizer(ABC):
             [self.metric_to_optimize], ascending=self.minimize
         )
 
-    def save_pdf_report(self, output_file, submission_hook_stats, current_result_path):
+    def save_pdf_report(
+        self,
+        output_file: str,
+        submission_hook_stats: Mapping[str, Any],
+        current_result_path: Union[str, os.PathLike],
+    ) -> None:
         today = datetime.datetime.now().strftime("%B %d, %Y")
         latex_title = "Results of optimization procedure from ({})".format(today)
         latex = LatexFile(latex_title)
@@ -81,13 +89,13 @@ class Optimizer(ABC):
                 "Git Meta Information", content=submission_hook_stats["GitConnector"]
             )
 
-        def filename_gen(base_path):
+        def filename_gen(base_path: Union[str, os.PathLike]) -> Iterator[str]:
             for num in itertools.count():
                 yield os.path.join(base_path, "{}.pdf".format(num))
 
         with TemporaryDirectory() as tmpdir:
             file_gen = filename_gen(tmpdir)
-            hook_args = dict(df=self.full_df, path_to_results=current_result_path)
+            hook_args = {"df": self.full_df, "path_to_results": current_result_path}
             overall_progress_file = next(file_gen)
             data_analysis.plot_opt_progress(
                 self.full_df, self.metric_to_optimize, overall_progress_file

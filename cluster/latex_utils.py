@@ -79,7 +79,17 @@ class LatexFile(object):
         )
         self.sections.append(section(name, content))
 
-    def produce_pdf(self, output_file):
+    def produce_pdf(self, output_file: str) -> None:
+        """Construct the LaTeX file and generate a PDF from it (using pdflatex).
+
+        In case pdflatex fails with an error, the LaTeX file is saved to ``{{
+        output_file }}.tex`` and the log to `{{ output_file }}.log`` for offline
+        debugging.  If there is no error, those files are automatically deleted when
+        finished.
+
+        Args:
+            output_file: Path to which the PDF file is written.
+        """
         logger = logging.getLogger("cluster_utils")
         full_content = "\n".join(self.sections)
         title_str = LATEX_TITLE.format(self.title)
@@ -99,7 +109,7 @@ class LatexFile(object):
                     check=True,
                     stdout=PIPE,
                 )
-            except CalledProcessError as e:
+            except CalledProcessError:
                 # save the log and tex for debugging
                 logger.error("pdflatex failed.  Save log and tex file for debugging.")
                 latex_log_file = os.path.join(tmpdir, "latex.log")
@@ -107,7 +117,7 @@ class LatexFile(object):
                 copyfile(latex_log_file, output_file + ".log")
 
                 # re-raise the error
-                raise e
+                raise
 
             logger.info(f"pdflatex call produced output file {output_file}")
             output_tmp = os.path.join(tmpdir, "latex.pdf")
