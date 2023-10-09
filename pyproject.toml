@@ -1,6 +1,6 @@
 [tool.black]
 preview = true
-target-version = ['py36']
+target-version = ['py38']
 
 [tool.mypy]
 exclude = ["build/", "examples/"]
