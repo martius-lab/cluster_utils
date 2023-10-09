@@ -193,10 +193,9 @@ class RelaxedCounter(Counter):
 
     def __getitem__(self, key):
         logger = logging.getLogger("cluster_utils")
-        if key not in self.keys():
-            if str(key) in self.keys():
-                logger.warning("String comparison used for key {}".format(key))
-                return super().__getitem__(str(key))
+        if key not in self.keys() and str(key) in self.keys():
+            logger.warning("String comparison used for key {}".format(key))
+            return super().__getitem__(str(key))
         return super().__getitem__(key)
 
 

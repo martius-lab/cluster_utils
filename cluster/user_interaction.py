@@ -47,7 +47,7 @@ class InteractiveMode:
             self.print("Enter ID")
             id = int(input())
             job = self.cluster_interface.get_job(id)
-            [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__.keys()]
+            [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__]
         except Exception:
             self.print("Error encountered, maybe invalid ID?")
 
@@ -92,7 +92,7 @@ class InteractiveMode:
                 self.print(">>>")
 
                 fn_string = input()
-                if fn_string in self.input_to_fn_dict.keys():
+                if fn_string in self.input_to_fn_dict:
                     self.input_to_fn_dict[fn_string]()
 
                 tty.setcbreak(sys.stdin.fileno())

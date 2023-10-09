@@ -563,7 +563,7 @@ def grid_search(
             running_bar = RunningJobsBar(total_jobs=len(jobs))
             successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
-            while not cluster_interface.n_completed_jobs == len(jobs):
+            while cluster_interface.n_completed_jobs != len(jobs):
                 to_submit = [
                     job for job in jobs if job.status == JobStatus.INITIAL_STATUS
                 ]

@@ -128,7 +128,7 @@ class ClusterSubmission(ABC):
         return [
             job
             for job in self.current_jobs
-            if job.status == JobStatus.CONCLUDED and not job.get_results() is None
+            if job.status == JobStatus.CONCLUDED and job.get_results() is not None
         ]
 
     @property

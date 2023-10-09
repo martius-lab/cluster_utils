@@ -51,7 +51,7 @@ class ProgressBar(ABC):
 
 
 # Color disabled until a bug in tqdm is fixed.
-# see https://stackoverflow.com/questions/58328625/tqdm-colored-progress-bar-printing-on-multiple-lines  # noqa: B950
+# see https://stackoverflow.com/questions/58328625/tqdm-colored-progress-bar-printing-on-multiple-lines
 
 
 class SubmittedJobsBar(ProgressBar):

@@ -156,7 +156,7 @@ class CommunicationServer:
                 "Received a job-concluded-message from a job that is not listed in the"
                 " cluster interface system"
             )
-        if not job.status == JobStatus.SENT_RESULTS or job.get_results() is None:
+        if job.status != JobStatus.SENT_RESULTS or job.get_results() is None:
             job.status = JobStatus.FAILED
             logger.info(f"Job {job_id} announced it end but no results were sent.")
         else:

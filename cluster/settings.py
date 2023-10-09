@@ -124,7 +124,7 @@ def save_metrics_params(metrics, params):
     save_dict_as_one_line_csv(flattened_params, param_file)
 
     time_elapsed = time.time() - read_params_from_cmdline.start_time
-    if "time_elapsed" not in metrics.keys():
+    if "time_elapsed" not in metrics:
         metrics["time_elapsed"] = time_elapsed
     else:
         print(

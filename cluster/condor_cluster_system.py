@@ -107,10 +107,7 @@ class Condor_ClusterSubmission(ClusterSubmission):
         job.run_script_path = run_script_file_path
 
     def is_blocked(self):
-        for job in self.jobs:
-            if self.status(job) == 1:
-                return True
-        return False
+        return any(self.status(job) == 1 for job in self.jobs)
 
     # TODO: Check that two simultaneous HPOs dont collide
 
