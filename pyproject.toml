@@ -2,12 +2,16 @@
 preview = true
 target-version = ['py36']
 
+[tool.mypy]
+exclude = ["build/", "examples/"]
+
 [[tool.mypy.overrides]]
 # list all modules for which no type hints are available
 module = [
     "matplotlib.*",
     "nox",
     "pyuv",
+    "pytest",
     "scipy.*",
     "seaborn",
     "setuptools",
