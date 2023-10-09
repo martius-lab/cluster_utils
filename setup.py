@@ -38,7 +38,6 @@ setup(
             "git+https://github.com/martius-lab/smart-settings.git"
             "@abe7101d1099aa00fe856b19b60ba8eefa5496be"
         ),
-        "python-dateutil",
     ],
     extras_require={
         "dev": [
@@ -55,7 +54,6 @@ setup(
             "mypy",
             "pandas-stubs",
             "types-colorama",
-            "types-python-dateutil",
             "types-tqdm",
         ],
     },
