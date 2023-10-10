@@ -42,6 +42,7 @@ exclude = ["build/", "examples/"]
 # list all modules for which no type hints are available
 module = [
     "matplotlib.*",
+    "nevergrad.*",
     "nox",
     "pyuv",
     "pytest",
