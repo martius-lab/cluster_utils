@@ -65,10 +65,10 @@ class Optimizer(ABC):
         )
 
         self.minimal_df = data_analysis.average_out(
-            self.full_df, [self.metric_to_optimize], self.params
-        )
-        self.minimal_df = self.minimal_df.sort_values(
-            [self.metric_to_optimize], ascending=self.minimize
+            self.full_df,
+            [self.metric_to_optimize],
+            self.params,
+            sort_ascending=self.minimize,
         )
 
     def save_pdf_report(

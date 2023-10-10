@@ -43,12 +43,15 @@ def test_average_out(dataframe):
         "fn_args.float",
         "fn_args.int",
     ]
-    result = data_analysis.average_out(dataframe, metrics, params_to_keep)
+    # call twice with different sort orders
+    result_asc = data_analysis.average_out(
+        dataframe, metrics, params_to_keep, sort_ascending=True
+    )
+    result_des = data_analysis.average_out(
+        dataframe, metrics, params_to_keep, sort_ascending=False
+    )
 
-    # sort by some column, so we are sure on the order
-    result = result.sort_values(by=["fn_args.int"])
-
-    expected = pd.DataFrame(
+    expected_asc = pd.DataFrame(
         {
             "fn_args.bool": {
                 0: False,
@@ -71,4 +74,5 @@ def test_average_out(dataframe):
         }
     )
 
-    pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_frame_equal(result_asc, expected_asc)
+    pd.testing.assert_frame_equal(result_des, expected_asc.iloc[::-1])
