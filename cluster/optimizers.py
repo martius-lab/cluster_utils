@@ -259,7 +259,8 @@ class Metaoptimizer(Optimizer):
 
         _, with_restarts = optimizer_settings
 
-        metaopt = pickle.load(open(file, "rb"))
+        with open(file, "rb") as f:
+            metaopt = pickle.load(f)
         if (metric_to_optimize, minimize) != (
             metaopt.metric_to_optimize,
             metaopt.minimize,
@@ -363,7 +364,7 @@ ng_optimizer_dict = {
 class NGOptimizer(Optimizer):
     def __init__(self, *, opt_alg, **kwargs):
         super().__init__(**kwargs)
-        assert opt_alg in ng_optimizer_dict.keys()
+        assert opt_alg in ng_optimizer_dict
         # TODO: Adjust for arbitrary types
         self.instrumentation = {
             param.param_name: self.get_ng_instrumentation(param)
@@ -395,7 +396,7 @@ class NGOptimizer(Optimizer):
 
     def ask(self):
         candidate = self.optimizer.ask()
-        if -1 in self.candidates.keys():
+        if -1 in self.candidates:
             raise ValueError("There is already one unassociated candidate!")
         self.candidates[-1] = candidate
         nested_items = [
@@ -405,7 +406,7 @@ class NGOptimizer(Optimizer):
         return nested_to_dict(nested_items)
 
     def add_candidate(self, job_id):
-        if -1 not in self.candidates.keys():
+        if -1 not in self.candidates:
             raise ValueError("There is no unassociated candidate!")
         self.candidates[job_id] = self.candidates[-1]
         del self.candidates[-1]
@@ -447,7 +448,8 @@ class NGOptimizer(Optimizer):
         if not os.path.exists(file):
             return None
 
-        ngopt = pickle.load(open(file, "rb"))
+        with open(file, "rb") as f:
+            ngopt = pickle.load(f)
         if (metric_to_optimize, minimize) != (ngopt.metric_to_optimize, ngopt.minimize):
             raise ValueError("Attempted to continue but optimizes a different metric!")
 

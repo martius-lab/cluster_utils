@@ -29,7 +29,7 @@ def list_to_tuple(maybe_list):
 
 def check_valid_param_name(string):
     pat = "[A-Za-z0-9_.:-]*$"
-    if type(string) is not str:
+    if not isinstance(string, str):
         raise TypeError("Parameter '{}' not valid. String expected.".format(string))
     if string in constants.RESERVED_PARAMS + (constants.WORKING_DIR,):
         # working_dir cannot be injected in grid_search/hpo
@@ -72,7 +72,7 @@ def rm_dir_full(dir_name):
 
 def flatten_nested_string_dict(nested_dict, prepend=""):
     for key, value in nested_dict.items():
-        if type(key) is not str:
+        if not isinstance(key, str):
             raise TypeError("Only strings as keys expected")
         if isinstance(value, dict):
             for sub in flatten_nested_string_dict(
@@ -146,7 +146,7 @@ def validate_hyperparam_dict(hyperparam_dict):
             [check_valid_param_name(n) for n in name]
         else:
             check_valid_param_name(name)
-        if type(option_list) is not list:
+        if not isinstance(option_list, list):
             raise TypeError(
                 f"Entries in hyperparam dict must be type list (not {name}:"
                 f" {type(option_list)})"
@@ -267,16 +267,16 @@ def make_temporary_dir(name: str) -> str:
     return run_dir
 
 
-def dict_to_dirname(setting, id, smart_naming=True):
+def dict_to_dirname(setting, job_id, smart_naming=True):
     vals = [
         "{}={}".format(str(key)[:3], str(value)[:6])
         for key, value in setting.items()
         if not isinstance(value, dict)
     ]
-    res = "{}_{}".format(id, "_".join(vals))
+    res = "{}_{}".format(job_id, "_".join(vals))
     if len(res) < 35 and smart_naming:
         return res
-    return str(id)
+    return str(job_id)
 
 
 def update_recursive(d, u, defensive=False):
@@ -291,20 +291,21 @@ def update_recursive(d, u, defensive=False):
 
 
 def check_import_in_fixed_params(setting_dict):
-    if "fixed_params" in setting_dict:
-        if "__import__" in setting_dict["fixed_params"]:
-            raise ImportError(
-                "Cannot import inside fixed params. Did you mean __import_promise__?"
-            )
+    if "fixed_params" in setting_dict and "__import__" in setting_dict["fixed_params"]:
+        raise ImportError(
+            "Cannot import inside fixed params. Did you mean __import_promise__?"
+        )
 
 
 def rename_import_promise(setting_dict):
-    if "fixed_params" in setting_dict:
-        if "__import_promise__" in setting_dict["fixed_params"]:
-            setting_dict["fixed_params"]["__import__"] = setting_dict["fixed_params"][
-                "__import_promise__"
-            ]
-            del setting_dict["fixed_params"]["__import_promise__"]
+    if (
+        "fixed_params" in setting_dict
+        and "__import_promise__" in setting_dict["fixed_params"]
+    ):
+        setting_dict["fixed_params"]["__import__"] = setting_dict["fixed_params"][
+            "__import_promise__"
+        ]
+        del setting_dict["fixed_params"]["__import_promise__"]
 
 
 def log_and_print(logger, msg):

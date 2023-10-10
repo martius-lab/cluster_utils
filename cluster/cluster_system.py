@@ -48,7 +48,7 @@ class ClusterSubmission(ABC):
             self.submission_hooks.manager = None
             self.submission_hooks.pop(identifier)
         else:
-            raise HookNotFoundException("Hook not found. Can not unregister")
+            raise HookNotFoundError("Hook not found. Can not unregister")
 
     def exec_pre_run_routines(self):
         for hook in self.submission_hooks.values():
@@ -67,9 +67,9 @@ class ClusterSubmission(ABC):
     def save_job_info(self, result_dir):
         return False
 
-    def get_job(self, id):
+    def get_job(self, job_id):
         for job in self.jobs:
-            if job.id == id:
+            if job.id == job_id:
                 return job
         return None
 
@@ -128,7 +128,7 @@ class ClusterSubmission(ABC):
         return [
             job
             for job in self.current_jobs
-            if job.status == JobStatus.CONCLUDED and not job.get_results() is None
+            if job.status == JobStatus.CONCLUDED and job.get_results() is not None
         ]
 
     @property
@@ -285,12 +285,12 @@ class ClusterSubmission(ABC):
 
 def get_cluster_type(requirements, run_local=None):
     logger = logging.getLogger("cluster_utils")
-    from cluster.condor_cluster_system import Condor_ClusterSubmission
-    from cluster.dummy_cluster_system import Dummy_ClusterSubmission
+    from cluster.condor_cluster_system import CondorClusterSubmission
+    from cluster.dummy_cluster_system import DummyClusterSubmission
 
     if is_command_available("condor_q"):
         logger.info("CONDOR detected, running CONDOR job submission")
-        return Condor_ClusterSubmission
+        return CondorClusterSubmission
     else:
         if run_local is None:
             answer = input("No cluster detected. Do you want to run locally? [Y/n]: ")
@@ -300,7 +300,7 @@ def get_cluster_type(requirements, run_local=None):
                 run_local = True
 
         if run_local:
-            return Dummy_ClusterSubmission
+            return DummyClusterSubmission
         else:
             raise OSError("Neither CONDOR nor SLURM was found. Not running locally")
 
@@ -344,5 +344,5 @@ class ClusterSubmissionHook(ABC):
         pass
 
 
-class HookNotFoundException(Exception):
+class HookNotFoundError(Exception):
     pass

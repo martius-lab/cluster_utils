@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Breaking Change:** Drop support for Python versions < 3.8
+- *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
 
 ### Fixed
 - Make it work with Python >=3.10

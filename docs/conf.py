@@ -22,6 +22,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 from __future__ import annotations
+
 import typing
 
 # -- General configuration ------------------------------------------------
@@ -50,7 +51,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "cluster_utils"
-copyright = "2021, Max Planck Institute for Intelligent Systems"
+copyright = "2021, Max Planck Institute for Intelligent Systems"  # noqa: A001
 author = "Max Planck Institute for Intelligent Systems"
 
 # The version info for the project you're documenting, acts as replacement for

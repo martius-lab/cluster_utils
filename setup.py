@@ -42,9 +42,7 @@ setup(
         "dev": [
             "absolufy-imports",
             "black",
-            "flake8",
-            "flake8-bugbear",
-            "flake8-isort",
+            "ruff",
             "nox",
             "pre-commit",
             "pytest",

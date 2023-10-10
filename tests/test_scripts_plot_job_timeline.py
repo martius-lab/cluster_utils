@@ -6,7 +6,7 @@ import pytest  # type: ignore
 from cluster.scripts.plot_job_timeline import JobStatus, parse_cluster_run_log
 
 
-@pytest.fixture
+@pytest.fixture()
 def cluster_run_logfile():
     this_dir = pathlib.PurePath(__file__).parent
     return this_dir / "cluster_run.log"

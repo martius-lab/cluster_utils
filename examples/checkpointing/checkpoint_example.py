@@ -53,7 +53,7 @@ if __name__ == "__main__":
     iteration = load_checkpoint(checkpoint_path, model, optim)
     # redirect output to log file for easier understanding what happens
     # the log file is written after the program ends.
-    sys.stdout = open(f"{params.model_dir}/log_{iteration}.txt", "w")
+    sys.stdout = open(f"{params.model_dir}/log_{iteration}.txt", "w")  # noqa: SIM115
 
     while True:
         # do some training

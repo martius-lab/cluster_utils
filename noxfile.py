@@ -12,11 +12,9 @@ LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
 @nox.session(python=PYTHON_VERSIONS)
 def lint(session):
     session.install("black")
-    session.install("flake8")
-    session.install("flake8-bugbear")
-    session.install("flake8-isort")
+    session.install("ruff")
     session.run("black", "--check", *LOCATIONS)
-    session.run("flake8", *LOCATIONS)
+    session.run("ruff", ".")
 
 
 @nox.session(python=PYTHON_VERSIONS)

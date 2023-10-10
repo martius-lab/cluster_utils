@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import sys
@@ -100,12 +101,9 @@ class GitConnector(object):
         Import library in a non-breaking fashion, connect to git repo
         :return: None
         """
-
-        try:
+        # Here we ignore the exception, should not affect of execution of the script
+        with contextlib.suppress(git.exc.InvalidGitRepositoryError):
             self._repo = self._connect_local_repo(self._local_path)
-        except git.exc.InvalidGitRepositoryError:
-            # Here we ignore the exception, should not affect of execution of the script
-            pass
 
     def _connect_local_repo(self, local_path):
         """
