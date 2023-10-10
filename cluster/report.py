@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import os
 from itertools import combinations, count
 from tempfile import TemporaryDirectory
+from typing import Any, Iterator, Mapping, NamedTuple, Sequence, Union
 
+import numpy as np
+import pandas as pd
 import seaborn as sns
 from matplotlib import rc
 
-from cluster import data_analysis
+from cluster import constants, data_analysis, distributions
 from cluster.latex_utils import LatexFile
-from cluster.utils import log_and_print
+from cluster.utils import log_and_print, shorten_string
 
 
 def init_plotting():
@@ -115,5 +120,174 @@ def produce_basic_report(
         try:
             latex.produce_pdf(output_file)
             log_and_print(logger, f"Report saved at {output_file}")
+        except Exception:
+            logging.warning("Could not generate PDF report", exc_info=True)
+
+
+class OptimizationConfig(NamedTuple):
+    parameters: Sequence[distributions.Distribution]
+    metric_to_optimize: str
+    minimize: bool
+    with_restarts: bool
+    minimal_restarts_to_count: int
+
+
+def distribution_plots(
+    full_df: pd.DataFrame,
+    optimized_params: Sequence[distributions.Distribution],
+    filename_generator: Iterator[str],
+) -> Iterator[str]:
+    """Generator to iteratively create distribution plots for the given parameters.
+
+    Args:
+        full_df:  DataFrame with data of all runs.
+        optimized_params:  Sequence of Distribution instances (containing parameter
+            names).  Only distribution types
+            :class:`~distributions.NumericalDistribution` and
+            :class:`distributions.Discrete` are supported.
+        filename_generator:  Generator to create names for temporary files.
+
+    Raises:
+        TypeError:  if a distribution of an unsupported type is given.
+    """
+    for distr in optimized_params:
+        filename = next(filename_generator)
+        if isinstance(distr, distributions.NumericalDistribution):
+            log_scale = isinstance(distr, distributions.TruncatedLogNormal)
+            res = data_analysis.distribution(
+                full_df,
+                constants.ITERATION,
+                distr.param_name,
+                filename=filename,
+                metric_logscale=log_scale,
+                x_bounds=(distr.lower, distr.upper),
+            )
+            if res:
+                yield filename
+        elif isinstance(distr, distributions.Discrete):
+            data_analysis.count_plot_horizontal(
+                full_df,
+                constants.ITERATION,
+                distr.param_name,
+                filename=filename,
+            )
+            yield filename
+        else:
+            raise TypeError(f"Distribution of type {type(distr)} is not supported.")
+
+
+def provide_recommendations(
+    minimal_df: pd.DataFrame,
+    config: OptimizationConfig,
+    how_many: int,
+) -> pd.DataFrame:
+    num_restarts = minimal_df[constants.RESTART_PARAM_NAME]
+    jobs_df = minimal_df[num_restarts >= config.minimal_restarts_to_count].copy()
+
+    metric_std = config.metric_to_optimize + constants.STD_ENDING
+    final_metric = f"expected {config.metric_to_optimize}"
+    if config.with_restarts and config.minimal_restarts_to_count > 1:
+        sign = -1.0 if config.minimize else 1.0
+        mean, std = jobs_df[config.metric_to_optimize], jobs_df[metric_std]
+        median_std = jobs_df[metric_std].median()
+
+        num_restarts = jobs_df[constants.RESTART_PARAM_NAME]
+        # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
+        expected_metric = mean - (
+            sign * (np.maximum(std, median_std)) / np.sqrt(num_restarts)
+        )
+        jobs_df[final_metric] = expected_metric
+    else:
+        jobs_df[final_metric] = jobs_df[config.metric_to_optimize]
+
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=config.minimize)[
+        :how_many
+    ].reset_index()
+    del best_jobs_df[metric_std]
+    del best_jobs_df[config.metric_to_optimize]
+    del best_jobs_df[constants.RESTART_PARAM_NAME]
+    del best_jobs_df["index"]
+
+    best_jobs_df.index += 1
+    best_jobs_df[final_metric] = list(
+        distributions.smart_round(best_jobs_df[final_metric])
+    )
+
+    best_jobs_df = best_jobs_df.transpose()
+    best_jobs_df.index = pd.Index([shorten_string(el, 40) for el in best_jobs_df.index])
+    return best_jobs_df
+
+
+def produce_hp_optimization_report(  # Optimizer.save_pdf_report
+    full_df,
+    config,
+    report_hooks,
+    output_file: str,
+    submission_hook_stats: Mapping[str, Any],
+    current_result_path: str | os.PathLike,
+) -> None:
+    today = datetime.datetime.now().strftime("%B %d, %Y")
+    latex_title = "Results of optimization procedure from ({})".format(today)
+    latex = LatexFile(latex_title)
+
+    params = [param.param_name for param in config.parameters]
+
+    if (
+        "GitConnector" in submission_hook_stats
+        and submission_hook_stats["GitConnector"]
+    ):
+        latex.add_generic_section(
+            "Git Meta Information", content=submission_hook_stats["GitConnector"]
+        )
+
+    def filename_gen(base_path: Union[str, os.PathLike]) -> Iterator[str]:
+        for num in count():
+            yield os.path.join(base_path, "{}.pdf".format(num))
+
+    with TemporaryDirectory() as tmpdir:
+        file_gen = filename_gen(tmpdir)
+        hook_args = {"df": full_df, "path_to_results": current_result_path}
+        overall_progress_file = next(file_gen)
+        data_analysis.plot_opt_progress(
+            full_df, config.metric_to_optimize, overall_progress_file
+        )
+
+        sensitivity_file = next(file_gen)
+        data_analysis.importance_by_iteration_plot(
+            full_df,
+            params,
+            config.metric_to_optimize,
+            config.minimize,
+            sensitivity_file,
+        )
+
+        minimal_df = data_analysis.average_out(
+            full_df,
+            [config.metric_to_optimize],
+            params,
+            sort_ascending=config.minimize,
+        )
+
+        distr_plot_files = distribution_plots(full_df, config.parameters, file_gen)
+
+        latex.add_section_from_figures(
+            "Overall progress", [overall_progress_file], common_scale=1.2
+        )
+        latex.add_section_from_dataframe(
+            "Top 5 recommendations",
+            provide_recommendations(
+                minimal_df,
+                config,
+                how_many=5,
+            ),
+        )
+        latex.add_section_from_figures("Hyperparameter importance", [sensitivity_file])
+        latex.add_section_from_figures("Distribution development", distr_plot_files)
+
+        for hook in report_hooks:
+            hook.write_section(latex, file_gen, hook_args)
+
+        try:
+            latex.produce_pdf(output_file)
         except Exception:
             logging.warning("Could not generate PDF report", exc_info=True)
