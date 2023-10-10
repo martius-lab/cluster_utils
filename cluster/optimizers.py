@@ -82,7 +82,7 @@ class Optimizer(ABC):
             with_restarts=self.with_restarts,
             minimal_restarts_to_count=self.minimal_restarts_to_count,
         )
-        report.produce_hp_optimization_report(
+        report.produce_optimization_report(
             self.full_df,
             config,
             self.report_hooks,

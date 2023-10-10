@@ -5,7 +5,7 @@ import logging
 import os
 from itertools import combinations, count
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Mapping, NamedTuple, Sequence, Union
+from typing import Any, Iterator, Mapping, NamedTuple, Sequence
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ import seaborn as sns
 from matplotlib import rc
 
 from cluster import constants, data_analysis, distributions
-from cluster.latex_utils import LatexFile
+from cluster.latex_utils import LatexFile, SectionHook
 from cluster.utils import log_and_print, shorten_string
 
 
@@ -125,6 +125,8 @@ def produce_basic_report(
 
 
 class OptimizationConfig(NamedTuple):
+    """Optimization parameters that are relevant for generating the report."""
+
     parameters: Sequence[distributions.Distribution]
     metric_to_optimize: str
     minimize: bool
@@ -133,11 +135,14 @@ class OptimizationConfig(NamedTuple):
 
 
 def distribution_plots(
-    full_df: pd.DataFrame,
+    full_data: pd.DataFrame,
     optimized_params: Sequence[distributions.Distribution],
     filename_generator: Iterator[str],
 ) -> Iterator[str]:
     """Generator to iteratively create distribution plots for the given parameters.
+
+    The plots are saved to PDF files, using the given filename_generator for determining
+    the file names.
 
     Args:
         full_df:  DataFrame with data of all runs.
@@ -149,13 +154,16 @@ def distribution_plots(
 
     Raises:
         TypeError:  if a distribution of an unsupported type is given.
+
+    Yields:
+        Filename of the generated plot.
     """
     for distr in optimized_params:
         filename = next(filename_generator)
         if isinstance(distr, distributions.NumericalDistribution):
             log_scale = isinstance(distr, distributions.TruncatedLogNormal)
             res = data_analysis.distribution(
-                full_df,
+                full_data,
                 constants.ITERATION,
                 distr.param_name,
                 filename=filename,
@@ -166,7 +174,7 @@ def distribution_plots(
                 yield filename
         elif isinstance(distr, distributions.Discrete):
             data_analysis.count_plot_horizontal(
-                full_df,
+                full_data,
                 constants.ITERATION,
                 distr.param_name,
                 filename=filename,
@@ -218,14 +226,26 @@ def provide_recommendations(
     return best_jobs_df
 
 
-def produce_hp_optimization_report(  # Optimizer.save_pdf_report
-    full_df,
-    config,
-    report_hooks,
+def produce_optimization_report(
+    full_data: pd.DataFrame,
+    config: OptimizationConfig,
+    report_hooks: Sequence[SectionHook],
     output_file: str,
     submission_hook_stats: Mapping[str, Any],
     current_result_path: str | os.PathLike,
 ) -> None:
+    """Produce PDF report for a ``hp_optimization`` run.
+
+    Args:
+        full_data:  The full data of the optimization including parameters and results
+            (one line per run).
+        config:  Configuration of the optimisation procedure.
+        report_hooks:  Section hooks to add additional content to the report.
+        output_file:  Where to save the report.
+        submission_hook_stats:  Hooks to add submission-specific information (only an
+            entry with key "GitConnector" is used if present).
+        current_result_path:  Path to the output files of the optimization.
+    """
     today = datetime.datetime.now().strftime("%B %d, %Y")
     latex_title = "Results of optimization procedure from ({})".format(today)
     latex = LatexFile(latex_title)
@@ -240,21 +260,21 @@ def produce_hp_optimization_report(  # Optimizer.save_pdf_report
             "Git Meta Information", content=submission_hook_stats["GitConnector"]
         )
 
-    def filename_gen(base_path: Union[str, os.PathLike]) -> Iterator[str]:
+    def filename_gen(base_path: str | os.PathLike) -> Iterator[str]:
         for num in count():
             yield os.path.join(base_path, "{}.pdf".format(num))
 
     with TemporaryDirectory() as tmpdir:
         file_gen = filename_gen(tmpdir)
-        hook_args = {"df": full_df, "path_to_results": current_result_path}
+        hook_args = {"df": full_data, "path_to_results": current_result_path}
         overall_progress_file = next(file_gen)
         data_analysis.plot_opt_progress(
-            full_df, config.metric_to_optimize, overall_progress_file
+            full_data, config.metric_to_optimize, overall_progress_file
         )
 
         sensitivity_file = next(file_gen)
         data_analysis.importance_by_iteration_plot(
-            full_df,
+            full_data,
             params,
             config.metric_to_optimize,
             config.minimize,
@@ -262,13 +282,13 @@ def produce_hp_optimization_report(  # Optimizer.save_pdf_report
         )
 
         minimal_df = data_analysis.average_out(
-            full_df,
+            full_data,
             [config.metric_to_optimize],
             params,
             sort_ascending=config.minimize,
         )
 
-        distr_plot_files = distribution_plots(full_df, config.parameters, file_gen)
+        distr_plot_files = distribution_plots(full_data, config.parameters, file_gen)
 
         latex.add_section_from_figures(
             "Overall progress", [overall_progress_file], common_scale=1.2
