@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import typing
 from abc import ABC, abstractmethod
 from shutil import copyfile
 from subprocess import PIPE, CalledProcessError, run
@@ -126,6 +127,22 @@ class LatexFile(object):
 
 def latex_format(string):
     return string.replace("_", "-")
+
+
+class StaticSectionGenerator:
+    """
+    Section generator (for use with :class:`SectionHook`) that returns a static value.
+    """
+
+    def __init__(self, value: typing.Any) -> None:
+        """
+        Args:
+            value:  Value that will be returned when calling the instance.
+        """
+        self.value = value
+
+    def __call__(self, df, path_to_results, filename_generator):
+        return self.value
 
 
 class SectionHook(ABC):

@@ -82,12 +82,9 @@ if __name__ == "__main__":
 
     distribution_list = [get_distribution(**item) for item in params.optimized_params]
 
-    # noinspection PyUnusedLocal
-    def find_json(df, path_to_results, filename_generator):
-        return json_full_name
-
     json_hook = latex_utils.SectionFromJsonHook(
-        section_title="Optimization setting script", section_generator=find_json
+        section_title="Optimization setting script",
+        section_generator=latex_utils.StaticSectionGenerator(json_full_name),
     )
 
     hp_optimization(

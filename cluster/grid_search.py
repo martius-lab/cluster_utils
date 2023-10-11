@@ -6,7 +6,7 @@ from pathlib import Path
 
 from cluster import grid_search, read_params_from_cmdline
 from cluster.git_utils import make_git_params
-from cluster.latex_utils import SectionFromJsonHook
+from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from cluster.report import init_plotting, produce_basic_report
 from cluster.utils import (
     check_import_in_fixed_params,
@@ -101,13 +101,9 @@ if __name__ == "__main__":
         f"{params.optimization_procedure_name}_report.pdf",
     )
 
-    # noinspection PyUnusedLocal
-
-    def find_json(df, path_to_results, filename_generator):
-        return json_full_name
-
     json_hook = SectionFromJsonHook(
-        section_title="Optimization setting script", section_generator=find_json
+        section_title="Optimization setting script",
+        section_generator=StaticSectionGenerator(json_full_name),
     )
 
     produce_basic_report(
