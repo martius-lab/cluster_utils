@@ -5,7 +5,6 @@ from pathlib import Path
 from cluster import (
     distributions,
     hp_optimization,
-    init_plotting,
     latex_utils,
     read_params_from_cmdline,
 )
@@ -54,7 +53,6 @@ if __name__ == "__main__":
     )
 
     json_full_name = os.path.abspath(sys.argv[1])
-    init_plotting()
 
     opt_procedure_name = params.optimization_procedure_name
 
