@@ -246,6 +246,8 @@ def produce_optimization_report(
             entry with key "GitConnector" is used if present).
         current_result_path:  Path to the output files of the optimization.
     """
+    init_plotting()
+
     today = datetime.datetime.now().strftime("%B %d, %Y")
     latex_title = "Results of optimization procedure from ({})".format(today)
     latex = LatexFile(latex_title)
