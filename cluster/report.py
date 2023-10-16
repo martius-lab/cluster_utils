@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import enum
 import logging
 import os
 from itertools import combinations, count
@@ -15,6 +16,46 @@ from matplotlib import rc
 from cluster import constants, data_analysis, distributions
 from cluster.latex_utils import LatexFile, SectionHook
 from cluster.utils import log_and_print, shorten_string
+
+
+class GenerateReportSetting(enum.Enum):
+    """The possible values for the "generate_report" setting."""
+
+    #: Do not generate report automatically.
+    NEVER = 0
+    #: Generate report once when the optimization has finished.
+    WHEN_FINISHED = 1
+    #: Generate report after every iteration of the optimization.
+    EVERY_ITERATION = 2
+
+    @staticmethod
+    def parse_generate_report_setting_hook(settings: dict[str, Any]) -> None:
+        """Parse the "generate_report" parameter in the settings dict.
+
+        Check if a key "generate_report" exists in the settings dictionary and parse its
+        value to replace it with the proper enum value.  If no entry exists in settings,
+        it will be added with default value ``NEVER``.
+
+        Raises:
+            ValueError: if the value in settings cannot be mapped to one of the enum
+                values.
+        """
+        key = "generate_report"
+        value_str: str = settings.get(key, GenerateReportSetting.NEVER.name)
+        value_str = value_str.upper()
+        try:
+            value_enum = GenerateReportSetting[value_str]
+        except KeyError as e:
+            options = (
+                GenerateReportSetting.NEVER.name,
+                GenerateReportSetting.WHEN_FINISHED.name,
+                GenerateReportSetting.EVERY_ITERATION.name,
+            )
+            raise ValueError(
+                f"Invalid value {e} for setting {key}.  Valid options are {options}."
+            ) from None
+
+        settings[key] = value_enum
 
 
 def init_plotting():
@@ -246,6 +287,9 @@ def produce_optimization_report(
             entry with key "GitConnector" is used if present).
         current_result_path:  Path to the output files of the optimization.
     """
+    logger = logging.getLogger("cluster_utils")
+    logger.info("Generate PDF report...")
+
     init_plotting()
 
     today = datetime.datetime.now().strftime("%B %d, %Y")
@@ -313,5 +357,6 @@ def produce_optimization_report(
 
         try:
             latex.produce_pdf(output_file)
+            logger.info("Saved report to %s", output_file)
         except Exception:
-            logging.warning("Could not generate PDF report", exc_info=True)
+            logger.warning("Could not generate PDF report", exc_info=True)

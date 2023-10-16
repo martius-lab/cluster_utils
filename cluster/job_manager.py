@@ -21,6 +21,7 @@ from cluster.progress_bars import (
     SubmittedJobsBar,
     redirect_stdout_to_tqdm,
 )
+from cluster.report import GenerateReportSetting
 from cluster.settings import optimizer_dict
 from cluster.user_interaction import InteractiveMode, NonInteractiveMode
 from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
@@ -229,6 +230,7 @@ def post_iteration_opt(
     metric_to_optimize,
     num_best_jobs_whose_data_is_kept,
     remove_working_dirs,
+    generate_report: bool,
 ):
     pdf_output = os.path.join(base_paths_and_files["result_dir"], "result.pdf")
     current_result_path = base_paths_and_files["current_result_dir"]
@@ -244,7 +246,10 @@ def post_iteration_opt(
 
     print(hp_optimizer.minimal_df[:10])
 
-    hp_optimizer.save_pdf_report(pdf_output, submission_hook_stats, current_result_path)
+    if generate_report:
+        hp_optimizer.save_pdf_report(
+            pdf_output, submission_hook_stats, current_result_path
+        )
 
     hp_optimizer.iteration += 1
 
@@ -295,6 +300,7 @@ def hp_optimization(
     optimizer_settings=None,
     n_completed_jobs_before_resubmit=1,
     no_user_interaction=False,
+    report_generation_mode: GenerateReportSetting = GenerateReportSetting.NEVER,
 ):
     if not (1 <= n_completed_jobs_before_resubmit <= n_jobs_per_iteration):
         raise ValueError(
@@ -389,6 +395,9 @@ def hp_optimization(
                     metric_to_optimize,
                     num_best_jobs_whose_data_is_kept,
                     remove_working_dirs,
+                    generate_report=(
+                        report_generation_mode is GenerateReportSetting.EVERY_ITERATION
+                    ),
                 )
                 logger.info(f"starting new iteration: {hp_optimizer.iteration}")
                 pre_iteration_opt(base_paths_and_files)
@@ -452,6 +461,13 @@ def hp_optimization(
         metric_to_optimize,
         num_best_jobs_whose_data_is_kept,
         remove_working_dirs,
+        generate_report=(
+            report_generation_mode
+            in [
+                GenerateReportSetting.EVERY_ITERATION,
+                GenerateReportSetting.WHEN_FINISHED,
+            ]
+        ),
     )
     post_opt(cluster_interface)
 
