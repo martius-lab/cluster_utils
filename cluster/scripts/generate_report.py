@@ -99,13 +99,13 @@ def main() -> int:
         "results_dir",
         type=pathlib.Path,
         help="Directory containing the generated files.",
-        metavar="<DIRECTORY>",
+        metavar="RESULTS_DIRECTORY",
     )
     parser.add_argument(
         "output",
         type=pathlib.Path,
         help="Where to save the report.",
-        metavar="<FILE>",
+        metavar="OUTPUT_FILE",
     )
     parser.add_argument(
         "--force",
