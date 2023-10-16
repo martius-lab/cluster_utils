@@ -254,6 +254,8 @@ def produce_optimization_report(
 
     params = [param.param_name for param in config.parameters]
 
+    # TODO this could be a bit nicer: either make it flexible so that arbitrary sections
+    # can be added from outside or change to only pass the git information.
     if (
         "GitConnector" in submission_hook_stats
         and submission_hook_stats["GitConnector"]

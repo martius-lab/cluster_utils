@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 import shutil
 import signal
 import sys
@@ -248,6 +249,13 @@ def post_iteration_opt(
     hp_optimizer.iteration += 1
 
     hp_optimizer.save_data_and_self(base_paths_and_files["result_dir"])
+
+    # save submission_hook_stats for offline-generation of PDF report
+    _submission_hook_stats_file = os.path.join(
+        base_paths_and_files["result_dir"], constants.SUBMISSION_HOOK_STATS_FILE
+    )
+    with open(_submission_hook_stats_file, "wb") as f:
+        pickle.dump(submission_hook_stats, f)
 
     comm_server.jobs = []
 

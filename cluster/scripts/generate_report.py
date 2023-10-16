@@ -11,7 +11,7 @@ import pathlib
 import pickle
 import sys
 
-from cluster.constants import STATUS_PICKLE_FILE
+from cluster.constants import STATUS_PICKLE_FILE, SUBMISSION_HOOK_STATS_FILE
 from cluster.optimizers import Optimizer
 
 
@@ -64,12 +64,25 @@ def main() -> int:
     with open(status_file, "rb") as f:
         optimizer: Optimizer = pickle.load(f)
 
+    # if submission hook stats are missing (e.g. because this is from an old run, where
+    # they haven't been saved yet), simply
+    submission_hook_stats_file = args.results_dir / SUBMISSION_HOOK_STATS_FILE
+    try:
+        with open(submission_hook_stats_file, "rb") as f:
+            submission_hook_stats = pickle.load(f)
+    except Exception as e:
+        logging.error(
+            "Failed to load submission hook stats from '%s': %s",
+            submission_hook_stats_file,
+            e,
+        )
+        submission_hook_stats = {}
+
     if not isinstance(optimizer, Optimizer):
         logging.warning("Object loaded from '%s' is not of type Optimizer", status_file)
 
-    # TODO: submission_hook_stats?
     # TODO: does this write anything to results_dir?
-    optimizer.save_pdf_report(args.output, {}, args.results_dir)
+    optimizer.save_pdf_report(args.output, submission_hook_stats, args.results_dir)
 
     return 0
 
