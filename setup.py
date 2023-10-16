@@ -53,6 +53,10 @@ setup(
             "types-colorama",
             "types-tqdm",
         ],
+        "docs": [
+            "sphinx",
+            "myst-parser",
+        ],
     },
     entry_points={
         "console_scripts": [

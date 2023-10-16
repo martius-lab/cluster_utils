@@ -9,7 +9,7 @@ Welcome to cluster_utils's documentation!
    configuration
    report
    troubleshooting
-
+   changelog
 
 
 `cluster_utils`_ has been powering my cluster runs since 2017. It has grown ever
