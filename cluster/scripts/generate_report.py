@@ -4,12 +4,15 @@
 As input it expects the path to a results directory containing a "status.pickle" file
 that is automatically saved at the end of very iteration.
 """
+from __future__ import annotations
+
 import argparse
 import contextlib
 import logging
 import pathlib
 import pickle
 import sys
+import typing
 
 import colorama
 
@@ -49,6 +52,43 @@ def configure_logging(verbose: bool) -> logging.Logger:
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
     return logger
+
+
+def load_submission_hook_stats(
+    results_dir: pathlib.Path, logger: logging.Logger
+) -> dict[str, typing.Any]:
+    """Load submission hook stats from file.
+
+    Tries to load submission hook stats from the corresponding file in the results
+    directory.
+    If loading fails (e.g. because the file does not exist) an empty dictionary is
+    returned.
+
+    Args:
+        results_dir:  Directory containing the file created by cluster utils.
+        logger:  Logger instance used for output.
+
+    Returns:
+        The loaded submission hook stats or an empty dictionary if loading fails.
+    """
+    submission_hook_stats_file = results_dir / SUBMISSION_HOOK_STATS_FILE
+    try:
+        with open(submission_hook_stats_file, "rb") as f:
+            submission_hook_stats = pickle.load(f)
+
+        if not isinstance(submission_hook_stats, dict):
+            raise TypeError(
+                f"Expected dictionary but got {type(submission_hook_stats)}."
+            )
+    except Exception as e:
+        logger.error(
+            "Failed to load submission hook stats from '%s': %s",
+            submission_hook_stats_file,
+            e,
+        )
+        submission_hook_stats = {}
+
+    return submission_hook_stats
 
 
 def main() -> int:
@@ -102,24 +142,11 @@ def main() -> int:
     with open(status_file, "rb") as f:
         optimizer: Optimizer = pickle.load(f)
 
-    # if submission hook stats are missing (e.g. because this is from an old run, where
-    # they haven't been saved yet), simply
-    submission_hook_stats_file = args.results_dir / SUBMISSION_HOOK_STATS_FILE
-    try:
-        with open(submission_hook_stats_file, "rb") as f:
-            submission_hook_stats = pickle.load(f)
-    except Exception as e:
-        logger.error(
-            "Failed to load submission hook stats from '%s': %s",
-            submission_hook_stats_file,
-            e,
-        )
-        submission_hook_stats = {}
+    submission_hook_stats = load_submission_hook_stats(args.results_dir, logger)
 
     if not isinstance(optimizer, Optimizer):
         logger.warning("Object loaded from '%s' is not of type Optimizer", status_file)
 
-    # TODO: does this write anything to results_dir?
     optimizer.save_pdf_report(args.output, submission_hook_stats, args.results_dir)
     logger.info("Saved report to %s", args.output)
 
