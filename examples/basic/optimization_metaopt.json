@@ -5,6 +5,7 @@
     "branch": "master",
     "commit": null
   },
+  "generate_report": "every_iteration",
   "script_relative_path": "examples/basic/main.py",
   "num_best_jobs_whose_data_is_kept": 5,
   "remove_working_dirs": false,
