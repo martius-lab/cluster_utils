@@ -2,27 +2,56 @@
 
 This code has been powering my cluster runs since 2017. It has grown ever since and now it is a proper monster. Enjoy :).
 
+
+## Documentation
+
+A more detailed documentation is included in the `docs/` folder of the repository.
+There is not yet a publicly hosted version of the documentation but you can but you can
+build it yourself with the following commands:
+
+```bash
+git clone https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+cd cluster_utils
+# install package with the additional dependencies needed to build the documentation
+pip install ".[docs]"
+cd docs/
+make html  # build documentation
+```
+When the build is finished, open ``docs/_build/html/index.html`` with the browser of
+your choice.
+
+
 ## Run to install:
 
-``python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git``
+```bash
+python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+```
 
 or if `ssh` is configured:
 
-``python3 -m pip install git+ssh://git@gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git``
+```bash
+python3 -m pip install git+ssh://git@gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+```
 
 To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
 
-``export MPLBACKEND="agg"``
+```bash
+export MPLBACKEND="agg"
+```
 
 ## Quick Start
 
 There are two basic functionalities:
 
-``python3 -m cluster.grid_search specification_of_grid_search.json``
+```bash
+python3 -m cluster.grid_search specification_of_grid_search.json
+```
 
 and
 
-``python3 -m cluster.hp_optimization specification_of_hp_opt.json``
+```bash
+python3 -m cluster.hp_optimization specification_of_hp_opt.json
+```
 
 for hyperparameter optimization
 
@@ -30,7 +59,7 @@ See `examples/basic` and `examples/rosenbrock` for simple demonstrations.
 
 ## Main features
 
-A nonexhaustive list of features is the following:
+A non-exhaustive list of features is the following:
 
 * **Automatic condor usage** Jobs are submitted, monitored (with error reporting), and cleaned up in an automated and highly customizable way.
 
@@ -125,7 +154,7 @@ For `optimizer_str="cem_metaoptimizer"`:
 Generally, the usage mindset should be *"obtain some interpretable understanding of the influence of the hyperparameters"* rather than *"blackbox optimizer just tells me the best setting"*.
 Usually, early in the project many of the hyperparameters are more like ideas, or strategies.
 Cluster utils can then tell you which ideas (or their combinations) make sense.
-Later in a project, there only tend to be actual hyperparameters (i.e. transfering a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
+Later in a project, there only tend to be actual hyperparameters (i.e. transferring a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
 
 Here are some rules of thumbs to set the configuration values that can help you to get started. Keep in mind that following these does not necessarily lead to optimal results on your specific problem.
 
