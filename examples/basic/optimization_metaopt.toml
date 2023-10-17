@@ -1,0 +1,61 @@
+optimization_procedure_name = "test_asynch_opt_metaopt"
+results_dir = "/is/rg/al/Projects/tmp"
+script_relative_path = "examples/basic/main.py"
+num_best_jobs_whose_data_is_kept = 5
+remove_working_dirs = false
+optimizer_str = "cem_metaoptimizer"
+
+[git_params]
+branch = "master"
+
+[environment_setup]
+pre_job_script = "examples/basic/pre_job_script.sh"
+
+[cluster_requirements]
+request_cpus = 1
+request_gpus = 0
+memory_in_mb = 1_000
+bid = 1_000
+
+[optimizer_settings]
+with_restarts = true
+num_jobs_in_elite = 10
+
+[optimization_setting]
+metric_to_optimize = "result"
+minimize = true
+number_of_samples = 1_000
+n_jobs_per_iteration = 100
+
+[fixed_params]
+test_resume = false
+
+[[optimized_params]]
+param = "fn_args.u"
+distribution = "TruncatedNormal"
+bounds = [ -3, 3 ]
+
+[[optimized_params]]
+param = "fn_args.v"
+distribution = "IntLogNormal"
+bounds = [ 1, 1_000 ]
+
+[[optimized_params]]
+param = "fn_args.w"
+distribution = "IntNormal"
+bounds = [ -5, 5 ]
+
+[[optimized_params]]
+param = "fn_args.x"
+distribution = "TruncatedNormal"
+bounds = [ 0, 4 ]
+
+[[optimized_params]]
+param = "fn_args.y"
+distribution = "TruncatedLogNormal"
+bounds = [ 0.01, 100.0 ]
+
+[[optimized_params]]
+param = "fn_args.sharp_penalty"
+distribution = "Discrete"
+options = [ false, true ]

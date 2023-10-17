@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {ref}`config.general_settings`).
 - Command `python3 -m cluster.scripts.generate_report` to manually generate the report
   based on saved files (see {doc}`report`).
+- Support settings files in TOML format.
 
 ### Fixed
 - Make it work with Python >=3.10
