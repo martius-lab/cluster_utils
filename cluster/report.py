@@ -79,7 +79,7 @@ def flatten_params(params_with_tuples):
             yield p
 
 
-def produce_basic_report(
+def produce_gridsearch_report(
     df,
     params,
     metrics,
@@ -89,8 +89,12 @@ def produce_basic_report(
     maximized_metrics=None,
     report_hooks=None,
 ):
+    """Produce PDF report with results of ``grid_search``."""
     logger = logging.getLogger("cluster_utils")
     log_and_print(logger, "Producing basic report... ")
+
+    init_plotting()
+
     maximized_metrics = maximized_metrics or []
     report_hooks = report_hooks or []
 

@@ -69,7 +69,8 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
 
        - ``never``: Do not generate report automatically.
        - ``when_finished``: Generate once when the optimization has finished.
-       - ``every_iteration``: Generate report of current state after every iteration.
+       - ``every_iteration``: Generate report of current state after every iteration
+         (not supported by ``grid_search``).
 
        If enabled, the report is saved as ``result.pdf`` in the results directory (see
        ``results_dir``).  Note that independent of the setting here, the report can
