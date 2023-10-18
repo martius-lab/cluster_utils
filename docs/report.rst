@@ -10,6 +10,10 @@ results.
 Manual Report Generation
 ========================
 
+.. note::
+
+   Manual report generation is currently only implemented for ``hp_optimization``.
+
 At the end of each iteration, the relevant statistics are written to files in the output
 directory from which the report can be generated with
 
