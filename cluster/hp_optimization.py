@@ -5,11 +5,11 @@ from pathlib import Path
 from cluster import (
     distributions,
     hp_optimization,
-    init_plotting,
     latex_utils,
     read_params_from_cmdline,
 )
 from cluster.git_utils import make_git_params
+from cluster.report import GenerateReportSetting
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,
@@ -47,14 +47,20 @@ def get_distribution(distribution, **kwargs):
 
 
 if __name__ == "__main__":
-    params = read_params_from_cmdline(
-        verbose=False,
-        pre_unpack_hooks=[check_import_in_fixed_params],
-        post_unpack_hooks=[rename_import_promise],
-    )
+    try:
+        params = read_params_from_cmdline(
+            verbose=False,
+            pre_unpack_hooks=[check_import_in_fixed_params],
+            post_unpack_hooks=[
+                rename_import_promise,
+                GenerateReportSetting.parse_generate_report_setting_hook,
+            ],
+        )
+    except Exception as e:
+        print(f"Error while reading parameters: {e}", file=sys.stderr)
+        sys.exit(1)
 
     json_full_name = os.path.abspath(sys.argv[1])
-    init_plotting()
 
     opt_procedure_name = params.optimization_procedure_name
 
@@ -82,12 +88,9 @@ if __name__ == "__main__":
 
     distribution_list = [get_distribution(**item) for item in params.optimized_params]
 
-    # noinspection PyUnusedLocal
-    def find_json(df, path_to_results, filename_generator):
-        return json_full_name
-
     json_hook = latex_utils.SectionFromJsonHook(
-        section_title="Optimization setting script", section_generator=find_json
+        section_title="Optimization setting script",
+        section_generator=latex_utils.StaticSectionGenerator(json_full_name),
     )
 
     hp_optimization(
@@ -106,5 +109,6 @@ if __name__ == "__main__":
         early_killing_params=params.get("early_killing_params", {}),
         no_user_interaction=params.get("no_user_interaction", False),
         opt_procedure_name=opt_procedure_name,
+        report_generation_mode=params["generate_report"],
         **params.optimization_setting,
     )

@@ -4,11 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+[//]: # (Note: {ref}/{doc} roles are used for references to the documentation)
+
+## Unreleased (3.0.0)
 
 ### Changed
-- **Breaking Change:** Drop support for Python versions < 3.8
+- **Breaking:** Drop support for Python versions < 3.8
+- **Breaking:** PDF reports are not generated anymore by default.  Add
+  `generate_report = "every_iteration"` in the settings to restore behaviour of previous
+  versions.
+- **Breaking:** `Optimizer.save_pdf_report()` is moved out of the `Optimizer` class to
+  `report.produce_optimization_report()`.
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
+
+### Added
+- Setting `generate_report` to control automatic report generation (See
+  {ref}`config.general_settings`).
+- Command `python3 -m cluster.scripts.generate_report` to manually generate the report
+  based on saved files (see {doc}`report`).
 
 ### Fixed
 - Make it work with Python >=3.10

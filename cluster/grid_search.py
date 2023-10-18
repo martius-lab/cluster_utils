@@ -6,8 +6,11 @@ from pathlib import Path
 
 from cluster import grid_search, read_params_from_cmdline
 from cluster.git_utils import make_git_params
-from cluster.latex_utils import SectionFromJsonHook
-from cluster.report import init_plotting, produce_basic_report
+from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
+from cluster.report import (
+    GenerateReportSetting,
+    produce_gridsearch_report,
+)
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,
@@ -16,14 +19,25 @@ from cluster.utils import (
 )
 
 if __name__ == "__main__":
+    logger = logging.getLogger("cluster_utils")
+
     params = read_params_from_cmdline(
         verbose=False,
         pre_unpack_hooks=[check_import_in_fixed_params],
-        post_unpack_hooks=[rename_import_promise],
+        post_unpack_hooks=[
+            rename_import_promise,
+            GenerateReportSetting.parse_generate_report_setting_hook,
+        ],
     )
 
+    # check parameters
+    if params["generate_report"] == GenerateReportSetting.EVERY_ITERATION:
+        logger.warning(
+            "grid_search does not support setting generate_report='EVERY_ITERATION'. "
+            " Will only create report when finished."
+        )
+
     json_full_name = os.path.abspath(sys.argv[1])
-    init_plotting()
 
     opt_procedure_name = params.optimization_procedure_name
 
@@ -85,7 +99,6 @@ if __name__ == "__main__":
     )
 
     if df is None:
-        logger = logging.getLogger("cluster_utils")
         logger.warning(
             "Exiting without report because no job results are "
             "available. Either the jobs did not exit properly, or "
@@ -101,21 +114,18 @@ if __name__ == "__main__":
         f"{params.optimization_procedure_name}_report.pdf",
     )
 
-    # noinspection PyUnusedLocal
-
-    def find_json(df, path_to_results, filename_generator):
-        return json_full_name
-
     json_hook = SectionFromJsonHook(
-        section_title="Optimization setting script", section_generator=find_json
+        section_title="Optimization setting script",
+        section_generator=StaticSectionGenerator(json_full_name),
     )
 
-    produce_basic_report(
-        df,
-        relevant_params,
-        metrics,
-        submission_hook_stats=submission_hook_stats,
-        procedure_name=params.optimization_procedure_name,
-        output_file=output_pdf,
-        report_hooks=[json_hook],
-    )
+    if params["generate_report"] is not GenerateReportSetting.NEVER:
+        produce_gridsearch_report(
+            df,
+            relevant_params,
+            metrics,
+            submission_hook_stats=submission_hook_stats,
+            procedure_name=params.optimization_procedure_name,
+            output_file=output_pdf,
+            report_hooks=[json_hook],
+        )

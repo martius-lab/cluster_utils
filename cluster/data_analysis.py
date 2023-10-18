@@ -34,6 +34,8 @@ def average_out(
     df: pd.DataFrame,
     metrics: List[str],
     params_to_keep: List[str],
+    /,
+    sort_ascending: bool,
     std_ending: str = constants.STD_ENDING,
     add_std: bool = True,
 ) -> pd.DataFrame:
@@ -45,6 +47,9 @@ def average_out(
             averaged).
         params_to_keep: Parameters by which the runs are grouped (i.e. average is
             computed over all runs with identical values on these parameters).
+        sort_ascending: The resulting DataFrame will be sorted by the values of
+            ``metric``.  This argument specifies whether it should be sorted ascending
+            (True) or descending (False).
         std_ending: Suffix that is appended to the metric column names when adding
             standard deviations.
         add_std: Whether to add columns with the standard deviations of metric columns.
@@ -71,6 +76,10 @@ def average_out(
             result[std_name] = new_df.groupby(params_to_keep, as_index=False).agg(
                 {metric: "std"}
             )[metric]
+
+    # sort the result
+    result = result.sort_values(metrics, ascending=sort_ascending)
+
     return result
 
 

@@ -6,6 +6,8 @@ Both ``grid_search`` and ``hp_optimization`` expect as input a JSON file with
 the configuration.
 
 
+.. _config.general_settings:
+
 General Parameters
 ==================
 
@@ -60,6 +62,22 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
    * - ``remove_working_dirs``
      - Optional, bool, default={grid_search: False, hp_optimization: True}
      - TODO
+   * - ``generate_report``
+     - Optional, default=never
+     - Specifies whether a report should be generated automatically. Can be one of the
+       following values:
+
+       - ``never``: Do not generate report automatically.
+       - ``when_finished``: Generate once when the optimization has finished.
+       - ``every_iteration``: Generate report of current state after every iteration
+         (not supported by ``grid_search``).
+
+       If enabled, the report is saved as ``result.pdf`` in the results directory (see
+       ``results_dir``).  Note that independent of the setting here, the report can
+       always be generated manually, see :ref:`manual_report_generation`.
+
+       *Added in version 3.0.  Set to "every_iteration" to get the behaviour of
+       versions <=2.5*
    * - ``environment_setup``
      - Mandatory
      - TODO.

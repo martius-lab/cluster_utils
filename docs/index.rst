@@ -7,8 +7,9 @@ Welcome to cluster_utils's documentation!
    :hidden:
 
    configuration
+   report
    troubleshooting
-
+   changelog
 
 
 `cluster_utils`_ has been powering my cluster runs since 2017. It has grown ever
@@ -53,7 +54,7 @@ See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
 Main features
 =============
 
-A nonexhaustive list of features is the following:
+A non-exhaustive list of features is the following:
 
 - **Automatic condor usage** Jobs are submitted, monitored (with error
   reporting), and cleaned up in an automated and highly customizable way.
@@ -83,7 +84,7 @@ of the influence of the hyperparameters"* rather than *"blackbox optimizer just
 tells me the best setting"*.  Usually, early in the project many of the
 hyperparameters are more like ideas, or strategies.  Cluster utils can then tell
 you which ideas (or their combinations) make sense.  Later in a project, there
-only tend to be actual hyperparameters (i.e. transfering a working architecture
+only tend to be actual hyperparameters (i.e. transferring a working architecture
 to a new dataset), which can then be fit to this specific setting using cluster
 utils.
 
@@ -165,9 +166,9 @@ Concurrency
 
 Limit the number of concurrent jobs.
 
-You can assign a ressource (tag) to your jobs and specify how many
-tokens each jobs consumes. There is a total of 10,000 tokes per
-ressource.
+You can assign a resource (tag) to your jobs and specify how many
+tokens each jobs consumes. There is a total of 10,000 tokens per
+resource.
 
 If you want to run 10 concurrent jobs, each job has to consume 1,000
 tokens.

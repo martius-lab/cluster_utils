@@ -5,6 +5,7 @@
     "branch": "master",
     "commit": null
   },
+  "generate_report": "every_iteration",
   "script_relative_path": "examples/basic/main.py",
   "remove_jobs_dir": false,
   "environment_setup": {

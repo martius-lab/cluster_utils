@@ -5,6 +5,7 @@
     "branch": "master",
     "commit": null
   },
+  "generate_report": "every_iteration",
   "script_relative_path": "examples/basic/main.py",
   "load_existing_results": true,
   "environment_setup": {

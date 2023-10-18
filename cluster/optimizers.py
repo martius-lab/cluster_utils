@@ -1,32 +1,33 @@
-import datetime
-import itertools
+from __future__ import annotations
+
 import logging
 import os
 import pickle
 import random
 from abc import ABC, abstractmethod
-from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Sequence
 
 import nevergrad as ng
 import nevergrad.parametrization.parameter as par
-import numpy as np
 import pandas as pd
 
 from cluster import constants, data_analysis, distributions
-from cluster.latex_utils import LatexFile
-from cluster.utils import get_sample_generator, nested_to_dict, shorten_string
+from cluster.utils import get_sample_generator, nested_to_dict
+
+if TYPE_CHECKING:
+    from cluster import latex_utils
 
 
 class Optimizer(ABC):
     def __init__(
         self,
         *,
-        metric_to_optimize,
-        minimize,
-        report_hooks,
-        number_of_samples,
-        optimized_params,
-    ):
+        metric_to_optimize: str,
+        minimize: bool,
+        report_hooks: Sequence[latex_utils.SectionHook],
+        number_of_samples: int,
+        optimized_params: Sequence[distributions.Distribution],
+    ) -> None:
         self.optimized_params = optimized_params
         self.metric_to_optimize = metric_to_optimize
         self.minimize = minimize
@@ -34,6 +35,8 @@ class Optimizer(ABC):
         self.number_of_samples = number_of_samples
         self.iteration = 0
         # TODO check if obsolete
+
+        self.with_restarts = False
 
         self.full_df = pd.DataFrame()
         self.minimal_df = pd.DataFrame()
@@ -62,92 +65,11 @@ class Optimizer(ABC):
         )
 
         self.minimal_df = data_analysis.average_out(
-            self.full_df, [self.metric_to_optimize], self.params
+            self.full_df,
+            [self.metric_to_optimize],
+            self.params,
+            sort_ascending=self.minimize,
         )
-        self.minimal_df = self.minimal_df.sort_values(
-            [self.metric_to_optimize], ascending=self.minimize
-        )
-
-    def save_pdf_report(self, output_file, submission_hook_stats, current_result_path):
-        today = datetime.datetime.now().strftime("%B %d, %Y")
-        latex_title = "Results of optimization procedure from ({})".format(today)
-        latex = LatexFile(latex_title)
-
-        if (
-            "GitConnector" in submission_hook_stats
-            and submission_hook_stats["GitConnector"]
-        ):
-            latex.add_generic_section(
-                "Git Meta Information", content=submission_hook_stats["GitConnector"]
-            )
-
-        def filename_gen(base_path):
-            for num in itertools.count():
-                yield os.path.join(base_path, "{}.pdf".format(num))
-
-        with TemporaryDirectory() as tmpdir:
-            file_gen = filename_gen(tmpdir)
-            hook_args = dict(df=self.full_df, path_to_results=current_result_path)
-            overall_progress_file = next(file_gen)
-            data_analysis.plot_opt_progress(
-                self.full_df, self.metric_to_optimize, overall_progress_file
-            )
-
-            sensitivity_file = next(file_gen)
-            data_analysis.importance_by_iteration_plot(
-                self.full_df,
-                self.params,
-                self.metric_to_optimize,
-                self.minimize,
-                sensitivity_file,
-            )
-
-            distr_plot_files = self.distribution_plots(file_gen)
-
-            latex.add_section_from_figures(
-                "Overall progress", [overall_progress_file], common_scale=1.2
-            )
-            latex.add_section_from_dataframe(
-                "Top 5 recommendations", self.provide_recommendations(5)
-            )
-            latex.add_section_from_figures(
-                "Hyperparameter importance", [sensitivity_file]
-            )
-            latex.add_section_from_figures("Distribution development", distr_plot_files)
-
-            for hook in self.report_hooks:
-                hook.write_section(latex, file_gen, hook_args)
-
-            try:
-                latex.produce_pdf(output_file)
-            except Exception:
-                logging.warning("Could not generate PDF report", exc_info=True)
-
-    def distribution_plots(self, filename_generator):
-        for distr in self.optimized_params:
-            filename = next(filename_generator)
-            if isinstance(distr, distributions.NumericalDistribution):
-                log_scale = isinstance(distr, distributions.TruncatedLogNormal)
-                res = data_analysis.distribution(
-                    self.full_df,
-                    constants.ITERATION,
-                    distr.param_name,
-                    filename=filename,
-                    metric_logscale=log_scale,
-                    x_bounds=(distr.lower, distr.upper),
-                )
-                if res:
-                    yield filename
-            elif isinstance(distr, distributions.Discrete):
-                data_analysis.count_plot_horizontal(
-                    self.full_df,
-                    constants.ITERATION,
-                    distr.param_name,
-                    filename=filename,
-                )
-                yield filename
-            else:
-                raise AssertionError()
 
     @abstractmethod
     def try_load_from_pickle(
@@ -196,43 +118,6 @@ class Optimizer(ABC):
             )
         else:
             return ""
-
-    def provide_recommendations(self, how_many):
-        num_restarts = self.minimal_df[constants.RESTART_PARAM_NAME]
-        jobs_df = self.minimal_df[num_restarts >= self.minimal_restarts_to_count].copy()
-
-        metric_std = self.metric_to_optimize + constants.STD_ENDING
-        final_metric = f"expected {self.metric_to_optimize}"
-        if self.with_restarts and self.minimal_restarts_to_count > 1:
-            sign = -1.0 if self.minimize else 1.0
-            mean, std = jobs_df[self.metric_to_optimize], jobs_df[metric_std]
-            median_std = jobs_df[metric_std].median()
-
-            num_restarts = jobs_df[constants.RESTART_PARAM_NAME]
-            # pessimistic estimate mean - std/sqrt(samples), based on Central Limit Theorem
-            expected_metric = mean - (
-                sign * (np.maximum(std, median_std)) / np.sqrt(num_restarts)
-            )
-            jobs_df[final_metric] = expected_metric
-        else:
-            jobs_df[final_metric] = jobs_df[self.metric_to_optimize]
-
-        best_jobs_df = jobs_df.sort_values([final_metric], ascending=self.minimize)[
-            :how_many
-        ].reset_index()
-        del best_jobs_df[metric_std]
-        del best_jobs_df[self.metric_to_optimize]
-        del best_jobs_df[constants.RESTART_PARAM_NAME]
-        del best_jobs_df["index"]
-
-        best_jobs_df.index += 1
-        best_jobs_df[final_metric] = list(
-            distributions.smart_round(best_jobs_df[final_metric])
-        )
-
-        best_jobs_df = best_jobs_df.transpose()
-        best_jobs_df.index = [shorten_string(el, 40) for el in best_jobs_df.index]
-        return best_jobs_df
 
 
 class Metaoptimizer(Optimizer):
