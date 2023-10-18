@@ -5,6 +5,7 @@ import os
 import pickle
 import random
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Sequence
 
 import nevergrad as ng
 import nevergrad.parametrization.parameter as par
@@ -13,17 +14,20 @@ import pandas as pd
 from cluster import constants, data_analysis, distributions
 from cluster.utils import get_sample_generator, nested_to_dict
 
+if TYPE_CHECKING:
+    from cluster import latex_utils
+
 
 class Optimizer(ABC):
     def __init__(
         self,
         *,
-        metric_to_optimize,
-        minimize,
-        report_hooks,
-        number_of_samples,
-        optimized_params,
-    ):
+        metric_to_optimize: str,
+        minimize: bool,
+        report_hooks: Sequence[latex_utils.SectionHook],
+        number_of_samples: int,
+        optimized_params: Sequence[distributions.Distribution],
+    ) -> None:
         self.optimized_params = optimized_params
         self.metric_to_optimize = metric_to_optimize
         self.minimize = minimize
