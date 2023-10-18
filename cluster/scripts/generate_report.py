@@ -16,6 +16,7 @@ import typing
 
 import colorama
 
+from cluster import report
 from cluster.constants import STATUS_PICKLE_FILE, SUBMISSION_HOOK_STATS_FILE
 from cluster.optimizers import Optimizer
 
@@ -147,7 +148,9 @@ def main() -> int:
     if not isinstance(optimizer, Optimizer):
         logger.warning("Object loaded from '%s' is not of type Optimizer", status_file)
 
-    optimizer.save_pdf_report(args.output, submission_hook_stats, args.results_dir)
+    report.produce_optimization_report(
+        optimizer, args.output, submission_hook_stats, args.results_dir
+    )
     logger.info("Saved report to %s", args.output)
 
     return 0

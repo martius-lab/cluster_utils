@@ -21,7 +21,7 @@ from cluster.progress_bars import (
     SubmittedJobsBar,
     redirect_stdout_to_tqdm,
 )
-from cluster.report import GenerateReportSetting
+from cluster.report import GenerateReportSetting, produce_optimization_report
 from cluster.settings import optimizer_dict
 from cluster.user_interaction import InteractiveMode, NonInteractiveMode
 from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
@@ -247,8 +247,11 @@ def post_iteration_opt(
     print(hp_optimizer.minimal_df[:10])
 
     if generate_report:
-        hp_optimizer.save_pdf_report(
-            pdf_output, submission_hook_stats, current_result_path
+        produce_optimization_report(
+            hp_optimizer,
+            pdf_output,
+            submission_hook_stats,
+            current_result_path,
         )
 
     hp_optimizer.iteration += 1

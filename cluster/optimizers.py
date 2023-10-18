@@ -5,13 +5,12 @@ import os
 import pickle
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, Union
 
 import nevergrad as ng
 import nevergrad.parametrization.parameter as par
 import pandas as pd
 
-from cluster import constants, data_analysis, distributions, report
+from cluster import constants, data_analysis, distributions
 from cluster.utils import get_sample_generator, nested_to_dict
 
 
@@ -32,6 +31,8 @@ class Optimizer(ABC):
         self.number_of_samples = number_of_samples
         self.iteration = 0
         # TODO check if obsolete
+
+        self.with_restarts = False
 
         self.full_df = pd.DataFrame()
         self.minimal_df = pd.DataFrame()
@@ -64,31 +65,6 @@ class Optimizer(ABC):
             [self.metric_to_optimize],
             self.params,
             sort_ascending=self.minimize,
-        )
-
-    def save_pdf_report(
-        self,
-        output_file: str,
-        submission_hook_stats: Mapping[str, Any],
-        current_result_path: Union[str, os.PathLike],
-    ) -> None:
-        # TODO where is this initialised, can we be sure that this exists here?
-        assert hasattr(self, "with_restarts")
-
-        config = report.OptimizationConfig(
-            parameters=self.optimized_params,
-            metric_to_optimize=self.metric_to_optimize,
-            minimize=self.minimize,
-            with_restarts=self.with_restarts,
-            minimal_restarts_to_count=self.minimal_restarts_to_count,
-        )
-        report.produce_optimization_report(
-            self.full_df,
-            config,
-            self.report_hooks,
-            output_file,
-            submission_hook_stats,
-            current_result_path,
         )
 
     @abstractmethod

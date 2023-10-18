@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import combinations, count
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Mapping, NamedTuple, Sequence
+from typing import Any, Iterator, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,8 @@ import seaborn as sns
 from matplotlib import rc
 
 from cluster import constants, data_analysis, distributions
-from cluster.latex_utils import LatexFile, SectionHook
+from cluster.latex_utils import LatexFile
+from cluster.optimizers import Optimizer
 from cluster.utils import log_and_print, shorten_string
 
 
@@ -169,16 +170,6 @@ def produce_gridsearch_report(
             logging.warning("Could not generate PDF report", exc_info=True)
 
 
-class OptimizationConfig(NamedTuple):
-    """Optimization parameters that are relevant for generating the report."""
-
-    parameters: Sequence[distributions.Distribution]
-    metric_to_optimize: str
-    minimize: bool
-    with_restarts: bool
-    minimal_restarts_to_count: int
-
-
 def distribution_plots(
     full_data: pd.DataFrame,
     optimized_params: Sequence[distributions.Distribution],
@@ -230,18 +221,19 @@ def distribution_plots(
 
 
 def provide_recommendations(
-    minimal_df: pd.DataFrame,
-    config: OptimizationConfig,
+    optimizer: Optimizer,
     how_many: int,
 ) -> pd.DataFrame:
-    num_restarts = minimal_df[constants.RESTART_PARAM_NAME]
-    jobs_df = minimal_df[num_restarts >= config.minimal_restarts_to_count].copy()
+    num_restarts = optimizer.minimal_df[constants.RESTART_PARAM_NAME]
+    jobs_df = optimizer.minimal_df[
+        num_restarts >= optimizer.minimal_restarts_to_count
+    ].copy()
 
-    metric_std = config.metric_to_optimize + constants.STD_ENDING
-    final_metric = f"expected {config.metric_to_optimize}"
-    if config.with_restarts and config.minimal_restarts_to_count > 1:
-        sign = -1.0 if config.minimize else 1.0
-        mean, std = jobs_df[config.metric_to_optimize], jobs_df[metric_std]
+    metric_std = optimizer.metric_to_optimize + constants.STD_ENDING
+    final_metric = f"expected {optimizer.metric_to_optimize}"
+    if optimizer.with_restarts and optimizer.minimal_restarts_to_count > 1:
+        sign = -1.0 if optimizer.minimize else 1.0
+        mean, std = jobs_df[optimizer.metric_to_optimize], jobs_df[metric_std]
         median_std = jobs_df[metric_std].median()
 
         num_restarts = jobs_df[constants.RESTART_PARAM_NAME]
@@ -251,13 +243,13 @@ def provide_recommendations(
         )
         jobs_df[final_metric] = expected_metric
     else:
-        jobs_df[final_metric] = jobs_df[config.metric_to_optimize]
+        jobs_df[final_metric] = jobs_df[optimizer.metric_to_optimize]
 
-    best_jobs_df = jobs_df.sort_values([final_metric], ascending=config.minimize)[
+    best_jobs_df = jobs_df.sort_values([final_metric], ascending=optimizer.minimize)[
         :how_many
     ].reset_index()
     del best_jobs_df[metric_std]
-    del best_jobs_df[config.metric_to_optimize]
+    del best_jobs_df[optimizer.metric_to_optimize]
     del best_jobs_df[constants.RESTART_PARAM_NAME]
     del best_jobs_df["index"]
 
@@ -272,9 +264,7 @@ def provide_recommendations(
 
 
 def produce_optimization_report(
-    full_data: pd.DataFrame,
-    config: OptimizationConfig,
-    report_hooks: Sequence[SectionHook],
+    optimizer: Optimizer,
     output_file: str,
     submission_hook_stats: Mapping[str, Any],
     current_result_path: str | os.PathLike,
@@ -282,10 +272,7 @@ def produce_optimization_report(
     """Produce PDF report for a ``hp_optimization`` run.
 
     Args:
-        full_data:  The full data of the optimization including parameters and results
-            (one line per run).
-        config:  Configuration of the optimisation procedure.
-        report_hooks:  Section hooks to add additional content to the report.
+        optimizer:  Optimizer instance that holds all the relevant data for the report.
         output_file:  Where to save the report.
         submission_hook_stats:  Hooks to add submission-specific information (only an
             entry with key "GitConnector" is used if present).
@@ -300,7 +287,7 @@ def produce_optimization_report(
     latex_title = "Results of optimization procedure from ({})".format(today)
     latex = LatexFile(latex_title)
 
-    params = [param.param_name for param in config.parameters]
+    params = [param.param_name for param in optimizer.optimized_params]
 
     # TODO this could be a bit nicer: either make it flexible so that arbitrary sections
     # can be added from outside or change to only pass the git information.
@@ -318,29 +305,24 @@ def produce_optimization_report(
 
     with TemporaryDirectory() as tmpdir:
         file_gen = filename_gen(tmpdir)
-        hook_args = {"df": full_data, "path_to_results": current_result_path}
+        hook_args = {"df": optimizer.full_df, "path_to_results": current_result_path}
         overall_progress_file = next(file_gen)
         data_analysis.plot_opt_progress(
-            full_data, config.metric_to_optimize, overall_progress_file
+            optimizer.full_df, optimizer.metric_to_optimize, overall_progress_file
         )
 
         sensitivity_file = next(file_gen)
         data_analysis.importance_by_iteration_plot(
-            full_data,
+            optimizer.full_df,
             params,
-            config.metric_to_optimize,
-            config.minimize,
+            optimizer.metric_to_optimize,
+            optimizer.minimize,
             sensitivity_file,
         )
 
-        minimal_df = data_analysis.average_out(
-            full_data,
-            [config.metric_to_optimize],
-            params,
-            sort_ascending=config.minimize,
+        distr_plot_files = distribution_plots(
+            optimizer.full_df, optimizer.optimized_params, file_gen
         )
-
-        distr_plot_files = distribution_plots(full_data, config.parameters, file_gen)
 
         latex.add_section_from_figures(
             "Overall progress", [overall_progress_file], common_scale=1.2
@@ -348,15 +330,14 @@ def produce_optimization_report(
         latex.add_section_from_dataframe(
             "Top 5 recommendations",
             provide_recommendations(
-                minimal_df,
-                config,
+                optimizer,
                 how_many=5,
             ),
         )
         latex.add_section_from_figures("Hyperparameter importance", [sensitivity_file])
         latex.add_section_from_figures("Distribution development", distr_plot_files)
 
-        for hook in report_hooks:
+        for hook in optimizer.report_hooks:
             hook.write_section(latex, file_gen, hook_args)
 
         try:
