@@ -21,8 +21,8 @@ from cluster.progress_bars import (
     SubmittedJobsBar,
     redirect_stdout_to_tqdm,
 )
-from cluster.report import GenerateReportSetting, produce_optimization_report
-from cluster.settings import optimizer_dict
+from cluster.report import produce_optimization_report
+from cluster.settings import GenerateReportSetting, optimizer_dict
 from cluster.user_interaction import InteractiveMode, NonInteractiveMode
 from cluster.utils import (
     ClusterRunType,

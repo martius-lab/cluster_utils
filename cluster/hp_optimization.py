@@ -9,7 +9,7 @@ from cluster import (
     read_params_from_cmdline,
 )
 from cluster.git_utils import make_git_params
-from cluster.report import GenerateReportSetting
+from cluster.settings import GenerateReportSetting
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,

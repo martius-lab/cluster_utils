@@ -9,9 +9,9 @@ from cluster.constants import FULL_DF_FILE
 from cluster.git_utils import make_git_params
 from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from cluster.report import (
-    GenerateReportSetting,
     produce_gridsearch_report,
 )
+from cluster.settings import GenerateReportSetting
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,
