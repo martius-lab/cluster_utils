@@ -6,11 +6,10 @@ import nox
 
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
-nox.options.sessions = ("lint", "mypy", "tests", "pytest")
 LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
 
 
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session(python=PYTHON_VERSIONS, tags=["lint"])
 def lint(session):
     session.install("black")
     session.install("ruff")
@@ -18,7 +17,7 @@ def lint(session):
     session.run("ruff", ".")
 
 
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session(python=PYTHON_VERSIONS, tags=["lint"])
 def mypy(session):
     """Run mypy"""
     # all required packages should be provided through the optional "mypy" dependency
@@ -26,21 +25,15 @@ def mypy(session):
     session.run("mypy", ".")
 
 
-@nox.session(python=PYTHON_VERSIONS)
-def black(session):
-    session.install("black")
-    session.run("black", *LOCATIONS)
-
-
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def pytest(session):
-    session.install(".")
+    session.install(".[all]")
     session.install("pytest")
     session.run("pytest")
 
 
-@nox.session(python=PYTHON_VERSIONS)
-def tests(session):
+@nox.session(python=PYTHON_VERSIONS, tags=["test"])
+def integration_tests(session):
     session.install(".")
 
     with tempfile.TemporaryDirectory() as test_dir:
@@ -52,3 +45,19 @@ def tests(session):
             external=True,
             success_codes=[1],
         )
+
+
+@nox.session(python=PYTHON_VERSIONS, tags=["test"])
+def integration_tests_with_report_generation(session):
+    session.install(".[report]")
+
+    with tempfile.TemporaryDirectory() as test_dir:
+        session.run(
+            "bash",
+            "tests/run_integration_tests_with_report.sh",
+            test_dir,
+            external=True,
+        )
+
+
+# TODO test scripts.generate_report
