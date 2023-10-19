@@ -7,6 +7,7 @@ STATUS_PICKLE_FILE = "status.pickle"
 SUBMISSION_HOOK_STATS_FILE = "submission_hook_stats.pickle"
 FULL_DF_FILE = "all_data.csv"
 REDUCED_DF_FILE = "reduced_data.csv"
+REPORT_DATA_FILE = "report_data.pickle"
 STD_ENDING = "__std"
 RESTART_PARAM_NAME = "job_restarts"
 

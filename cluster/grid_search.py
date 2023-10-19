@@ -1,11 +1,12 @@
 import logging
 import os
+import pickle
 import sys
 from collections import Counter
 from pathlib import Path
 
 from cluster import grid_search, read_params_from_cmdline
-from cluster.constants import FULL_DF_FILE
+from cluster.constants import FULL_DF_FILE, REPORT_DATA_FILE
 from cluster.git_utils import make_git_params
 from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from cluster.report import (
@@ -119,6 +120,21 @@ if __name__ == "__main__":
         section_title="Optimization setting script",
         section_generator=StaticSectionGenerator(json_full_name),
     )
+
+    # save further data that is needed for offline report generation
+    report_data_file = os.path.join(
+        base_paths_and_files["result_dir"], REPORT_DATA_FILE
+    )
+    logger.info("Save report data to %s", report_data_file)
+    report_data = {
+        "params": relevant_params,
+        "metrics": metrics,
+        "submission_hook_stats": submission_hook_stats,
+        "procedure_name": params.optimization_procedure_name,
+        "report_hooks": [json_hook],
+    }
+    with open(report_data_file, "wb") as f:
+        pickle.dump(report_data, f)
 
     if params["generate_report"] is not GenerateReportSetting.NEVER:
         produce_gridsearch_report(
