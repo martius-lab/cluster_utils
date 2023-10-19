@@ -21,7 +21,6 @@ from cluster.progress_bars import (
     SubmittedJobsBar,
     redirect_stdout_to_tqdm,
 )
-from cluster.report import produce_optimization_report
 from cluster.settings import GenerateReportSetting, optimizer_dict
 from cluster.user_interaction import InteractiveMode, NonInteractiveMode
 from cluster.utils import (
@@ -255,6 +254,9 @@ def post_iteration_opt(
     print(hp_optimizer.minimal_df[:10])
 
     if generate_report:
+        # conditional import as it depends on optional dependencies
+        from cluster.report import produce_optimization_report
+
         produce_optimization_report(
             hp_optimizer,
             pdf_output,

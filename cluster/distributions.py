@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from collections import Counter
 
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import scipy.stats
@@ -249,5 +248,8 @@ class Discrete(Distribution):
         super().prepare_samples(howmany)
 
     def plot(self):
+        # conditional import as it depends on optional dependencies
+        import matplotlib.pyplot as plt
+
         plt.pie(self.probs, labels=self.option_list, autopct="%1.1f%%", shadow=True)
         plt.show()

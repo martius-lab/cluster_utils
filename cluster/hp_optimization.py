@@ -60,6 +60,11 @@ if __name__ == "__main__":
         print(f"Error while reading parameters: {e}", file=sys.stderr)
         sys.exit(1)
 
+    if params["generate_report"] is not GenerateReportSetting.NEVER:
+        # conditional import as it depends on optional dependencies (not used here but
+        # already import to fail early in case dependencies are missing)
+        import cluster.report  # noqa:F401
+
     json_full_name = os.path.abspath(sys.argv[1])
 
     opt_procedure_name = params.optimization_procedure_name
