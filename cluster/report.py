@@ -265,7 +265,7 @@ def provide_recommendations(
 
 def produce_optimization_report(
     optimizer: Optimizer,
-    output_file: str,
+    output_file: str | os.PathLike,
     submission_hook_stats: Mapping[str, Any],
     current_result_path: str | os.PathLike,
 ) -> None:
