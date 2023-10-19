@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 
 from cluster import grid_search, read_params_from_cmdline
+from cluster.constants import FULL_DF_FILE
 from cluster.git_utils import make_git_params
 from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from cluster.report import (
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         )
         sys.exit()
 
-    df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
+    df.to_csv(os.path.join(base_paths_and_files["result_dir"], FULL_DF_FILE))
 
     relevant_params = [param.param_name for param in hyperparam_dict]
     output_pdf = os.path.join(

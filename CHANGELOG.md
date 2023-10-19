@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   versions.
 - **Breaking:** `Optimizer.save_pdf_report()` is moved out of the `Optimizer` class to
   `report.produce_optimization_report()`.
+- The raw data of `grid_search` is saved to a file "all_data.csv" instead of
+  "results_raw.csv" to be consistent with `hp_optimization` (the format of the file
+  didn't change, only the name).
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
 
 ### Added
