@@ -1,5 +1,4 @@
 from cluster.job_manager import grid_search, hp_optimization
-from cluster.report import init_plotting
 from cluster.settings import (
     announce_early_results,
     announce_fraction_finished,
@@ -12,7 +11,6 @@ from cluster.settings import (
 __all__ = [
     "grid_search",
     "hp_optimization",
-    "init_plotting",
     "announce_early_results",
     "announce_fraction_finished",
     "cluster_main",
