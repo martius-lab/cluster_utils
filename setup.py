@@ -36,7 +36,19 @@ setup(
         ),
     ],
     extras_require={
-        "report": [  # optional dependencies required for generating the report
+        # all optional dependencies, excluding the ones only needed for development
+        "all": [
+            "cluster[report]",
+        ],
+        # really all optional dependencies
+        "all-dev": [
+            "cluster[all]",
+            "cluster[dev]",
+            "cluster[mypy]",
+            "cluster[docs]",
+        ],
+        # optional dependencies required for generating the report
+        "report": [
             "seaborn>=0.11.0",
             "matplotlib",
             "scikit-learn",
