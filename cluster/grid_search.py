@@ -101,12 +101,11 @@ if __name__ == "__main__":
     )
 
     if df is None:
-        logger.warning(
-            "Exiting without report because no job results are "
-            "available. Either the jobs did not exit properly, or "
-            "you forgot to call `save_metric_params`."
+        logger.error(
+            "Exiting because no job results are available. Either the jobs did not exit"
+            " properly, or you forgot to call `save_metric_params`."
         )
-        sys.exit()
+        sys.exit(1)
 
     df.to_csv(os.path.join(base_paths_and_files["result_dir"], FULL_DF_FILE))
 
