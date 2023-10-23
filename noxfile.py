@@ -58,6 +58,3 @@ def integration_tests_with_report_generation(session):
             test_dir,
             external=True,
         )
-
-
-# TODO test scripts.generate_report
