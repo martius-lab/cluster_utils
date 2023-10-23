@@ -146,6 +146,7 @@ def is_settings_file(cmd_line):
         cmd_line.endswith(".json")
         or cmd_line.endswith(".yml")
         or cmd_line.endswith(".yaml")
+        or cmd_line.endswith(".toml")
     ):
         if not os.path.isfile(cmd_line):
             raise FileNotFoundError(f"{cmd_line}: No such settings file found")

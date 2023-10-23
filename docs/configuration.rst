@@ -2,8 +2,9 @@
 Configuration
 *************
 
-Both ``grid_search`` and ``hp_optimization`` expect as input a JSON file with
-the configuration.
+Both ``grid_search`` and ``hp_optimization`` expect as input a settings file
+with the configuration.  The file can be any format that is supported by
+smart_settings_ (currently JSON, YAML and TOML).
 
 
 .. _config.general_settings:
@@ -350,3 +351,6 @@ Nested parameters can be set using dots:
 ::
 
     python3 -m cluster.grid_search config.json 'git_params.branch="foo"'
+
+
+.. _smart_settings: https://github.com/martius-lab/smart-settings

@@ -35,7 +35,7 @@ setup(
         (
             "smart_settings @ "
             "git+https://github.com/martius-lab/smart-settings.git"
-            "@abe7101d1099aa00fe856b19b60ba8eefa5496be"
+            "@eb7331fdcad58d314a842087bbf136735e890013"
         ),
     ],
     extras_require={
