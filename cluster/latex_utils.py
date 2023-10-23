@@ -96,7 +96,6 @@ class LatexFile(object):
         """
         logger = logging.getLogger("cluster_utils")
 
-        # make sure output_file is of type Path
         output_file = pathlib.Path(output_file)
 
         full_content = "\n".join(self.sections)
