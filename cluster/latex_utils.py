@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import os
+import pathlib
 import typing
 from abc import ABC, abstractmethod
 from shutil import copyfile
@@ -80,7 +83,7 @@ class LatexFile(object):
         )
         self.sections.append(section(name, content))
 
-    def produce_pdf(self, output_file: str) -> None:
+    def produce_pdf(self, output_file: str | os.PathLike) -> None:
         """Construct the LaTeX file and generate a PDF from it (using pdflatex).
 
         In case pdflatex fails with an error, the LaTeX file is saved to ``{{
@@ -92,6 +95,9 @@ class LatexFile(object):
             output_file: Path to which the PDF file is written.
         """
         logger = logging.getLogger("cluster_utils")
+
+        output_file = pathlib.Path(output_file)
+
         full_content = "\n".join(self.sections)
         title_str = LATEX_TITLE.format(self.title)
         date_str = LATEX_DATE.format(self.date)
@@ -114,8 +120,8 @@ class LatexFile(object):
                 # save the log and tex for debugging
                 logger.error("pdflatex failed.  Save log and tex file for debugging.")
                 latex_log_file = os.path.join(tmpdir, "latex.log")
-                copyfile(latex_file, output_file + ".tex")
-                copyfile(latex_log_file, output_file + ".log")
+                copyfile(latex_file, output_file.with_suffix(".tex"))
+                copyfile(latex_log_file, output_file.with_suffix(".log"))
 
                 # re-raise the error
                 raise

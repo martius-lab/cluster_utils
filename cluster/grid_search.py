@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 
 from cluster import grid_search, read_params_from_cmdline
+from cluster.constants import FULL_DF_FILE
 from cluster.git_utils import make_git_params
 from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from cluster.report import (
@@ -16,6 +17,7 @@ from cluster.utils import (
     get_time_string,
     make_temporary_dir,
     rename_import_promise,
+    save_report_data,
 )
 
 if __name__ == "__main__":
@@ -99,14 +101,13 @@ if __name__ == "__main__":
     )
 
     if df is None:
-        logger.warning(
-            "Exiting without report because no job results are "
-            "available. Either the jobs did not exit properly, or "
-            "you forgot to call `save_metric_params`."
+        logger.error(
+            "Exiting because no job results are available. Either the jobs did not exit"
+            " properly, or you forgot to call `save_metric_params`."
         )
-        sys.exit()
+        sys.exit(1)
 
-    df.to_csv(os.path.join(base_paths_and_files["result_dir"], "results_raw.csv"))
+    df.to_csv(os.path.join(base_paths_and_files["result_dir"], FULL_DF_FILE))
 
     relevant_params = [param.param_name for param in hyperparam_dict]
     output_pdf = os.path.join(
@@ -117,6 +118,16 @@ if __name__ == "__main__":
     json_hook = SectionFromJsonHook(
         section_title="Optimization setting script",
         section_generator=StaticSectionGenerator(json_full_name),
+    )
+
+    # save further data that is needed for offline report generation
+    save_report_data(
+        base_paths_and_files["result_dir"],
+        params=relevant_params,
+        metrics=metrics,
+        submission_hook_stats=submission_hook_stats,
+        procedure_name=params.optimization_procedure_name,
+        report_hooks=[json_hook],
     )
 
     if params["generate_report"] is not GenerateReportSetting.NEVER:

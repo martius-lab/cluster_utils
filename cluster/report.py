@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import combinations, count
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -89,6 +89,7 @@ def produce_gridsearch_report(
     submission_hook_stats=None,
     maximized_metrics=None,
     report_hooks=None,
+    start_time: Optional[datetime.datetime] = None,
 ):
     """Produce PDF report with results of ``grid_search``."""
     logger = logging.getLogger("cluster_utils")
@@ -99,8 +100,10 @@ def produce_gridsearch_report(
     maximized_metrics = maximized_metrics or []
     report_hooks = report_hooks or []
 
-    today = datetime.datetime.now().strftime("%B %d, %Y")
-    latex_title = "Cluster job '{}' results ({})".format(procedure_name, today)
+    if start_time is None:
+        start_time = datetime.datetime.now()
+    str_start_time = start_time.strftime("%B %d, %Y")
+    latex_title = "Cluster job '{}' results ({})".format(procedure_name, str_start_time)
     latex = LatexFile(title=latex_title)
 
     if (
@@ -265,9 +268,10 @@ def provide_recommendations(
 
 def produce_optimization_report(
     optimizer: Optimizer,
-    output_file: str,
+    output_file: str | os.PathLike,
     submission_hook_stats: Mapping[str, Any],
     current_result_path: str | os.PathLike,
+    start_time: Optional[datetime.datetime] = None,
 ) -> None:
     """Produce PDF report for a ``hp_optimization`` run.
 
@@ -277,14 +281,17 @@ def produce_optimization_report(
         submission_hook_stats:  Hooks to add submission-specific information (only an
             entry with key "GitConnector" is used if present).
         current_result_path:  Path to the output files of the optimization.
+        start_time:  Time when the run was started.  If None, the current time is used.
     """
     logger = logging.getLogger("cluster_utils")
     logger.info("Generate PDF report...")
 
     init_plotting()
 
-    today = datetime.datetime.now().strftime("%B %d, %Y")
-    latex_title = "Results of optimization procedure from ({})".format(today)
+    if start_time is None:
+        start_time = datetime.datetime.now()
+    str_start_time = start_time.strftime("%B %d, %Y")
+    latex_title = "Results of optimization procedure from ({})".format(str_start_time)
     latex = LatexFile(latex_title)
 
     params = [param.param_name for param in optimizer.optimized_params]

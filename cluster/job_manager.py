@@ -1,6 +1,6 @@
+import datetime
 import logging
 import os
-import pickle
 import shutil
 import signal
 import sys
@@ -24,7 +24,15 @@ from cluster.progress_bars import (
 from cluster.report import GenerateReportSetting, produce_optimization_report
 from cluster.settings import optimizer_dict
 from cluster.user_interaction import InteractiveMode, NonInteractiveMode
-from cluster.utils import log_and_print, make_red, process_other_params, rm_dir_full
+from cluster.utils import (
+    ClusterRunType,
+    log_and_print,
+    make_red,
+    process_other_params,
+    rm_dir_full,
+    save_metadata,
+    save_report_data,
+)
 
 
 def init_logging(working_dir):
@@ -257,13 +265,9 @@ def post_iteration_opt(
     hp_optimizer.iteration += 1
 
     hp_optimizer.save_data_and_self(base_paths_and_files["result_dir"])
-
-    # save submission_hook_stats for offline-generation of PDF report
-    _submission_hook_stats_file = os.path.join(
-        base_paths_and_files["result_dir"], constants.SUBMISSION_HOOK_STATS_FILE
+    save_report_data(
+        base_paths_and_files["result_dir"], submission_hook_stats=submission_hook_stats
     )
-    with open(_submission_hook_stats_file, "wb") as f:
-        pickle.dump(submission_hook_stats, f)
 
     comm_server.jobs = []
 
@@ -331,6 +335,12 @@ def hp_optimization(
         report_hooks,
         optimizer_settings,
     )
+
+    now = datetime.datetime.now()
+    save_metadata(
+        base_paths_and_files["result_dir"], ClusterRunType.HP_OPTIMIZATION, now
+    )
+
     start_iteration = hp_optimizer.iteration
     pre_iteration_opt(base_paths_and_files)
 
@@ -559,6 +569,9 @@ def grid_search(
         report_hooks,
         dict(restarts=restarts),
     )
+
+    now = datetime.datetime.now()
+    save_metadata(base_paths_and_files["result_dir"], ClusterRunType.GRID_SEARCH, now)
 
     pre_iteration_opt(base_paths_and_files)
     logger = logging.getLogger("cluster_utils")
