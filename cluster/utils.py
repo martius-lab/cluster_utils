@@ -1,17 +1,31 @@
+from __future__ import annotations
+
 import collections
 import csv
 import datetime
+import enum
 import itertools
+import json
 import logging
 import os
+import pathlib
+import pickle
 import random
 import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
+from typing import Any
 
 from cluster import constants
+
+
+class ClusterRunType(enum.Enum):
+    """Enumeration of possible cluster run types."""
+
+    GRID_SEARCH = 0
+    HP_OPTIMIZATION = 1
 
 
 def shorten_string(string, max_len):
@@ -311,3 +325,66 @@ def rename_import_promise(setting_dict):
 def log_and_print(logger, msg):
     logger.info(msg)
     print(msg)
+
+
+def save_metadata(results_dir: str | os.PathLike, cluster_run_type, start_time) -> None:
+    """Save file with metadata about the cluster run in the results directory.
+
+    The file will be saved with the name defined in :var:`constants.METADATA_FILE`.
+
+    **If the file already exists, it will be overwritten!**
+
+    Args:
+        results_dir:  Directory in which the data should be saved.
+        TODO
+
+    Raises:
+        NotADirectoryError: if results_dir does not exist or is not a directory.
+    """
+    results_dir = pathlib.Path(results_dir)
+
+    if not results_dir.is_dir():
+        raise NotADirectoryError(results_dir)
+
+    logger = logging.getLogger("cluster_utils")
+
+    filename = results_dir / constants.METADATA_FILE
+    logger.info("Save metadata to %s", filename)
+    with open(filename, "w") as f:
+        json.dump(
+            {
+                "run_type": cluster_run_type.name,
+                "start_time": start_time.isoformat(),
+            },
+            f,
+        )
+
+
+def save_report_data(results_dir: str | os.PathLike, **kwargs: Any) -> None:
+    """Save the given keyword arguments as report data in the results directory.
+
+    The file will be saved with the name defined in :var:`constants.REPORT_DATA_FILE`
+    and should contain all data that is needed for offline-generation of the report,
+    which is not already saved in separate files.
+
+    **If the file already exists, it will be overwritten!**
+
+    Args:
+        results_dir:  Directory in which the data should be saved.
+        kwargs:  Arbitrary number of objects that will be saved in the report data file.
+            Given objects must be picklable.
+
+    Raises:
+        NotADirectoryError: if results_dir does not exist or is not a directory.
+    """
+    results_dir = pathlib.Path(results_dir)
+
+    if not results_dir.is_dir():
+        raise NotADirectoryError(results_dir)
+
+    logger = logging.getLogger("cluster_utils")
+
+    filename = results_dir / constants.REPORT_DATA_FILE
+    logger.info("Save report data to %s", filename)
+    with open(filename, "wb") as f:
+        pickle.dump(kwargs, f)
