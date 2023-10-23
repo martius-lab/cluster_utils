@@ -178,8 +178,8 @@ def main() -> int:
     except FileNotFoundError:
         logger.fatal(
             "No metadata file found.  Either '%s' is not a results directory of a"
-            " cluster_utils run or it is from an older version that did not yet save"
-            " '%s'.",
+            " cluster_utils run or it is from an older version that did not yet"
+            " save '%s'.",
             args.results_dir,
             METADATA_FILE,
         )

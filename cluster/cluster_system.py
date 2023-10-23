@@ -140,7 +140,11 @@ class ClusterSubmission(ABC):
         return [
             job
             for job in self.completed_jobs
-            if job.status == JobStatus.FAILED or job.get_results() is None
+            if job.status == JobStatus.FAILED
+            or (
+                job.get_results() is None
+                and job.status != JobStatus.CONCLUDED_WITHOUT_RESULTS
+            )
         ]
 
     @property
@@ -267,7 +271,7 @@ class ClusterSubmission(ABC):
         for job in self.failed_jobs:
             if job.error_info not in self.error_msgs:
                 warn_string = (
-                    f"\x1b[1;31m Job: {job.id} on hostname {job.hostname} failed with"
+                    f"\x1b[1;31m Job {job.id} on hostname {job.hostname} failed with"
                     " error:\x1b[0m\n"
                 )
                 full_warning = f"{warn_string}{''.join(job.error_info or '')}"

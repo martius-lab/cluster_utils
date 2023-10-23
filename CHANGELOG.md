@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Make it work with Python >=3.10
+- Fix not counting some jobs as successfully concluded. This happened if the server registered a
+  job as finished before its results arrived, incorrectly counting such a job as failed.
+  This might have been in particular the case if a job sent a larger amount of metric information
+  at once.
 
 
 ## 2.5 - 2023-10-05

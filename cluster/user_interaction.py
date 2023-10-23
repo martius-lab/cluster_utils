@@ -1,7 +1,10 @@
+import logging
 import select
 import sys
 import termios
 import tty
+
+from cluster.utils import log_and_print, make_red
 
 
 class InteractiveMode:
@@ -53,7 +56,9 @@ class InteractiveMode:
 
     def stop_remaining_jobs(self):
         try:
-            self.print("Are you sure you want to stop remaining jobs?")
+            self.print(
+                make_red("Are you sure you want to stop all remaining jobs? [y/N]")
+            )
             jobs_to_cancel = [
                 job.id
                 for job in self.cluster_interface.jobs
@@ -62,12 +67,14 @@ class InteractiveMode:
             self.print(jobs_to_cancel)
             answer = input()
             if answer.lower() in ["y", "yes"]:
+                logger = logging.getLogger("cluster_utils")
+                logger.info("User manually stopped all remaining jobs.")
                 msg = "Job cancelled by cluster utils"
                 [
-                    self.comm_server.handle_error_encountered((job_id, msg))
+                    self.comm_server.handle_error_encountered((job_id, [msg]))
                     for job_id in jobs_to_cancel
                 ]
-                print("Cancelled all remaining jobs.")
+                log_and_print(logger, "Cancelled all remaining jobs.")
         except Exception:
             self.print("Error encountered")
 

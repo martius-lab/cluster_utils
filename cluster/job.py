@@ -17,6 +17,7 @@ class JobStatus:
     FAILED = 2
     SENT_RESULTS = 3
     CONCLUDED = 4
+    CONCLUDED_WITHOUT_RESULTS = 5
 
 
 class Job:

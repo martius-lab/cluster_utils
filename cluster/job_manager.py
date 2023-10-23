@@ -356,13 +356,15 @@ def hp_optimization(
 
         while cluster_interface.n_completed_jobs < number_of_samples:
             check_for_keyboard_input()
-            time.sleep(0.2)
+            time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
+
             jobs_to_tell = [
                 job
                 for job in cluster_interface.successful_jobs
                 if not job.results_used_for_update
             ]
             hp_optimizer.tell(jobs_to_tell)
+
             current_iteration = hp_optimizer.iteration - start_iteration
             n_jobs_completed_cur_iteration = (
                 cluster_interface.n_completed_jobs
@@ -636,7 +638,7 @@ def grid_search(
                     " Ending procedure."
                 )
             check_for_keyboard_input()
-            time.sleep(0.2)
+            time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
 
     post_opt(cluster_interface)
 
