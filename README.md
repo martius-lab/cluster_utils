@@ -185,15 +185,57 @@ You can keep the best validation error achieved over the epochs and report this 
 2. Install `cluster_utils` in editable mode: `pip install -e ".[dev]"`
 3. Register the pre-commit hooks: `pre-commit install`
 
-### Running Tests
+### Running Linters and Tests
 
-cluster_utils currently only has simple tests that just run some of the examples.
-You can run the tests using `nox -s tests`.
-This will setup a new virtual environment, install cluster_utils and its dependencies, and run the tests.
-As this is quite a slow process, you can reuse the virtual environment after you set it up once, using the `-r` flag: `nox -r -s tests`.
+We use nox to run various linters and tests.  You can simply call `nox` in the root
+directory of the package to run everything, however, you will usually want to restrict a
+bit what is run.
 
-Any merge request to master has to pass the continuous integration pipeline, which basically runs `nox`.
-In order to make sure continuous integration passes, you can thus run this command locally.
+Any merge request to master has to pass the continuous integration pipeline, which
+basically runs `nox`.
+In order to make sure continuous integration passes, you can thus run this command
+locally.
+
+#### Python Versions
+
+nox is configured to test with different Python versions.  You can limit it to a
+specific version (e.g. because you only have that one installed locally) with the `-p`
+option.  For example to run only with Python 3.10:
+```bash
+nox -p "3.10"
+```
+
+#### Reuse Environment
+
+By default nox creates a fresh virtual environment every time you run it.  As this is
+quite a slow process, you can reuse the virtual environment after you set it up once,
+using the `-r` flag.  Example:
+```bash
+nox -p "3.10" -r
+```
+
+#### Run Only Specific Tests
+
+You can restrict which checks (called "sessions") are run with `-s`.  For example to run
+only the mypy check:
+```bash
+nox -s mypy
+```
+You can get a list of all available sessions with
+```bash
+nox --list
+```
+
+As an alternative to listing specific sessions, you can also run a group of related
+sessions using tags with `-t`.  Currently available tags are:
+
+- **lint**:  All linter checks.
+- **test**:  All tests (unit tests and integration tests)
+
+Example: To run all linters with Python 3.10, reusing the environment:
+```bash
+nox -p "3.10" -r -t lint
+```
 
 ### Workflow with pre-commit
 
