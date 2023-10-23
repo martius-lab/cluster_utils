@@ -57,7 +57,7 @@ setup(
             "absolufy-imports",
             "black",
             "ruff",
-            "nox",
+            "nox>=2022.8.7",
             "pre-commit",
             "pytest",
         ],

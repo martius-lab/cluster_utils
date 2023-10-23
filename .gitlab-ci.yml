@@ -11,7 +11,7 @@ cache:
     - .cache/pip
 
 before_script:
-  - pip install nox==2022.1.7
+  - pip install nox>=2022.8.7
   - apt-get install -y
   # Add the dummy pdflatex to the PATH
   - cp ./tests/dummy_pdflatex.sh /usr/local/bin/pdflatex
