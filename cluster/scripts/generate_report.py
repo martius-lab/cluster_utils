@@ -33,7 +33,11 @@ LOGGER_NAME = "generate_report"
 
 
 class Metadata(typing.NamedTuple):
+    """Metadata of the cluster run."""
+
+    #: Which type of run was used.
     run_type: ClusterRunType
+    #: Timestamp of the start of the run.
     start_time: datetime.datetime
 
     @staticmethod
@@ -105,9 +109,12 @@ def generate_hp_optimization_report(
     if not isinstance(optimizer, Optimizer):
         logger.warning("Object loaded from '%s' is not of type Optimizer", status_file)
 
-    # TODO: pass metadata for start_time
     report.produce_optimization_report(
-        optimizer, output_file, report_data["submission_hook_stats"], results_dir
+        optimizer,
+        output_file,
+        report_data["submission_hook_stats"],
+        results_dir,
+        metadata.start_time,
     )
 
 
@@ -126,10 +133,10 @@ def generate_grid_search_report(
     with open(other_info_file, "rb") as f:
         other_info = pickle.load(f)
 
-    # TODO: pass metadata for start_time
     report.produce_gridsearch_report(
         data,
         output_file=output_file,
+        start_time=metadata.start_time,
         **other_info,
     )
 
