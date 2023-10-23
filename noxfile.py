@@ -45,3 +45,10 @@ def tests(session):
 
     with tempfile.TemporaryDirectory() as test_dir:
         session.run("bash", "tests/run_integration_tests.sh", test_dir, external=True)
+        session.run(
+            "bash",
+            "tests/test_main_no_save_metrics.sh",
+            test_dir,
+            external=True,
+            success_codes=[1],
+        )

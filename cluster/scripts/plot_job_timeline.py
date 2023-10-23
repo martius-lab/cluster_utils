@@ -75,11 +75,16 @@ def parse_cluster_run_log(
             end_reason = None
             if "started on hostname" in line:
                 pass  # nothing to do here
-            elif line.endswith("finished successfully.\n"):
+            elif line.endswith("finished successfully.\n") or line.endswith(
+                "now sent results after concluding earlier."
+            ):
                 end_reason = JobStatus.FINISHED
             elif line.endswith("exited to be resumed.\n"):
                 end_reason = JobStatus.EXIT_FOR_RESUME
-            elif line.endswith("announced it end but no results were sent.\n"):
+            elif line.endswith("Considering job failed.\n") or line.endswith(
+                # Keeping this line for backwards compability
+                "announced it end but no results were sent.\n"
+            ):
                 end_reason = JobStatus.FAILED
             elif line.endswith("submitted.\n"):
                 end_reason = JobStatus.SUBMITTED

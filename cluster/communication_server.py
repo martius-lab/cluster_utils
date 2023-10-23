@@ -7,6 +7,7 @@ import time
 
 import pyuv
 
+from cluster import constants
 from cluster.job import JobStatus
 
 
@@ -31,6 +32,7 @@ class MinJob:
 class CommunicationServer:
     def __init__(self, cluster_system):
         logger = logging.getLogger("cluster_utils")
+        self.event_loop = None
         self.ip_adress = self.get_own_ip()
         self.port = None
         logger.info(f"Master script running on IP: {self.ip_adress}")
@@ -83,22 +85,22 @@ class CommunicationServer:
             signal_h.close()
             server.close()
 
-        loop = pyuv.Loop.default_loop()
-        async_connection = pyuv.Async(loop)
+        self.event_loop = pyuv.Loop.default_loop()
+        async_connection = pyuv.Async(self.event_loop)
 
         def signal_cb(sig, frame):
             async_connection.send(async_exit)
 
-        server = pyuv.UDP(loop)
+        server = pyuv.UDP(self.event_loop)
         server.bind((self.ip_adress, 0))
         self.port = server.getsockname()[1]
         logger.info(f"Communication happening on port: {self.port}")
         server.start_recv(on_read)
 
-        signal_h = pyuv.Signal(loop)
+        signal_h = pyuv.Signal(self.event_loop)
         signal_h.start(signal_cb, signal.SIGINT)
 
-        t = threading.Thread(target=loop.run, daemon=True)
+        t = threading.Thread(target=self.event_loop.run, daemon=True)
         t.start()
 
         signal.signal(signal.SIGINT, signal_cb)
@@ -135,16 +137,20 @@ class CommunicationServer:
     def handle_job_sent_results(self, message):
         logger = logging.getLogger("cluster_utils")
         job_id, metrics = message
-        logger.info(f"Job {job_id} sent results.")
         job = self.cluster_system.get_job(job_id)
         if job is None:
             raise ValueError(
                 "Received a results-message from a job that is not listed in the"
                 " cluster interface system"
             )
+        if job.status == JobStatus.CONCLUDED_WITHOUT_RESULTS:
+            job.status = JobStatus.CONCLUDED
+            logger.info(f"Job {job_id} now sent results after concluding earlier.")
+        else:
+            job.status = JobStatus.SENT_RESULTS
+            logger.info(f"Job {job_id} sent results.")
         job.metrics = metrics
         job.set_results()
-        job.status = JobStatus.SENT_RESULTS
         if job.get_results() is None:
             raise ValueError("Job sent metrics but something went wrong")
 
@@ -158,8 +164,31 @@ class CommunicationServer:
                 " cluster interface system"
             )
         if job.status != JobStatus.SENT_RESULTS or job.get_results() is None:
-            job.status = JobStatus.FAILED
-            logger.info(f"Job {job_id} announced it end but no results were sent.")
+            # It is possible that the CONCLUDED message is processed before the SENT_RESULTS
+            # message. We catch that case here by moving the job to an intermediate concluded state
+            # and that is either changed to CONCLUDED when the SENT_RESULTS message arrives, or to
+            # FAILED when a certain time passes without any received results.
+            job.status = JobStatus.CONCLUDED_WITHOUT_RESULTS
+
+            def fail_job_if_still_no_results(timer):
+                if job.status == JobStatus.CONCLUDED_WITHOUT_RESULTS:
+                    job.status = JobStatus.FAILED
+                    job.error_info = "Job concluded but sent no results."
+                    logger.info(
+                        f"Job {job_id} has concluded, but has not sent results after"
+                        f" {constants.CONCLUDED_WITHOUT_RESULTS_GRACE_TIME_IN_SECS} seconds."
+                        " Considering job failed."
+                    )
+
+            # We give the job some time to send its results and fail it otherwise.
+            pyuv.Timer(self.event_loop).start(
+                fail_job_if_still_no_results,
+                constants.CONCLUDED_WITHOUT_RESULTS_GRACE_TIME_IN_SECS,
+                repeat=0.0,  # No repeats
+            )
+            logger.info(
+                f"Job {job_id} announced its end but no results were sent so far."
+            )
         else:
             job.status = JobStatus.CONCLUDED
             logger.info(f"Job {job_id} finished successfully.")
