@@ -7,29 +7,15 @@ from itertools import combinations, count
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator, Mapping, Optional, Sequence
 
-try:
+from cluster.utils import OptionalDependencyImport
+
+with OptionalDependencyImport("report"):
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
     import seaborn as sns
     from matplotlib import rc
     from sklearn.ensemble import RandomForestRegressor
-except ImportError as e:
-    import textwrap
-
-    pip_cmd = textwrap.dedent("""
-        ```
-        # when installing directly from GitLab:
-        pip install "cluster[report] @ git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git"
-
-        # when installing from local working copy:
-        pip install ".[report]"
-        ```
-    """)
-    raise ModuleNotFoundError(
-        f"Failed to import {e}.  You may need to install the 'report' extra"
-        f" dependencies.  You can do this with {pip_cmd}"
-    ) from e
 
 from cluster import constants, data_analysis, distributions
 from cluster.latex_utils import LatexFile
