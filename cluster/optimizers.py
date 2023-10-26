@@ -7,12 +7,10 @@ import random
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Sequence
 
-import nevergrad as ng
-import nevergrad.parametrization.parameter as par
 import pandas as pd
 
 from cluster import constants, data_analysis, distributions
-from cluster.utils import get_sample_generator, nested_to_dict
+from cluster.utils import OptionalDependencyImport, get_sample_generator, nested_to_dict
 
 if TYPE_CHECKING:
     from cluster import latex_utils
@@ -236,19 +234,30 @@ class Metaoptimizer(Optimizer):
             pickle.dump(self, f)
 
 
-ng_optimizer_dict = {
-    "twopointsde": ng.optimizers.TwoPointsDE,
-    "oneplusone": ng.optimizers.OnePlusOne,
-    "cma": ng.optimizers.CMA,
-    "tbpsa": ng.optimizers.TBPSA,
-    "pso": ng.optimizers.PSO,
-    "randomsearch": ng.optimizers.RandomSearch,
-}
-
-
 class NGOptimizer(Optimizer):
+    @staticmethod
+    def get_optimizer_dict():
+        # conditional import as it depends on optional dependencies
+        with OptionalDependencyImport("nevergrad"):
+            import nevergrad as ng
+
+        return {
+            "twopointsde": ng.optimizers.TwoPointsDE,
+            "oneplusone": ng.optimizers.OnePlusOne,
+            "cma": ng.optimizers.CMA,
+            "tbpsa": ng.optimizers.TBPSA,
+            "pso": ng.optimizers.PSO,
+            "randomsearch": ng.optimizers.RandomSearch,
+        }
+
     def __init__(self, *, opt_alg, **kwargs):
+        # conditional import as it depends on optional dependencies
+        with OptionalDependencyImport("nevergrad"):
+            import nevergrad.parametrization.parameter as par
+
         super().__init__(**kwargs)
+
+        ng_optimizer_dict = self.get_optimizer_dict()
         assert opt_alg in ng_optimizer_dict
         # TODO: Adjust for arbitrary types
         self.instrumentation = {
@@ -263,6 +272,10 @@ class NGOptimizer(Optimizer):
         self.candidates = {}
 
     def get_ng_instrumentation(self, param):
+        # conditional import as it depends on optional dependencies
+        with OptionalDependencyImport("nevergrad"):
+            import nevergrad.parametrization.parameter as par
+
         if type(param) is distributions.TruncatedLogNormal:
             return par.Log(lower=param.lower, upper=param.upper)
         if type(param) is distributions.TruncatedNormal:
@@ -339,6 +352,7 @@ class NGOptimizer(Optimizer):
             raise ValueError("Attempted to continue but optimizes a different metric!")
 
         # hack to circumvent weird type issues with nevergrad optimizers
+        ng_optimizer_dict = cls.get_optimizer_dict()
         tmp_optimizer = ng_optimizer_dict[opt_alg](
             instrumentation=ngopt.instrumentation
         )

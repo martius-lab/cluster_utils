@@ -20,7 +20,7 @@ setup(
         # the explicit dependency on jinja2 can be removed.
         "jinja2",
         "numpy",
-        "nevergrad",
+        "scipy",
         "tqdm",
         "colorama",
         # master of pyuv contains fix needed for Python 3.10
@@ -39,6 +39,7 @@ setup(
         # all optional dependencies, excluding the ones only needed for development
         "all": [
             "cluster[report]",
+            "cluster[nevergrad]",
         ],
         # really all optional dependencies
         "all-dev": [
@@ -52,6 +53,9 @@ setup(
             "seaborn>=0.11.0",
             "matplotlib",
             "scikit-learn",
+        ],
+        "nevergrad": [
+            "nevergrad",
         ],
         "dev": [
             "absolufy-imports",
