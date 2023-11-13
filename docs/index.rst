@@ -6,6 +6,7 @@ Welcome to cluster_utils's documentation!
    :maxdepth: 2
    :hidden:
 
+   installation
    configuration
    report
    troubleshooting
@@ -20,15 +21,7 @@ since and now it is a proper monster. Enjoy :).
 Installation
 ============
 
-.. code-block:: bash
-
-   python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
-
-To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
-
-.. code-block:: bash
-
-   export MPLBACKEND="agg"
+see :doc:`installation`.
 
 
 Basic Usage

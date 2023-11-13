@@ -8,10 +8,7 @@ from cluster import grid_search, read_params_from_cmdline
 from cluster.constants import FULL_DF_FILE
 from cluster.git_utils import make_git_params
 from cluster.latex_utils import SectionFromJsonHook, StaticSectionGenerator
-from cluster.report import (
-    GenerateReportSetting,
-    produce_gridsearch_report,
-)
+from cluster.settings import GenerateReportSetting
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,
@@ -38,6 +35,11 @@ if __name__ == "__main__":
             "grid_search does not support setting generate_report='EVERY_ITERATION'. "
             " Will only create report when finished."
         )
+
+    if params["generate_report"] is not GenerateReportSetting.NEVER:
+        # conditional import as it depends on optional dependencies
+        # (already import here to fail early in case dependencies are missing)
+        from cluster.report import produce_gridsearch_report
 
     json_full_name = os.path.abspath(sys.argv[1])
 

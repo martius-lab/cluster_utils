@@ -1,62 +1,40 @@
 from __future__ import annotations
 
 import datetime
-import enum
 import logging
 import os
 from itertools import combinations, count
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator, Mapping, Optional, Sequence
 
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from matplotlib import rc
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    from matplotlib import rc
+    from sklearn.ensemble import RandomForestRegressor
+except ImportError as e:
+    import textwrap
+
+    pip_cmd = textwrap.dedent("""
+        ```
+        # when installing directly from GitLab:
+        pip install "cluster[report] @ git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git"
+
+        # when installing from local working copy:
+        pip install ".[report]"
+        ```
+    """)
+    raise ModuleNotFoundError(
+        f"Failed to import {e}.  You may need to install the 'report' extra"
+        f" dependencies.  You can do this with {pip_cmd}"
+    ) from e
 
 from cluster import constants, data_analysis, distributions
 from cluster.latex_utils import LatexFile
 from cluster.optimizers import Optimizer
 from cluster.utils import log_and_print, shorten_string
-
-
-class GenerateReportSetting(enum.Enum):
-    """The possible values for the "generate_report" setting."""
-
-    #: Do not generate report automatically.
-    NEVER = 0
-    #: Generate report once when the optimization has finished.
-    WHEN_FINISHED = 1
-    #: Generate report after every iteration of the optimization.
-    EVERY_ITERATION = 2
-
-    @staticmethod
-    def parse_generate_report_setting_hook(settings: dict[str, Any]) -> None:
-        """Parse the "generate_report" parameter in the settings dict.
-
-        Check if a key "generate_report" exists in the settings dictionary and parse its
-        value to replace it with the proper enum value.  If no entry exists in settings,
-        it will be added with default value ``NEVER``.
-
-        Raises:
-            ValueError: if the value in settings cannot be mapped to one of the enum
-                values.
-        """
-        key = "generate_report"
-        value_str: str = settings.get(key, GenerateReportSetting.NEVER.name)
-        value_str = value_str.upper()
-        try:
-            value_enum = GenerateReportSetting[value_str]
-        except KeyError as e:
-            options = (
-                GenerateReportSetting.NEVER.name,
-                GenerateReportSetting.WHEN_FINISHED.name,
-                GenerateReportSetting.EVERY_ITERATION.name,
-            )
-            raise ValueError(
-                f"Invalid value {e} for setting {key}.  Valid options are {options}."
-            ) from None
-
-        settings[key] = value_enum
 
 
 def init_plotting():
@@ -78,6 +56,183 @@ def flatten_params(params_with_tuples):
                 yield i
         else:
             yield p
+
+
+def distribution(df, param, metric, filename=None, metric_logscale=None, x_bounds=None):
+    logger = logging.getLogger("cluster_utils")
+    smaller_df = df[[param, metric]]
+    unique_vals = smaller_df[param].unique()
+    if not len(unique_vals):
+        return False
+    ax = None
+    metric_logscale = (
+        metric_logscale
+        if metric_logscale is not None
+        else data_analysis.detect_scale(smaller_df[metric]) == "log"
+    )
+    try:
+        ax = sns.kdeplot(
+            data=smaller_df,
+            x=metric,
+            hue=param,
+            palette="crest",
+            fill=True,
+            common_norm=False,
+            alpha=0.5,
+            linewidth=0,
+            log_scale=metric_logscale,
+        )
+    except Exception as e:
+        logger.warning(f"sns.distplot failed for param {param} with exception {e}")
+
+    if ax is None:
+        return False
+
+    if x_bounds is not None:
+        ax.set_xlim(*x_bounds)
+    ax.set_title("Distribution of {} by {}".format(metric, param))
+    fig = plt.gcf()
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
+
+
+def heat_map(df, param1, param2, metric, filename=None, annot=False):
+    reduced_df = df[[param1, param2, metric]]
+    grouped_df = reduced_df.groupby([param1, param2], as_index=False).mean()
+    pivoted_df = grouped_df.pivot(index=param1, columns=param2, values=metric)
+    fmt = None if not annot else ".2g"
+    ax = sns.heatmap(pivoted_df, annot=annot, fmt=fmt)
+    ax.set_title(metric)
+    fig = plt.gcf()
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
+def count_plot_horizontal(df, time, count_over, filename=None):
+    smaller_df = df[[time, count_over]]
+
+    ax = sns.countplot(y=time, hue=count_over, data=smaller_df)
+    ax.set_title("Evolving frequencies of {} over {}".format(count_over, time))
+    fig = plt.gcf()
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
+def plot_opt_progress(df, metric, filename=None):
+    fig = plt.figure()
+    ax = sns.boxplot(x=constants.ITERATION, y=metric, data=df)
+    ax.set_yscale(data_analysis.detect_scale(df[metric]))
+    plt.title("Optimization progress")
+
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
+
+
+def compute_performance_gains(df, params, metric, minimum):
+    def fit_forest(df, params, metric):
+        data = df[params + [metric]]
+        clf = RandomForestRegressor(n_estimators=1000)
+
+        x = data[params]  # Features
+        y = data[metric]  # Labels
+
+        clf.fit(x, y)
+        return clf
+
+    df = data_analysis.turn_categorical_to_numerical(df, params)
+    df = df.dropna(subset=[metric])
+    normalize = data_analysis.Normalizer(params)
+
+    forest = fit_forest(normalize(df), params, metric)
+
+    max_iteration = df[constants.ITERATION].max()
+    dfs = [
+        normalize(df[df[constants.ITERATION] == 1 + i]) for i in range(max_iteration)
+    ]
+
+    names = [f"iteration {1 + i}" for i in range(max_iteration)]
+    importances = [
+        list(
+            data_analysis.performance_gain_for_iteration(
+                forest, df_, params, metric, minimum
+            )
+        )
+        for df_ in dfs
+    ]
+
+    data_dict = dict(zip(names, list(importances)))
+    feature_imp = pd.DataFrame.from_dict(data_dict)
+    feature_imp.index = [shorten_string(param, 40) for param in params]
+    return feature_imp
+
+
+def importance_by_iteration_plot(df, params, metric, minimum, filename=None):
+    importances = compute_performance_gains(df, params, metric, minimum)
+    importances.T.plot(kind="bar", stacked=True, legend=False)
+    lgd = plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.55), ncol=2)
+
+    ax = plt.gca()
+    fig = plt.gcf()
+    ax.set_yscale(data_analysis.detect_scale(importances.mean().values))
+    ax.set_ylabel(f"Potential change in {metric}")
+    ax.set_title("Influence of hyperparameters on performance")
+    if filename:
+        fig.savefig(
+            filename,
+            format="pdf",
+            dpi=1200,
+            bbox_extra_artists=(lgd,),
+            bbox_inches="tight",
+        )
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
+
+
+def metric_correlation_plot(df, metrics, filename=None):
+    corr = df[list(metrics)].rank().corr(method="spearman")
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(10, 150, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    ax = sns.heatmap(
+        corr,
+        cmap=cmap,
+        vmin=-1.0,
+        vmax=1.0,
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.5},
+    )
+    plt.xticks(rotation=90)
+
+    ax.set_title("Spearman correlation of metrics")
+    ax.figure.tight_layout()
+    fig = plt.gcf()
+
+    if filename:
+        fig.savefig(filename, format="pdf", dpi=1200)
+    else:
+        plt.show()
+    plt.close(fig)
+    return True
 
 
 def produce_gridsearch_report(
@@ -136,7 +291,7 @@ def produce_gridsearch_report(
         file_gen = filename_gen(tmpdir)
 
         correlation_file = next(file_gen)
-        data_analysis.metric_correlation_plot(df, metrics, correlation_file)
+        metric_correlation_plot(df, metrics, correlation_file)
         latex.add_section_from_figures(
             "Metric Spearman Correlation", [correlation_file]
         )
@@ -146,7 +301,7 @@ def produce_gridsearch_report(
             distr_files = [
                 fname
                 for fname, param in zip(distr_files, params)
-                if data_analysis.distribution(df, param, metric, fname)
+                if distribution(df, param, metric, fname)
             ]
 
             section_name = "Distributions of '{}' w.r.t. parameters".format(metric)
@@ -155,7 +310,7 @@ def produce_gridsearch_report(
             heat_map_files = []
             for param1, param2 in combinations(params, 2):
                 filename = next(file_gen)
-                data_analysis.heat_map(df, param1, param2, metric, filename, annot=True)
+                heat_map(df, param1, param2, metric, filename, annot=True)
                 heat_map_files.append(filename)
 
             section_name = "Heatmaps of {} w.r.t. parameters".format(metric)
@@ -201,7 +356,7 @@ def distribution_plots(
         filename = next(filename_generator)
         if isinstance(distr, distributions.NumericalDistribution):
             log_scale = isinstance(distr, distributions.TruncatedLogNormal)
-            res = data_analysis.distribution(
+            res = distribution(
                 full_data,
                 constants.ITERATION,
                 distr.param_name,
@@ -212,7 +367,7 @@ def distribution_plots(
             if res:
                 yield filename
         elif isinstance(distr, distributions.Discrete):
-            data_analysis.count_plot_horizontal(
+            count_plot_horizontal(
                 full_data,
                 constants.ITERATION,
                 distr.param_name,
@@ -314,12 +469,12 @@ def produce_optimization_report(
         file_gen = filename_gen(tmpdir)
         hook_args = {"df": optimizer.full_df, "path_to_results": current_result_path}
         overall_progress_file = next(file_gen)
-        data_analysis.plot_opt_progress(
+        plot_opt_progress(
             optimizer.full_df, optimizer.metric_to_optimize, overall_progress_file
         )
 
         sensitivity_file = next(file_gen)
-        data_analysis.importance_by_iteration_plot(
+        importance_by_iteration_plot(
             optimizer.full_df,
             params,
             optimizer.metric_to_optimize,

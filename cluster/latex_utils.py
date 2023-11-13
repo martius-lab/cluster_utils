@@ -116,9 +116,13 @@ class LatexFile(object):
                     check=True,
                     stdout=PIPE,
                 )
-            except CalledProcessError:
+            except CalledProcessError as e:
                 # save the log and tex for debugging
-                logger.error("pdflatex failed.  Save log and tex file for debugging.")
+                logger.error(
+                    "pdflatex failed with exit code %d.  Save log and tex file for"
+                    " debugging.",
+                    e.returncode,
+                )
                 latex_log_file = os.path.join(tmpdir, "latex.log")
                 copyfile(latex_file, output_file.with_suffix(".tex"))
                 copyfile(latex_log_file, output_file.with_suffix(".log"))
@@ -126,9 +130,17 @@ class LatexFile(object):
                 # re-raise the error
                 raise
 
-            logger.info(f"pdflatex call produced output file {output_file}")
             output_tmp = os.path.join(tmpdir, "latex.pdf")
-            copyfile(output_tmp, output_file)
+            try:
+                copyfile(output_tmp, output_file)
+            except FileNotFoundError as e:
+                logger.error(
+                    "Expected that pdflatex produced output file %s but file does not"
+                    " exist.",
+                    e.filename,
+                )
+                raise
+            logger.info("Report is saved as %s", output_file)
 
 
 def latex_format(string):

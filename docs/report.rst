@@ -5,6 +5,11 @@ Report Generation
 A report in PDF format can be generated to give an overview over the optimisation
 results.
 
+.. important::
+
+   Generating the report requires optional dependencies from the "report" group.  See
+   :ref:`optional_dependencies`.
+
 .. _manual_report_generation:
 
 Manual Report Generation
@@ -25,3 +30,12 @@ Automatic Report Generation
 
 The report can also be generated automatically either in every iteration or only once at
 the very end.  See the ``generate_report`` option in :ref:`config.general_settings`.
+
+
+.. note::
+
+   To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
+
+   .. code-block:: bash
+
+      export MPLBACKEND="agg"
