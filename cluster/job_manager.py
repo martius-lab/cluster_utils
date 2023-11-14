@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import os
@@ -145,7 +147,7 @@ def initialize_hp_optimizer(
 
 
 def pre_opt(
-    base_paths_and_files,
+    base_paths_and_files: dict[str, str],
     submission_requirements,
     optimized_params,
     other_params,
@@ -288,7 +290,7 @@ def post_iteration_opt(
 
 
 def hp_optimization(
-    base_paths_and_files,
+    base_paths_and_files: dict[str, str],
     submission_requirements,
     optimized_params,
     other_params,

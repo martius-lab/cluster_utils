@@ -1,12 +1,17 @@
+"""ClusterSubmission implementation for HTCondor."""
+from __future__ import annotations
+
 import logging
 import os
 import subprocess
 from collections import namedtuple
 from copy import copy
 from subprocess import PIPE, run
+from typing import Any
 
 from cluster import constants
-from cluster.cluster_system import ClusterSubmission
+from cluster.cluster_system import ClusterJobId, ClusterSubmission
+from cluster.job import Job
 
 CondorRecord = namedtuple(
     "CondorRecord",
@@ -25,14 +30,19 @@ CondorRecord = namedtuple(
 
 
 class CondorClusterSubmission(ClusterSubmission):
-    def __init__(self, requirements, paths, remove_jobs_dir=True):
+    def __init__(
+        self,
+        requirements: dict[str, Any],  # TODO can this be more specific than Any?
+        paths: dict[str, str],
+        remove_jobs_dir: bool = True,
+    ) -> None:
         super().__init__(paths, remove_jobs_dir)
 
         os.environ["MPLBACKEND"] = "agg"
         self._process_requirements(requirements)
-        self.exceptions_seen = set({})
+        self.exceptions_seen = set({})  # FIXME unused?
 
-    def submit_fn(self, job):
+    def submit_fn(self, job: Job) -> ClusterJobId:
         logger = logging.getLogger("cluster_utils")
         self.generate_job_spec_file(job)
         submit_cmd = "condor_submit_bid {} {}\n".format(
@@ -80,13 +90,13 @@ class CondorClusterSubmission(ClusterSubmission):
             f" {new_cluster_id}."
         )
 
-        return new_cluster_id
+        return ClusterJobId(new_cluster_id)
 
-    def stop_fn(self, cluster_id):
+    def stop_fn(self, cluster_id: ClusterJobId) -> subprocess.CompletedProcess:
         cmd = "condor_rm {}".format(cluster_id)
         return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
-    def generate_job_spec_file(self, job):
+    def generate_job_spec_file(self, job: Job) -> None:
         job_file_name = "job_{}_{}.sh".format(job.iteration, job.id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
         job_spec_file_path = os.path.join(self.submission_dir, job_file_name + ".sub")
@@ -106,12 +116,14 @@ class CondorClusterSubmission(ClusterSubmission):
         job.job_spec_file_path = job_spec_file_path
         job.run_script_path = run_script_file_path
 
-    def is_blocked(self):
+    def is_blocked(self) -> bool:
+        # FIXME self.status is not defined.  It also seems is_blocked is never called,
+        # so it can probably be removed?
         return any(self.status(job) == 1 for job in self.jobs)
 
     # TODO: Check that two simultaneous HPOs dont collide
 
-    def _process_requirements(self, requirements):
+    def _process_requirements(self, requirements: dict[str, Any]) -> None:
         # Job requirements
         self.mem = requirements["memory_in_mb"]
         self.cpus = requirements["request_cpus"]
