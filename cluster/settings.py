@@ -62,6 +62,16 @@ class GenerateReportSetting(enum.Enum):
         settings[key] = value_enum
 
 
+class SettingsJsonEncoder(json.JSONEncoder):
+    """JSON encoder that handles custom types used in the settings structure."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, enum.Enum):
+            return obj.name
+
+        return json.JSONEncoder.default(self, obj)
+
+
 def cluster_main(main_func=None, **read_params_args):
     if main_func is None:
         return functools.partial(cluster_main, **read_params_args)
@@ -82,7 +92,7 @@ def cluster_main(main_func=None, **read_params_args):
 def save_settings_to_json(setting_dict, working_dir):
     filename = os.path.join(working_dir, constants.JSON_SETTINGS_FILE)
     with open(filename, "w") as file:
-        file.write(json.dumps(setting_dict, sort_keys=True, indent=4))
+        json.dump(setting_dict, file, sort_keys=True, indent=4, cls=SettingsJsonEncoder)
 
 
 def send_results_to_server(metrics):
