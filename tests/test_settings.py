@@ -3,6 +3,7 @@ import pathlib
 
 import pytest
 
+from cluster import constants
 from cluster import settings as s
 from cluster.utils import (
     check_import_in_fixed_params,
@@ -114,3 +115,10 @@ def test_read_params_from_cmdline__working_dir(tmp_path, base_config):
     # just a basic check to see if the file was read
     assert params["optimization_procedure_name"] == "test_grid_search"
     assert params["generate_report"] is s.GenerateReportSetting.NEVER
+
+    # verify that settings file was written
+    output_settings_file = working_dir / constants.JSON_SETTINGS_FILE
+    assert output_settings_file.is_file()
+    with open(output_settings_file, "r") as f:
+        settings = json.load(f)
+    assert settings["optimization_procedure_name"] == "test_grid_search"
