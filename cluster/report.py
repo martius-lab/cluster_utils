@@ -17,7 +17,8 @@ try:
 except ImportError as e:
     import textwrap
 
-    pip_cmd = textwrap.dedent("""
+    pip_cmd = textwrap.dedent(
+        """
         ```
         # when installing directly from GitLab:
         pip install "cluster[report] @ git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git"
@@ -25,7 +26,8 @@ except ImportError as e:
         # when installing from local working copy:
         pip install ".[report]"
         ```
-    """)
+    """
+    )
     raise ModuleNotFoundError(
         f"Failed to import {e}.  You may need to install the 'report' extra"
         f" dependencies.  You can do this with {pip_cmd}"

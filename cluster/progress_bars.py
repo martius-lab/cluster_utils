@@ -38,7 +38,8 @@ class ProgressBar(ABC):
         self.value = 0
 
     @abstractmethod
-    def start_tqdm(self, **kwargs): ...
+    def start_tqdm(self, **kwargs):
+        ...
 
     def update(self, new_value):
         # Negative updates may occur due to instability. This silences the error
