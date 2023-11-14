@@ -40,7 +40,8 @@ class OptionalDependencyNotFoundError(ModuleNotFoundError):
         """
         super().__init__(name=module)
 
-        self.message = textwrap.dedent("""
+        self.message = textwrap.dedent(
+            """
             Failed to import '{module}'.  Make sure you installed the optional '{group}' dependencies.
             You can do this with:
             ```
@@ -50,7 +51,10 @@ class OptionalDependencyNotFoundError(ModuleNotFoundError):
             # when installing from local working copy:
             pip install ".[{group}]"
             ```
-        """.format(module=module, group=optional_dependency_group))
+        """.format(
+                module=module, group=optional_dependency_group
+            )
+        )
 
     def __str__(self) -> str:
         return self.message

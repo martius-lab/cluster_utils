@@ -53,8 +53,9 @@ class Optimizer(ABC):
         if self.metric_to_optimize not in df:
             # raise a more understandable error
             raise KeyError(
-                "Trying to optimize metric '{}' but it is not provided by the job."
-                .format(self.metric_to_optimize)
+                "Trying to optimize metric '{}' but it is not provided by the job.".format(
+                    self.metric_to_optimize
+                )
             )
 
         self.full_df = pd.concat([self.full_df, df], ignore_index=True, sort=True)
