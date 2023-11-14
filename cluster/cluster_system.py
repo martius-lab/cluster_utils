@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import errno
 import logging
-import subprocess
+import shutil
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NewType, Optional
 
@@ -296,21 +295,8 @@ def get_cluster_type(
 
 
 def is_command_available(cmd: str) -> bool:
-    logger = logging.getLogger("cluster_utils")
-    try:
-        # FIXME executing a command to see if it is available seems very dangerous to me
-        # (e.g. assume I want to check if the handy "self-destruct-now" command is
-        # available :) ).
-        # There are safer methods, e.g. "command -v {cmd}"
-        # (see https://stackoverflow.com/a/677212/2095383)
-        subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            return False
-        else:
-            logger.warning("Found command, but " + cmd + " could not be executed")
-            return True
-    return True
+    """Check if the command 'cmd' is available."""
+    return shutil.which(cmd) is not None
 
 
 class ClusterSubmissionHook(ABC):
