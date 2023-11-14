@@ -35,6 +35,8 @@ separated by commas):
      - Needed for
    * - **report**
      - For generating PDF reports (see :doc:`report`).
+   * - **nevergrad**
+     - To use the *nevergrad* optimizer in ``hp_optimization``.
    * - **docs**
      - For building the documentation.
    * - **dev**

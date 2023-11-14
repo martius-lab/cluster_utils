@@ -24,15 +24,6 @@ y
 EOF
 
 
-python -m cluster.hp_optimization tests/hp_opt_nevergrad.json \
-    "no_user_interaction=True" \
-    "results_dir=\"$test_dir\"" \
-    <<EOF
-y
-y
-EOF
-
-
 python -m cluster.grid_search tests/grid_search_main_w_decorator.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \

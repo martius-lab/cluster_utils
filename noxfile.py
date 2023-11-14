@@ -58,3 +58,16 @@ def integration_tests_with_report_generation(session):
             test_dir,
             external=True,
         )
+
+
+@nox.session(python=PYTHON_VERSIONS, tags=["test"])
+def integration_tests_with_nevergrad(session):
+    session.install(".[nevergrad]")
+
+    with tempfile.TemporaryDirectory() as test_dir:
+        session.run(
+            "bash",
+            "tests/run_integration_tests_with_nevergrad.sh",
+            test_dir,
+            external=True,
+        )

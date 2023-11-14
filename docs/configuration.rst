@@ -126,7 +126,14 @@ Specific for hp_optimization
    * - ``optimizer_str``
      - Mandatory
      - The optimisation method that is used to find good hyperparameters.
-       Supported methods are "cem_metaoptimizer", "nevergrad" and "gridsearch".
+       Supported methods are 
+
+       - cem_metaoptimizer
+       - nevergrad \*
+       - gridsearch
+
+       \* To use nevergrad, the optional dependencies from the "nevergrad" group are
+       needed, see :ref:`optional_dependencies`.
    * - ``optimizer_settings``
      - Mandatory
      - Settings specific to the optimiser selected in ``optimizer_str``.
@@ -272,6 +279,11 @@ cem_metaoptimizer
 
 nevergrad
 ~~~~~~~~~
+
+.. note::
+
+   To use nevergrad, the optional dependencies from the "nevergrad" group are needed,
+   see :ref:`optional_dependencies`.
 
 .. list-table::
    :header-rows: 1
