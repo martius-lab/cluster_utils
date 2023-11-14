@@ -261,19 +261,6 @@ class ClusterSubmission(ABC):
     def is_blocked(self) -> bool:
         raise NotImplementedError
 
-    def __enter__(self) -> None:
-        logger = logging.getLogger("cluster_utils")
-        # TODO: take emergency cleanup to new implementation
-        try:
-            # FIXME this method does not seem to exist.  Is __enter__ actually used
-            # anywhere or is this some obsolete code that can be removed?
-            self.exec_pre_submission_routines()
-            self.submit()
-        except BaseException:
-            self.close()
-            logger.warning("Job killed in emergency mode! Check condor_q!")
-            raise
-
     def close(self) -> None:
         logger = logging.getLogger("cluster_utils")
         self.stop_all()
