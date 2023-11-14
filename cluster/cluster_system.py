@@ -56,9 +56,7 @@ class ClusterSubmission(ABC):
         logger = logging.getLogger("cluster_utils")
         if identifier in self.submission_hooks:
             logger.info("Unregister submission hook {}".format(identifier))
-            # FIXME this seems to be a bug, should probably be
-            # self.submission_hooks[identifier].manager = None
-            self.submission_hooks.manager = None
+            self.submission_hooks[identifier].manager = None
             self.submission_hooks.pop(identifier)
         else:
             raise HookNotFoundError("Hook not found. Can not unregister")
