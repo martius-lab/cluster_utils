@@ -351,7 +351,7 @@ class ClusterSubmissionHook(ABC):
     def __init__(self, identifier: str):
         self.identifier = identifier
         # TODO use a bool or enum for this?
-        self.state: Optional[int] = None  # 0: everything is fine
+        self.state: int = 1  # 0: everything is fine
         # 1: errors encountered
         self.status: Optional[str] = None
         self.manager: Optional[ClusterSubmission] = None
