@@ -234,27 +234,12 @@ class ClusterSubmission(ABC):
         else:
             return max(latest)
 
-    """
-  @abstractmethod
-  def status(self, job):
-    # 0: not submitted (could also mean its done)
-    # 1: submitted
-    # 2: running
-    raise NotImplementedError
-  """
-
     @abstractmethod
     def submit_fn(self, job: Job) -> ClusterJobId:
         raise NotImplementedError
 
     @abstractmethod
     def stop_fn(self, cluster_id: ClusterJobId) -> None:
-        raise NotImplementedError
-
-    # FIXME it seems this is only used internally in CondorClusterSubmission and
-    # DummyClusterSubmission, so no need to have it here
-    @abstractmethod
-    def generate_job_spec_file(self, job):
         raise NotImplementedError
 
     @abstractmethod
