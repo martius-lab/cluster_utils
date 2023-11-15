@@ -40,7 +40,6 @@ class CondorClusterSubmission(ClusterSubmission):
 
         os.environ["MPLBACKEND"] = "agg"
         self._process_requirements(requirements)
-        self.exceptions_seen = set({})  # FIXME unused?
 
     def submit_fn(self, job: Job) -> ClusterJobId:
         logger = logging.getLogger("cluster_utils")

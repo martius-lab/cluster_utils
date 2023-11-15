@@ -26,7 +26,6 @@ class DummyClusterSubmission(ClusterSubmission):
     ) -> None:
         super().__init__(paths, remove_jobs_dir)
         self._process_requirements(requirements)
-        self.exceptions_seen = set({})  # FIXME unused?
         self.available_cpus = range(cpu_count())
         self.futures_tuple: list[tuple[ClusterJobId, concurrent.futures.Future]] = []
         self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
