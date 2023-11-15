@@ -92,9 +92,9 @@ class CondorClusterSubmission(ClusterSubmission):
 
         return ClusterJobId(new_cluster_id)
 
-    def stop_fn(self, cluster_id: ClusterJobId) -> subprocess.CompletedProcess:
+    def stop_fn(self, cluster_id: ClusterJobId) -> None:
         cmd = "condor_rm {}".format(cluster_id)
-        return run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
+        run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
     def generate_job_spec_file(self, job: Job) -> None:
         job_file_name = "job_{}_{}.sh".format(job.iteration, job.id)
