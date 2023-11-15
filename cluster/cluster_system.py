@@ -331,3 +331,9 @@ class ClusterSubmissionHook(ABC):
 
 class HookNotFoundError(Exception):
     pass
+
+
+class SubmissionError(Exception):
+    """Indicates an error during job submission."""
+
+    pass

@@ -51,6 +51,8 @@ elif [[ $rc == 1 ]]; then
     exit 1
 fi
 """
+# TODO: the MPI_CLUSTER_RUN_SCRIPT above does not forward errorcodes other than 1 and 3.
+# Could this be a problem?
 
 MPI_CLUSTER_JOB_SPEC_FILE = f"""# Submission ID %(id)d
 JobBatchName=%(opt_procedure_name)s
