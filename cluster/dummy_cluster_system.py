@@ -45,7 +45,9 @@ class DummyClusterSubmission(ClusterSubmission):
         cluster_id = self.generate_cluster_id()
         new_futures_tuple = (
             cluster_id,
-            self.executor.submit(run, cmd, stdout=PIPE, stderr=PIPE, shell=True),
+            self.executor.submit(
+                run, cmd, stdout=PIPE, stderr=PIPE, shell=True  # type:ignore
+            ),
         )
         logger.info(f"Job with id {job.id} submitted locally.")
         job.futures_object = new_futures_tuple[1]
