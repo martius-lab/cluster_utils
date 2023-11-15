@@ -31,10 +31,10 @@ class DummyClusterSubmission(ClusterSubmission):
         self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
 
     def generate_cluster_id(self) -> ClusterJobId:
-        cluster_id = np.random.randint(1e10)
+        cluster_id = np.random.randint(int(1e10))
         while cluster_id in [c_id for c_id, future in self.futures_tuple]:
-            cluster_id = np.random.randint(1e10)
-        return ClusterJobId(cluster_id)
+            cluster_id = np.random.randint(int(1e10))
+        return ClusterJobId(str(cluster_id))
 
     def submit_fn(self, job: Job) -> ClusterJobId:
         logger = logging.getLogger("cluster_utils")
