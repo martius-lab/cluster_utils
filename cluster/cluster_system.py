@@ -242,10 +242,6 @@ class ClusterSubmission(ABC):
     def stop_fn(self, cluster_id: ClusterJobId) -> None:
         raise NotImplementedError
 
-    @abstractmethod
-    def is_blocked(self) -> bool:
-        raise NotImplementedError
-
     def close(self) -> None:
         logger = logging.getLogger("cluster_utils")
         self.stop_all()

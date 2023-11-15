@@ -115,11 +115,6 @@ class CondorClusterSubmission(ClusterSubmission):
         job.job_spec_file_path = job_spec_file_path
         job.run_script_path = run_script_file_path
 
-    def is_blocked(self) -> bool:
-        # FIXME self.status is not defined.  It also seems is_blocked is never called,
-        # so it can probably be removed?
-        return any(self.status(job) == 1 for job in self.jobs)
-
     # TODO: Check that two simultaneous HPOs dont collide
 
     def _process_requirements(self, requirements: dict[str, Any]) -> None:

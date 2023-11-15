@@ -91,9 +91,6 @@ class DummyClusterSubmission(ClusterSubmission):
                 return 3
             return 1
 
-    def is_blocked(self) -> bool:
-        return True
-
     @property
     def futures(self):
         return [future for _, future in self.futures_tuple]
