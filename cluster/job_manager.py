@@ -41,9 +41,10 @@ def init_logging(working_dir):
 
     reload(logging)
     filename = os.path.join(working_dir, "cluster_run.log")
+    level = os.environ.get("CLUSTER_UTILS_LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
         filename=filename,
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     print(f"Detailed logging available in {filename}")

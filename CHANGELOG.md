@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command `python3 -m cluster.scripts.generate_report` to manually generate the report
   based on saved files (see {doc}`report`).
 - Support settings files in TOML format.
+- Control logger level via environment variable `LOG_LEVEL` (most relevant
+  use-case is to enable debug output via `export LOG_LEVEL=debug`.
 
 ### Fixed
 - Make it work with Python >=3.10
