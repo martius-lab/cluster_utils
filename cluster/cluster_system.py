@@ -11,6 +11,7 @@ from cluster.utils import rm_dir_full
 if TYPE_CHECKING:
     from cluster.condor_cluster_system import CondorClusterSubmission
     from cluster.dummy_cluster_system import DummyClusterSubmission
+    from cluster.slurm_cluster_system import SlurmClusterSubmission
 
 # use a dedicated type for cluster job ids instead of 'str' (this makes function
 # signatures easier to understand).  ClusterJobId will behave like a subclass of str.
@@ -272,15 +273,23 @@ class ClusterSubmission(ABC):
 
 def get_cluster_type(
     requirements, run_local=None
-) -> type[CondorClusterSubmission] | type[DummyClusterSubmission]:
+) -> (
+    type[CondorClusterSubmission]
+    | type[SlurmClusterSubmission]
+    | type[DummyClusterSubmission]
+):
     from cluster.condor_cluster_system import CondorClusterSubmission
     from cluster.dummy_cluster_system import DummyClusterSubmission
+    from cluster.slurm_cluster_system import SlurmClusterSubmission
 
     logger = logging.getLogger("cluster_utils")
 
     if is_command_available("condor_q"):
         logger.info("CONDOR detected, running CONDOR job submission")
         return CondorClusterSubmission
+    elif is_command_available("sbatch"):
+        logger.info("Slurm detected, running Slurm job submission")
+        return SlurmClusterSubmission
     else:
         if run_local is None:
             answer = input("No cluster detected. Do you want to run locally? [Y/n]: ")
