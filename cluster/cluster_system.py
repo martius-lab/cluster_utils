@@ -251,6 +251,7 @@ class ClusterSubmission(ABC):
     def check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
         for job in self.failed_jobs:
+            assert job.error_info is not None, "Failed job has no error_info."
             if job.error_info not in self.error_msgs:
                 warn_string = (
                     f"\x1b[1;31m Job {job.id} on hostname {job.hostname} failed with"

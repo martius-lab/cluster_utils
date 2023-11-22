@@ -7,7 +7,7 @@ import time
 import typing
 from contextlib import suppress
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 
@@ -15,6 +15,9 @@ from cluster import constants
 from cluster.utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
 
 if TYPE_CHECKING:
+    import concurrent.futures
+
+    from cluster.cluster_system import ClusterJobId
     from cluster.settings import SingularitySettings
 
 
@@ -41,16 +44,16 @@ class Job:
         opt_procedure_name,
         singularity_settings: Optional[SingularitySettings],
         metric_to_watch=None,
-    ):
+    ) -> None:
         self.metric_to_watch = metric_to_watch
         self.paths = paths
         self.id = id
         self.settings = settings
         self.other_params = other_params
-        self.cluster_id = None
+        self.cluster_id: Optional[ClusterJobId] = None
         self.results_used_for_update = False
-        self.job_spec_file_path = False
-        self.run_script_path = None
+        self.job_spec_file_path: Optional[str] = None
+        self.run_script_path: Optional[str] = None
         self.hostname = None
         self.waiting_for_resume = False
         self.start_time = None
@@ -63,12 +66,12 @@ class Job:
         }
         self.status = JobStatus.INITIAL_STATUS
         self.metrics = None
-        self.error_info = None
+        self.error_info: Optional[str] = None
         self.resulting_df = None
         self.param_df = None
         self.metric_df = None
-        self.reported_metric_values = None
-        self.futures_object = None
+        self.reported_metric_values: list[Any] = []  # FIXME what is the expected type?
+        self.futures_object: Optional[concurrent.futures.Future] = None
         self.opt_procedure_name = opt_procedure_name
         self.singularity_settings = singularity_settings
 
