@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
@@ -83,7 +85,7 @@ if __name__ == "__main__":
         main_path = os.getcwd()
         git_params = None
 
-    base_paths_and_files = dict(
+    base_paths_and_files: dict[str, str] = dict(
         main_path=main_path,
         script_to_run=params.script_relative_path,
         result_dir=results_path,
