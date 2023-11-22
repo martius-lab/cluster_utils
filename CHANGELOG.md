@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support settings files in TOML format.
 - Control logger level via environment variable `LOG_LEVEL` (most relevant
   use-case is to enable debug output via `export LOG_LEVEL=debug`.
+- Option to run jobs in Singularity/Apptainer containers (see
+  {ref}`config_singularity`).
 
 ### Fixed
 - Make it work with Python >=3.10
