@@ -11,7 +11,7 @@ from cluster import (
     read_params_from_cmdline,
 )
 from cluster.git_utils import make_git_params
-from cluster.settings import GenerateReportSetting
+from cluster.settings import GenerateReportSetting, SingularitySettings
 from cluster.utils import (
     check_import_in_fixed_params,
     get_time_string,
@@ -100,6 +100,12 @@ if __name__ == "__main__":
         section_generator=latex_utils.StaticSectionGenerator(json_full_name),
     )
 
+    singularity_settings = (
+        SingularitySettings.from_settings(params["singularity"])
+        if "singularity" in params
+        else None
+    )
+
     hp_optimization(
         base_paths_and_files=base_paths_and_files,
         submission_requirements=params.cluster_requirements,
@@ -117,5 +123,6 @@ if __name__ == "__main__":
         no_user_interaction=params.get("no_user_interaction", False),
         opt_procedure_name=opt_procedure_name,
         report_generation_mode=params["generate_report"],
+        singularity_settings=singularity_settings,
         **params.optimization_setting,
     )

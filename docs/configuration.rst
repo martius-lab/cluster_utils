@@ -105,6 +105,51 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
      - TODO
 
 
+.. _config_singularity:
+
+Use Singularity/Apptainer Containers
+------------------------------------
+
+Jobs can be executed inside Singularity/Apptainer [#singularity1]_ containers to give
+you full control over the environment, installed packages, etc.  To enable
+containerisation of jobs, add a section ``singularity`` in the config file.  This
+section can have the following parameters:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Info
+     - Description
+   * - ``image``
+     - **Mandatory**
+     - Path to the container image.
+   * - ``executable``
+     - default=singularity
+     - Specify the executable that is used to run the container (mostly useful if you
+       want to explicitly use Apptainer instead of Singularity in an environment where
+       both are installed).
+   * - ``use_run``
+     - default=false
+     - Per default the container is run with ``singularity exec``.  Set this to true to
+       use ``singularity run`` instead.  This is only useful for images that use a
+       wrapper run script that executes the given command (sometimes needed for some
+       environment initialisation).
+   * - ``args``
+     - default=[]
+     - List of additional arguments that are passed to ``singularity exec|run``.  Use
+       this to set flags like ``--nv``, ``--cleanenv``, ``--contain``, etc. if needed.
+
+Example (in TOML):
+
+.. code-block:: toml
+
+   [singularity]
+   image = "my_container.sif"
+   args = ["--nv", "--cleanenv"]
+
+
+
 Specific for hp_optimization
 ============================
 
@@ -363,6 +408,14 @@ Nested parameters can be set using dots:
 ::
 
     python3 -m cluster.grid_search config.json 'git_params.branch="foo"'
+
+
+
+.. [#singularity1] `SingularityCE <https://sylabs.io/singularity/>`_ and `Apptainer
+   <https://apptainer.org>`_ are both emerged from the original Singularity project.  So
+   far they are still mostly compatible but their features may diverge over time.  So
+   you may want to check which one is installed on the cluster you are using, e.g. by
+   running ``singularity --version``.
 
 
 .. _smart_settings: https://github.com/martius-lab/smart-settings

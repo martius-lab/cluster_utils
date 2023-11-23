@@ -1,13 +1,24 @@
+from __future__ import annotations
+
 import logging
 import os
+import pathlib
 import time
+import typing
 from contextlib import suppress
 from copy import deepcopy
+from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 
 from cluster import constants
 from cluster.utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
+
+if TYPE_CHECKING:
+    import concurrent.futures
+
+    from cluster.cluster_system import ClusterJobId
+    from cluster.settings import SingularitySettings
 
 
 class JobStatus:
@@ -23,6 +34,7 @@ class JobStatus:
 class Job:
     def __init__(
         self,
+        *,
         id,  # noqa: A002
         settings,
         other_params,
@@ -30,17 +42,18 @@ class Job:
         iteration,
         connection_info,
         opt_procedure_name,
+        singularity_settings: Optional[SingularitySettings],
         metric_to_watch=None,
-    ):
+    ) -> None:
         self.metric_to_watch = metric_to_watch
         self.paths = paths
         self.id = id
         self.settings = settings
         self.other_params = other_params
-        self.cluster_id = None
+        self.cluster_id: Optional[ClusterJobId] = None
         self.results_used_for_update = False
-        self.job_spec_file_path = False
-        self.run_script_path = None
+        self.job_spec_file_path: Optional[str] = None
+        self.run_script_path: Optional[str] = None
         self.hostname = None
         self.waiting_for_resume = False
         self.start_time = None
@@ -53,13 +66,14 @@ class Job:
         }
         self.status = JobStatus.INITIAL_STATUS
         self.metrics = None
-        self.error_info = None
+        self.error_info: Optional[str] = None
         self.resulting_df = None
         self.param_df = None
         self.metric_df = None
-        self.reported_metric_values = None
-        self.futures_object = None
+        self.reported_metric_values: list[Any] = []  # FIXME what is the expected type?
+        self.futures_object: Optional[concurrent.futures.Future] = None
         self.opt_procedure_name = opt_procedure_name
+        self.singularity_settings = singularity_settings
 
     def generate_final_setting(self, paths):
         current_setting = deepcopy(self.settings)
@@ -153,6 +167,14 @@ class Job:
                 '"' + str(current_setting) + '"',
             )
 
+        if self.singularity_settings:
+            exec_cmd = self.singularity_wrap(
+                exec_cmd,
+                self.singularity_settings,
+                paths["main_path"],
+                current_setting["working_dir"],
+            )
+
         res = "\n".join(
             [
                 set_cwd,
@@ -164,6 +186,48 @@ class Job:
             ]
         )
         return res
+
+    def singularity_wrap(
+        self,
+        exec_cmd: str,
+        singularity_settings: SingularitySettings,
+        exec_dir: typing.Union[str, os.PathLike],
+        working_dir: typing.Union[str, os.PathLike],
+    ) -> str:
+        """Wrap the given command to execute it in a Singularity container.
+
+        Args:
+            exec_cmd: The command that shall be executed in the container.
+        """
+        logger = logging.getLogger("cluster_utils")
+
+        singularity_image = pathlib.Path(singularity_settings.image).expanduser()
+        working_dir = pathlib.Path(working_dir)
+
+        if not singularity_image.exists():
+            raise FileNotFoundError(
+                f"Singularity image '{singularity_image}' does not exist"
+            )
+
+        # create model directory (so it can be bound into the container)
+        working_dir.mkdir(exist_ok=True)
+
+        # construct singularity command
+        cwd = os.fspath(exec_dir)
+        bind_dirs = ["/tmp", os.fspath(working_dir), cwd]
+        singularity_cmd = [
+            singularity_settings.executable,
+            "run" if singularity_settings.use_run else "exec",
+            "--bind=%s" % ",".join(bind_dirs),
+            "--pwd=%s" % cwd,
+            *singularity_settings.args,
+            os.fspath(singularity_image),
+        ]
+
+        full_cmd = "{} {}".format(" ".join(singularity_cmd), exec_cmd)
+        logger.debug("Singularity-wrapped command: %s", full_cmd)
+
+        return full_cmd
 
     def set_results(self):
         flattened_params = dict(flatten_nested_string_dict(self.final_settings))
