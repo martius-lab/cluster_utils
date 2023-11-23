@@ -5,8 +5,10 @@ import shutil
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NewType, Optional
 
+import colorama
+
 from cluster.job import Job, JobStatus
-from cluster.utils import rm_dir_full
+from cluster.utils import rm_dir_full, styled
 
 if TYPE_CHECKING:
     from cluster.condor_cluster_system import CondorClusterSubmission
@@ -245,9 +247,21 @@ class ClusterSubmission(ABC):
     def close(self) -> None:
         logger = logging.getLogger("cluster_utils")
         self.stop_all()
+
         if self.remove_jobs_dir:
-            logger.info("Removing jobs dir {}".format(self.submission_dir))
+            logger.info("Removing jobs directory %s", self.submission_dir)
             rm_dir_full(self.submission_dir)
+        else:
+            # repeat the path to the jobs directory at the end, so it is easier to find
+            print(
+                "Output/logs of individual jobs are kept in %s"
+                % styled(self.submission_dir, colorama.Fore.BLUE)
+            )
+
+        print(
+            "Results are stored in %s"
+            % styled(self.paths["result_dir"], colorama.Fore.BLUE)
+        )
 
     def check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
