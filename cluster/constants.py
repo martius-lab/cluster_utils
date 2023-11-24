@@ -32,10 +32,11 @@ DISTR_BASE_COLORS = [
 CONCLUDED_WITHOUT_RESULTS_GRACE_TIME_IN_SECS = 5.0
 JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS = 0.2
 
+RETURN_CODE_FOR_RESUME = 3
+
 MPI_CLUSTER_MAX_NUM_TOKENS = 10000
 
-MPI_CLUSTER_RUN_SCRIPT = """
-#!/bin/bash
+MPI_CLUSTER_RUN_SCRIPT = f"""#!/bin/bash
 # Submission ID %(id)d
 
 %(cmd)s
@@ -43,15 +44,15 @@ rc=$?
 if [[ $rc == 0 ]]; then
     rm -f %(run_script_file_path)s
     rm -f %(job_spec_file_path)s
-elif [[ $rc == 3 ]]; then
-    echo "exit with code 3 for resume"
-    exit 3
+elif [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
+    echo "exit with code {RETURN_CODE_FOR_RESUME} for resume"
+    exit {RETURN_CODE_FOR_RESUME}
 elif [[ $rc == 1 ]]; then
     exit 1
 fi
 """
 
-MPI_CLUSTER_JOB_SPEC_FILE = """# Submission ID %(id)d
+MPI_CLUSTER_JOB_SPEC_FILE = f"""# Submission ID %(id)d
 JobBatchName=%(opt_procedure_name)s
 executable = %(run_script_file_path)s
 
@@ -65,10 +66,10 @@ request_memory=%(mem)s
 
 %(requirements_line)s
 
-on_exit_hold = (ExitCode =?= 3)
+on_exit_hold = (ExitCode =?= {RETURN_CODE_FOR_RESUME})
 on_exit_hold_reason = "Checkpointed, will resume"
 on_exit_hold_subcode = 2
-periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 2) )
+periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= {RETURN_CODE_FOR_RESUME}) && (HoldReasonSubCode =?= 2) )
 
 # Inherit environment variables at submission time in job script
 getenv=True
