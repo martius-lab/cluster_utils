@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   job as finished before its results arrived, incorrectly counting such a job as failed.
   This might have been in particular the case if a job sent a larger amount of metric information
   at once.
+- Fix `exit_for_resume` not working on local submissions. If a job called `exit_for_resume`,
+  the job would just exit, not restart, and `cluster_utils` would indefinitely hang waiting for the
+  job to fully finish. Now, local submissions restart the job if the job instructs them too.
 
 
 ## 2.5 - 2023-10-05

@@ -82,8 +82,18 @@ queue
 """
 
 
-LOCAL_RUN_SCRIPT = """#!/bin/bash
+LOCAL_RUN_SCRIPT = f"""#!/bin/bash
 # %(id)d
 
-%(cmd)s
+while true; do
+    %(cmd)s
+
+    rc=$?
+    if [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
+        echo "exit with code {RETURN_CODE_FOR_RESUME} for resume: restarting"
+        sleep 1
+    else
+        exit $rc
+    fi
+done
 """
