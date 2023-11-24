@@ -7,7 +7,7 @@
   },
   "generate_report": "never",
   "script_relative_path": "examples/basic/main_no_fail.py",
-  "remove_jobs_dir": true,
+  "remove_jobs_dir": false,
   "environment_setup": {},
   "cluster_requirements": {
     "request_cpus": 1,

@@ -85,6 +85,17 @@ queue
 LOCAL_RUN_SCRIPT = f"""#!/bin/bash
 # %(id)d
 
+error=%(run_script_file_path)s.err
+output=%(run_script_file_path)s.out
+
+# Close standard output and error file descriptors
+exec 1<&-
+exec 2<&-
+
+# Redirect output and error streams to files from here on
+exec 1<>$output
+exec 2<>$error
+
 while true; do
     %(cmd)s
 

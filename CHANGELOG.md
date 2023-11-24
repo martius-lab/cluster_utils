@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependencies for report generation and nevergrad are not installed by default
   anymore.  Install the optional dependency groups "report" and "nevergrad" if
   needed (see {ref}`optional_dependencies`)
+- Local submissions now store stdout and stderr to log files, like they would do on the cluster.
+  This should be useful for debugging scripts to work with the cluster locally, as previously,
+  there was no way to access the outputs of locally running jobs.
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
 
 ### Added
