@@ -244,6 +244,15 @@ class ClusterSubmission(ABC):
     def stop_fn(self, cluster_id: ClusterJobId) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    def check_for_failure(self, job: Job) -> Optional[str]:
+        """Check if the given job failed on the cluster.
+
+        Returns:
+            If the job failed, return an error message, otherwise None.
+        """
+        raise NotImplementedError
+
     def close(self) -> None:
         logger = logging.getLogger("cluster_utils")
         self.stop_all()
@@ -262,6 +271,19 @@ class ClusterSubmission(ABC):
             "Results are stored in %s"
             % styled(self.paths["result_dir"], colorama.Fore.BLUE)
         )
+
+    def check_for_failed_jobs(self) -> None:
+        """Check if the cluster system reported failing jobs.
+
+        The status of failed jobs will be changed to JobStatus.FAILED and the reported
+        error message will be stored in job.error_info.
+        """
+        for job in self.submitted_jobs:
+            if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
+                error_msg = self.check_for_failure(job)
+                if error_msg is not None:
+                    job.status = JobStatus.FAILED
+                    job.error_info = error_msg
 
     def check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")

@@ -5,7 +5,6 @@ import os
 import pathlib
 import time
 import typing
-from contextlib import suppress
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -54,7 +53,7 @@ class Job:
         self.results_used_for_update = False
         self.job_spec_file_path: Optional[str] = None
         self.run_script_path: Optional[str] = None
-        self.hostname = None
+        self.hostname: Optional[str] = None
         self.waiting_for_resume = False
         self.start_time = None
         self.estimated_end = None
@@ -262,35 +261,6 @@ class Job:
             tuple(sorted(self.param_df.columns)),
             tuple(sorted(self.metric_df.columns)),
         )
-
-    def check_filesystem_for_errors(self):
-        assert self.run_script_path is not None
-        assert self.status == JobStatus.SUBMITTED or self.waiting_for_resume
-        log_file = f"{self.run_script_path}.log"
-        with suppress(FileNotFoundError):
-            with open(log_file) as f:
-                content = f.read()
-            _, __, after = content.rpartition("return value ")
-
-            if after and after[0] != "1":
-                return
-
-            _, __, hostname = content.rpartition("Job executing on host: <172.22.")
-            hostname = f"?0{hostname[2:].split(':')[0]}"
-            self.hostname = hostname
-            err_file = f"{self.run_script_path}.err"
-            with open(err_file) as f_err:
-                exception = f_err.read()
-            self.status = JobStatus.FAILED
-            self.error_info = exception
-
-        # Local run
-        if self.futures_object is not None and (
-            self.futures_object.done()
-            and self.futures_object.result().__dict__["returncode"] == 1
-        ):
-            self.status = JobStatus.FAILED
-            self.error_info = self.futures_object.result().stderr.decode()
 
     @property
     def time_left(self):

@@ -5,7 +5,7 @@ import logging
 import pathlib
 import subprocess
 from subprocess import PIPE, run
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 from cluster import settings
 from cluster.cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
@@ -112,6 +112,59 @@ def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
 
 
 class SlurmClusterSubmission(ClusterSubmission):
+    """Interface to submit jobs on a Slurm cluster."""
+
+    # Possible State values (according to `man sacct`)
+    #
+    #  BF  BOOT_FAIL       Job terminated due to launch failure, typically due to a
+    #                      hardware failure (e.g. unable to boot the node or block
+    #                      and the job can not be requeued).
+    #  CA  CANCELLED       Job was explicitly cancelled by the user or system
+    #                      administrator.  The job may or may not have been
+    #                      initiated.
+    #  CD  COMPLETED       Job has terminated all processes on all nodes with an
+    #                      exit code of zero.
+    #  DL  DEADLINE        Job terminated on deadline.
+    #  F   FAILED          Job terminated with non-zero exit code or other failure
+    #                      condition.
+    #  NF  NODE_FAIL       Job terminated due to failure of one or more allocated
+    #                      nodes.
+    #  OOM OUT_OF_MEMORY   Job experienced out of memory error.
+    #  PD  PENDING         Job is awaiting resource allocation.
+    #  PR  PREEMPTED       Job terminated due to preemption.
+    #  R   RUNNING         Job currently has an allocation.
+    #  RQ  REQUEUED        Job was requeued.
+    #  RS  RESIZING        Job is about to change size.
+    #  RV  REVOKED         Sibling was removed from cluster due to other cluster
+    #                      starting the job.
+    #  S   SUSPENDED       Job has an allocation, but execution has been suspended
+    #                      and CPUs have been released for other jobs.
+    #  TO  TIMEOUT         Job terminated upon reaching its time limit.
+    #
+    # job_state_good maps state names to a boolean indicating if the state indicates
+    # that the job failed for some reason (False) or if it either succeeded or is still
+    # running (True)
+    #
+    # TODO: I assigned True/False on what I thought makes sense based on the
+    # description.  This should be reviewed by someone who is more familiar with Slurm.
+    job_state_good = {
+        "BOOT_FAIL": False,
+        "CANCELLED": False,
+        "COMPLETED": True,
+        "DEADLINE": False,
+        "FAILED": False,
+        "NODE_FAIL": False,
+        "OUT_OF_MEMORY": False,
+        "PENDING": True,
+        "PREEMPTED": False,
+        "RUNNING": True,
+        "REQUEUED": True,
+        "RESIZING": True,
+        "REVOKED": False,
+        "SUSPENDED": True,
+        "TIMEOUT": False,
+    }
+
     def __init__(
         self,
         requirements: dict[str, Any],
@@ -227,3 +280,54 @@ class SlurmClusterSubmission(ClusterSubmission):
 
         cmd = ["scancel", cluster_id]
         run(cmd, stderr=PIPE, stdout=PIPE)
+
+    def check_for_failure(self, job: Job) -> Optional[str]:
+        assert job.cluster_id is not None
+        assert job.run_script_path is not None
+
+        sacct_cmd = [
+            "sacct",
+            "--jobs",
+            job.cluster_id,
+            "--parsable2",  # fields are separated by `|`
+            "--format=JobID,NodeList,State,ExitCode",
+            "--noheader",
+        ]
+
+        proc = run(sacct_cmd, check=True, stdout=PIPE)
+        output = proc.stdout.decode()
+
+        # Output looks like this:
+        #
+        #     4597753|cpu-short|martius|2|FAILED|1:0
+        #     4597753.batch||martius|2|FAILED|1:0
+        #     4597753.extern||martius|2|COMPLETED|0:0
+        #
+        # The ExitCode field has the format {exit_code}:{signal_that_killed_job_if_any}
+
+        for line in output.splitlines():
+            job_id, node_list, state, exit_code = line.split("|")
+
+            # extract actual exit code from the ExitCode field
+            exit_code = exit_code.partition(":")[0]
+
+            # Only check the line where job_id matches exactly the expected cluster id
+            # (ignore the .batch and .extern lines).
+            if job_id == job.cluster_id and (
+                # Job is considered failed if it has return code 1 or if the state
+                # indicates a failure.
+                exit_code == 1
+                or (state in self.job_state_good and not self.job_state_good[state])
+            ):
+                # write hostname to job (it is used in the error message)
+                job.hostname = node_list
+
+                # read error message from stderr output file
+                stderr_file = pathlib.Path(job.run_script_path).with_suffix(".err")
+                error_output = stderr_file.read_text()
+
+                return (
+                    "Job failed with state {} / exit code {}.  Error output:\n{}"
+                ).format(state, exit_code, error_output)
+
+        return None
