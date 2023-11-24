@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependencies for report generation and nevergrad are not installed by default
   anymore.  Install the optional dependency groups "report" and "nevergrad" if
   needed (see {ref}`optional_dependencies`)
+- Local submissions now store stdout and stderr to log files, like they would do on the cluster.
+  This should be useful for debugging scripts to work with the cluster locally, as previously,
+  there was no way to access the outputs of locally running jobs.
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
 
 ### Added
@@ -29,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command `python3 -m cluster.scripts.generate_report` to manually generate the report
   based on saved files (see {doc}`report`).
 - Support settings files in TOML format.
-- Control logger level via environment variable `LOG_LEVEL` (most relevant
-  use-case is to enable debug output via `export LOG_LEVEL=debug`.
+- Control logger level via environment variable `CLUSTER_UTILS_LOG_LEVEL` (most relevant
+  use-case is to enable debug output via `export CLUSTER_UTILS_LOG_LEVEL=debug`.
 - Option to run jobs in Singularity/Apptainer containers (see
   {ref}`config_singularity`).
 
@@ -40,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   job as finished before its results arrived, incorrectly counting such a job as failed.
   This might have been in particular the case if a job sent a larger amount of metric information
   at once.
+- Fix `exit_for_resume` not working on local submissions. If a job called `exit_for_resume`,
+  the job would just exit, not restart, and `cluster_utils` would indefinitely hang waiting for the
+  job to fully finish. Now, local submissions restart the job if the job instructs them too.
 
 
 ## 2.5 - 2023-10-05

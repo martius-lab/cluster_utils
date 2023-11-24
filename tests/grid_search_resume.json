@@ -1,0 +1,37 @@
+{
+  "optimization_procedure_name": "test_grid_search_resume",
+  "run_in_working_dir": true,
+  "git_params": {
+    "branch": "master",
+    "commit": null
+  },
+  "generate_report": "never",
+  "script_relative_path": "examples/basic/main_no_fail.py",
+  "remove_jobs_dir": false,
+  "environment_setup": {},
+  "cluster_requirements": {
+    "request_cpus": 1,
+    "request_gpus": 0,
+    "cuda_requirement": null,
+    "memory_in_mb": 16000,
+    "bid": 800
+  },
+  "fixed_params": {
+    "test_resume": true,
+    "max_sleep_time": 1,
+
+    "fn_args.w": 1,
+    "fn_args.x": 3.0,
+    "fn_args.y": 0.1,
+    "fn_args.v": 10,
+    "fn_args.sharp_penalty": false
+  },
+  "restarts": 1,
+  "samples": null,
+  "hyperparam_list": [
+    {
+      "param": "fn_args.u",
+      "values": [0.5]
+    }
+  ]
+}
