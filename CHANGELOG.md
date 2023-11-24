@@ -32,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command `python3 -m cluster.scripts.generate_report` to manually generate the report
   based on saved files (see {doc}`report`).
 - Support settings files in TOML format.
-- Control logger level via environment variable `LOG_LEVEL` (most relevant
-  use-case is to enable debug output via `export LOG_LEVEL=debug`.
+- Control logger level via environment variable `CLUSTER_UTILS_LOG_LEVEL` (most relevant
+  use-case is to enable debug output via `export CLUSTER_UTILS_LOG_LEVEL=debug`.
 - Option to run jobs in Singularity/Apptainer containers (see
   {ref}`config_singularity`).
 
