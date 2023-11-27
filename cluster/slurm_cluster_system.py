@@ -5,7 +5,7 @@ import logging
 import pathlib
 import subprocess
 from subprocess import PIPE, run
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple, Sequence
 
 from cluster import settings
 from cluster.cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
@@ -281,43 +281,57 @@ class SlurmClusterSubmission(ClusterSubmission):
         cmd = ["scancel", cluster_id]
         run(cmd, stderr=PIPE, stdout=PIPE)
 
-    def check_for_failure(self, job: Job) -> Optional[str]:
-        assert job.cluster_id is not None
-        assert job.run_script_path is not None
+    def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
+        logger = logging.getLogger("cluster_utils")
 
+        assert all(job.cluster_id is not None for job in jobs)
+
+        # construct lookup table to map cluster id to job
+        job_map = {job.cluster_id: job for job in jobs if job.cluster_id}
+
+        job_id_list = ",".join(job_map.keys())
         sacct_cmd = [
             "sacct",
             "--jobs",
-            job.cluster_id,
+            job_id_list,
             "--parsable2",  # fields are separated by `|`
             "--format=JobID,NodeList,State,ExitCode",
             "--noheader",
         ]
 
+        logger.debug("Execute command %s", sacct_cmd)
         proc = run(sacct_cmd, check=True, stdout=PIPE)
+
         output = proc.stdout.decode()
+        logger.debug("Output of sacct:\n%s", output)
 
         # Output looks like this:
         #
         #     4597753|cpu-short|martius|2|FAILED|1:0
         #     4597753.batch||martius|2|FAILED|1:0
         #     4597753.extern||martius|2|COMPLETED|0:0
+        #     ...
         #
         # The ExitCode field has the format {exit_code}:{signal_that_killed_job_if_any}
 
         for line in output.splitlines():
             job_id, node_list, state, exit_code = line.split("|")
 
+            # Only check the line where job_id matches exactly the expected cluster id
+            # (ignore the .batch and .extern lines).
+            if job_id not in job_map:
+                continue
+
+            job = job_map[ClusterJobId(job_id)]
+            assert job.run_script_path is not None
+
             # extract actual exit code from the ExitCode field
             exit_code = exit_code.partition(":")[0]
 
-            # Only check the line where job_id matches exactly the expected cluster id
-            # (ignore the .batch and .extern lines).
-            if job_id == job.cluster_id and (
-                # Job is considered failed if it has return code 1 or if the state
-                # indicates a failure.
-                exit_code == 1
-                or (state in self.job_state_good and not self.job_state_good[state])
+            # Job is considered failed if it has return code 1 or if the state indicates
+            # a failure.
+            if exit_code == 1 or (
+                state in self.job_state_good and not self.job_state_good[state]
             ):
                 # write hostname to job (it is used in the error message)
                 job.hostname = node_list
@@ -326,8 +340,8 @@ class SlurmClusterSubmission(ClusterSubmission):
                 stderr_file = pathlib.Path(job.run_script_path).with_suffix(".err")
                 error_output = stderr_file.read_text()
 
-                return (
+                error_msg = (
                     "Job failed with state {} / exit code {}.  Error output:\n{}"
                 ).format(state, exit_code, error_output)
 
-        return None
+                job.mark_failed(error_msg)

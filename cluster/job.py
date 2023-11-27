@@ -262,6 +262,20 @@ class Job:
             tuple(sorted(self.metric_df.columns)),
         )
 
+    def mark_failed(self, error_message: str) -> None:
+        """Mark the job as failed.
+
+        This sets the job's :attr:`~Job.status` to FAILED and stores the given error
+        message to :attr:`~Job.error_info`.
+        """
+        logger = logging.getLogger("cluster_utils")
+        logger.debug(
+            "Mark job %d (cluster id: %s) as failed.", self.id, self.cluster_id
+        )
+
+        self.status = JobStatus.FAILED
+        self.error_info = error_message
+
     @property
     def time_left(self):
         if self.estimated_end is not None:

@@ -8,7 +8,7 @@ from collections import namedtuple
 from contextlib import suppress
 from copy import copy
 from subprocess import PIPE, run
-from typing import Any, Optional
+from typing import Any, Sequence
 
 from cluster import constants
 from cluster.cluster_system import ClusterJobId, ClusterSubmission
@@ -96,29 +96,30 @@ class CondorClusterSubmission(ClusterSubmission):
         cmd = "condor_rm {}".format(cluster_id)
         run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
-    def check_for_failure(self, job: Job) -> Optional[str]:
-        assert job.run_script_path is not None
+    def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
+        for job in jobs:
+            assert job.run_script_path is not None
 
-        # read condor log file to check the return code
-        log_file = f"{job.run_script_path}.log"
-        with suppress(FileNotFoundError):
-            with open(log_file) as f:
-                content = f.read()
-            _, __, after = content.rpartition("return value ")
+            # read condor log file to check the return code
+            log_file = f"{job.run_script_path}.log"
+            with suppress(FileNotFoundError):
+                with open(log_file) as f:
+                    content = f.read()
+                _, __, after = content.rpartition("return value ")
 
-            if after and after[0] == "1":
-                _, __, hostname = content.rpartition("Job executing on host: <172.22.")
-                hostname = f"?0{hostname[2:].split(':')[0]}"
-                job.hostname = hostname
+                if after and after[0] == "1":
+                    _, __, hostname = content.rpartition(
+                        "Job executing on host: <172.22."
+                    )
+                    hostname = f"?0{hostname[2:].split(':')[0]}"
+                    job.hostname = hostname
 
-                # read error message from the stderr output file
-                err_file = f"{job.run_script_path}.err"
-                with open(err_file) as f_err:
-                    error_output = f_err.read()
+                    # read error message from the stderr output file
+                    err_file = f"{job.run_script_path}.err"
+                    with open(err_file) as f_err:
+                        error_output = f_err.read()
 
-                return error_output
-
-        return None
+                    job.mark_failed(error_output)
 
     def generate_job_spec_file(self, job: Job) -> None:
         job_file_name = "job_{}_{}.sh".format(job.iteration, job.id)

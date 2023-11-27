@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import shutil
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, NewType, Optional
+from typing import TYPE_CHECKING, NewType, Optional, Sequence
 
 import colorama
 
@@ -245,11 +245,11 @@ class ClusterSubmission(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def check_for_failure(self, job: Job) -> Optional[str]:
-        """Check if the given job failed on the cluster.
+    def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
+        """Check if the given jobs failed on the cluster.
 
-        Returns:
-            If the job failed, return an error message, otherwise None.
+        Implementations of this method shall check all given jobs and call
+        :meth:`Job.mark_failed` for jobs that failed.
         """
         raise NotImplementedError
 
@@ -278,12 +278,12 @@ class ClusterSubmission(ABC):
         The status of failed jobs will be changed to JobStatus.FAILED and the reported
         error message will be stored in job.error_info.
         """
-        for job in self.submitted_jobs:
-            if job.status == JobStatus.SUBMITTED or job.waiting_for_resume:
-                error_msg = self.check_for_failure(job)
-                if error_msg is not None:
-                    job.status = JobStatus.FAILED
-                    job.error_info = error_msg
+        jobs = [
+            job
+            for job in self.submitted_jobs
+            if job.status == JobStatus.SUBMITTED or job.waiting_for_resume
+        ]
+        self.mark_failed_jobs(jobs)
 
     def check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
