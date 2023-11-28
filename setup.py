@@ -12,13 +12,10 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "gitpython>=3.0.5",
-        "pandas[output-formatting]",
-        # TODO: Temporary workaround.  Jinja is included in the "output-formatting"
-        # optional dependencies of pandas but there is currently a problem with the
-        # dependencies that should be fixed in pandas 2.1.2
-        # (https://github.com/pandas-dev/pandas/pull/55275).  So once 2.1.2 is released,
-        # the explicit dependency on jinja2 can be removed.
-        "jinja2",
+        # pandas 2.0.3 is the last version that works with Python 3.8
+        # Note: on newer versions it should be "output-formatting" but on this one it
+        # seems it still has to be "output_formatting" to work.
+        "pandas[output_formatting]==2.0.3",
         "numpy",
         "scipy",
         "tqdm",
