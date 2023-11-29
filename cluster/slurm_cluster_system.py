@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import pathlib
 import subprocess
+import time
 from subprocess import PIPE, run
 from typing import Any, NamedTuple, Sequence
 
@@ -165,6 +166,10 @@ class SlurmClusterSubmission(ClusterSubmission):
         "TIMEOUT": False,
     }
 
+    #: Minimum duration between checks for failing jobs (to avoid polling the system too
+    #: much)
+    CHECK_FOR_FAILURES_INTERVAL_SEC = 60
+
     def __init__(
         self,
         requirements: dict[str, Any],
@@ -174,6 +179,9 @@ class SlurmClusterSubmission(ClusterSubmission):
         super().__init__(paths, remove_jobs_dir)
 
         self.requirements = SlurmJobRequirements.from_settings_dict(requirements)
+
+        #: Time stamp of the last time checking for errors
+        self._last_time_checking_for_failures = 0.0
 
     def submit_fn(self, job: Job) -> ClusterJobId:
         logger = logging.getLogger("cluster_utils")
@@ -283,6 +291,18 @@ class SlurmClusterSubmission(ClusterSubmission):
 
     def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
         logger = logging.getLogger("cluster_utils")
+
+        now = time.time()
+
+        # immediately return if last check was within the check interval (to avoid
+        # spamming the server with too many requests)
+        if (
+            now - self._last_time_checking_for_failures
+        ) < self.CHECK_FOR_FAILURES_INTERVAL_SEC:
+            return
+        self._last_time_checking_for_failures = now
+
+        logger.debug("Check for failed jobs")
 
         assert all(job.cluster_id is not None for job in jobs)
 
