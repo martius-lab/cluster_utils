@@ -22,6 +22,12 @@ from cluster.optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
 from cluster.utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
 
+class SettingsError(Exception):
+    """Custom error for anything related to the settings."""
+
+    ...
+
+
 class GenerateReportSetting(enum.Enum):
     """The possible values for the "generate_report" setting."""
 

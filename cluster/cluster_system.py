@@ -3,14 +3,17 @@ from __future__ import annotations
 import logging
 import shutil
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, NewType, Optional
+from typing import TYPE_CHECKING, NewType, Optional, Sequence
+
+import colorama
 
 from cluster.job import Job, JobStatus
-from cluster.utils import rm_dir_full
+from cluster.utils import rm_dir_full, styled
 
 if TYPE_CHECKING:
     from cluster.condor_cluster_system import CondorClusterSubmission
     from cluster.dummy_cluster_system import DummyClusterSubmission
+    from cluster.slurm_cluster_system import SlurmClusterSubmission
 
 # use a dedicated type for cluster job ids instead of 'str' (this makes function
 # signatures easier to understand).  ClusterJobId will behave like a subclass of str.
@@ -241,12 +244,46 @@ class ClusterSubmission(ABC):
     def stop_fn(self, cluster_id: ClusterJobId) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
+        """Check if the given jobs failed on the cluster.
+
+        Implementations of this method shall check all given jobs and call
+        :meth:`Job.mark_failed` for jobs that failed.
+        """
+        raise NotImplementedError
+
     def close(self) -> None:
         logger = logging.getLogger("cluster_utils")
         self.stop_all()
+
         if self.remove_jobs_dir:
-            logger.info("Removing jobs dir {}".format(self.submission_dir))
+            logger.info("Removing jobs directory %s", self.submission_dir)
             rm_dir_full(self.submission_dir)
+        else:
+            # repeat the path to the jobs directory at the end, so it is easier to find
+            print(
+                "Output/logs of individual jobs are kept in %s"
+                % styled(self.submission_dir, colorama.Fore.BLUE)
+            )
+
+        print(
+            "Results are stored in %s"
+            % styled(self.paths["result_dir"], colorama.Fore.BLUE)
+        )
+
+    def check_for_failed_jobs(self) -> None:
+        """Check if the cluster system reported failing jobs.
+
+        The status of failed jobs will be changed to JobStatus.FAILED and the reported
+        error message will be stored in job.error_info.
+        """
+        jobs = [
+            job
+            for job in self.submitted_jobs
+            if job.status == JobStatus.SUBMITTED or job.waiting_for_resume
+        ]
+        self.mark_failed_jobs(jobs)
 
     def check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
@@ -272,15 +309,23 @@ class ClusterSubmission(ABC):
 
 def get_cluster_type(
     requirements, run_local=None
-) -> type[CondorClusterSubmission] | type[DummyClusterSubmission]:
+) -> (
+    type[CondorClusterSubmission]
+    | type[SlurmClusterSubmission]
+    | type[DummyClusterSubmission]
+):
     from cluster.condor_cluster_system import CondorClusterSubmission
     from cluster.dummy_cluster_system import DummyClusterSubmission
+    from cluster.slurm_cluster_system import SlurmClusterSubmission
 
     logger = logging.getLogger("cluster_utils")
 
     if is_command_available("condor_q"):
         logger.info("CONDOR detected, running CONDOR job submission")
         return CondorClusterSubmission
+    elif is_command_available("sbatch"):
+        logger.info("Slurm detected, running Slurm job submission")
+        return SlurmClusterSubmission
     else:
         if run_local is None:
             answer = input("No cluster detected. Do you want to run locally? [Y/n]: ")
@@ -330,4 +375,10 @@ class ClusterSubmissionHook(ABC):
 
 
 class HookNotFoundError(Exception):
+    pass
+
+
+class SubmissionError(Exception):
+    """Indicates an error during job submission."""
+
     pass

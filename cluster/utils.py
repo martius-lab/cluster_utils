@@ -20,6 +20,8 @@ from pathlib import Path
 from time import sleep
 from typing import Any
 
+import colorama
+
 from cluster import constants
 
 
@@ -444,3 +446,11 @@ def save_report_data(results_dir: str | os.PathLike, **kwargs: Any) -> None:
     logger.info("Save report data to %s", filename)
     with open(filename, "wb") as f:
         pickle.dump(kwargs, f)
+
+
+def styled(text: str, *args) -> str:
+    """Little helper to apply color/style using colorama on a string.
+
+    It simply prepends all given args to text and appends ``colorama.Style.RESET_ALL``.
+    """
+    return "".join([*args, text, colorama.Style.RESET_ALL])

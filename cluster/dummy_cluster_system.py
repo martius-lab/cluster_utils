@@ -8,7 +8,7 @@ import random
 from copy import copy
 from multiprocessing import cpu_count
 from subprocess import PIPE, run
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -59,6 +59,16 @@ class DummyClusterSubmission(ClusterSubmission):
             if cluster_id == job_id:
                 future.cancel()
         concurrent.futures.wait(self.futures)
+
+    def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
+        for job in jobs:
+            assert job.futures_object is not None
+            if (
+                job.futures_object.done()
+                and job.futures_object.result().returncode == 1
+            ):
+                msg = job.futures_object.result().stderr.decode()
+                job.mark_failed(msg)
 
     def generate_job_spec_file(self, job: Job) -> None:
         job_file_name = "{}_{}.sh".format(job.iteration, job.id)

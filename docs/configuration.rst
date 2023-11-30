@@ -89,20 +89,171 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
          job.
    * - ``cluster_requirements``
      - Mandatory
-     - Settings for the cluster (number of CPUs, bid, etc.).  See cluster
-       documentation for meaning of the options.  Important: A separate job is
-       submitted for each set of parameters, consider this when specifying the
-       cluster requirements (especially the bid!).
-
-       - TODO: Complete list of options
-       - ``request_cpus``: int
-       - ``request_gpus``: int
-       - ``cuda_requirement``:  Can be "null".  TODO probably version?
-       - ``memory_in_mb``: int
-       - ``bid``: int
+     - Settings for the cluster (number of CPUs, bid, etc.).  See
+       :ref:`config_cluster_requirements`.
+   * - ``singularity``
+     - Optional
+     - See :ref:`config_singularity`.
    * - ``fixed_params``
      - Mandatory
      - TODO
+
+
+.. _config_cluster_requirements:
+
+Cluster Requirements
+--------------------
+
+When running on a cluster, you have to specify the resources needed for each job (number
+of CPUs/GPUs, memory, etc.).  This is all configured in the section
+``cluster_requirements``.  
+.. note:: The cluster requirements are ignored when running on a local machine.
+
+Some of the options are common among all supported cluster systems, some are
+system-specific.  Note that all the options are per job, i.e. each job will get the
+requested CPUs, memory, ..., it's not shared between jobs.
+
+Simple example (in TOML):
+
+.. code-block:: toml
+
+   [cluster_requirements]
+   request_cpus = 1
+   request_gpus = 0
+   memory_in_mb = 1_000
+   bid = 1_000
+
+
+Common Options
+~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Info
+     - Description
+   * - ``request_cpus``
+     - int
+     - Number of CPUs that is requested.
+   * - ``request_gpus``
+     - int
+     - Number of GPUs that is requested.
+   * - ``memory_in_mb``
+     - int
+     - Memory (in MB) that is requested.
+
+
+Condor-specific Options
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The following options are only used when running on Condor (i.e. the MPI cluster).
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Info
+     - Description
+   * - ``bid``
+     - int
+     - The amount of cluster money you are bidding for each job.  See documentation of
+       the MPI-IS cluster on how the bidding system works.
+   * - ``cuda_requirement``
+     - ?
+     - ``cuda_requirement`` has multiple behaviors. If it is a number, it specifies the
+       *minimum* CUDA capability the GPU should have. If the number is prefixed with
+       ``<`` or ``<=``, it specifies the *maximum* CUDA capability. Otherwise, the value
+       is taken as a full requirement string, example (in TOML):
+
+       .. code-block:: toml
+
+          [cluster_requirements]
+          # ...
+          cuda_requirement = "TARGET.CUDACapability >= 5.0 && TARGET.CUDACapability <= 8.0"
+          # ...
+
+       Remember to prefix the constraints with ``TARGET.``. See
+       https://atlas.is.localnet/confluence/display/IT/Specific+GPU+needs for the kind
+       of constraints that are possible.
+
+   * - ``gpu_memory_mb``
+     - int
+     - Minimum memory size the GPU should have, in megabytes.
+   * - ``concurrency_limit`` / ``concurrency_limit_tag``
+     - Optional
+     - Limit the number of concurrent jobs. You can assign a resource (tag) to your jobs
+       and specify how many tokens each jobs consumes. There is a total of 10,000 tokens
+       per resource. If you want to run 10 concurrent jobs, each job has to consume
+       1,000 tokens.
+
+       To use this feature, it is as easy as adding (example in TOML)
+
+       .. code-block:: toml
+
+          [cluster_requirements]
+          # ...
+          concurrency_limit_tag = "gpu"
+          concurrency_limit = 10
+          # ...
+
+       to the settings.
+
+       You can assign different tags to different runs. In that way you can limit only
+       the number of gpu jobs, for instance.
+   * - ``hostname_list``
+     - list of strings
+     - Cluster nodes to exclusively use for running jobs.
+   * - ``forbidden_hostnames``
+     - list of strings
+     - Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
+   * - ``extra_submission_options``
+     - dictionary, list or string
+     - This allows to add additional lines to the `.sub` file used for submitting jobs
+       to the cluster. Note that this setting is normally not needed, as cluster_utils
+       automatically builds the submission file for you.
+
+
+.. todo:: Is the list above complete?
+
+
+Slurm-specific Options
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Info
+     - Description
+   * - ``partition``
+     - string
+     - Name of the partition to run the jobs on.  See documentation of the corresponding
+       cluster on what partitions are available.
+
+       Multiple partitions can be given as a comma-separated string
+       (``partition1,partition2``), in this case jobs will be executed on any of them
+       (depending on which has free capacity first).
+   * - ``request_time``
+     - string
+     - Time limit for the jobs.  Jobs taking longer than this will be aborted, so make
+       sure to request enough time (but don't exaggerate too much as shorter jobs can be
+       scheduled more easily).
+
+       From the `Slurm documentation <https://slurm.schedmd.com/sbatch.html>`_:
+
+           Acceptable time formats include "minutes", "minutes:seconds",
+           "hours:minutes:seconds", "days-hours", "days-hours:minutes" and
+           "days-hours:minutes:seconds".
+
+       So for example to request 1 hour per job use ``request_time = "1:00:00"``.
+
+.. note::
+
+   There are currently no options to restrict the type of GPU.  On the ML Cloud cluster
+   of the University of Tübingen, this is currently done via the *partitions*.  See
+   https://portal.mlcloud.uni-tuebingen.de/user-guide/batch for a list of available
+   partitions.
 
 
 .. _config_singularity:
