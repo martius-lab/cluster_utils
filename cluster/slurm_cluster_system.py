@@ -289,19 +289,12 @@ class SlurmClusterSubmission(ClusterSubmission):
         cmd = ["scancel", cluster_id]
         run(cmd, stderr=PIPE, stdout=PIPE)
 
+    def is_ready_to_check_for_failed_jobs(self) -> bool:
+        time_since_last_check = time.time() - self._last_time_checking_for_failures
+        return time_since_last_check >= self.CHECK_FOR_FAILURES_INTERVAL_SEC
+
     def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
         logger = logging.getLogger("cluster_utils")
-
-        now = time.time()
-
-        # immediately return if last check was within the check interval (to avoid
-        # spamming the server with too many requests)
-        if (
-            now - self._last_time_checking_for_failures
-        ) < self.CHECK_FOR_FAILURES_INTERVAL_SEC:
-            return
-        self._last_time_checking_for_failures = now
-
         logger.debug("Check for failed jobs")
 
         assert all(job.cluster_id is not None for job in jobs)
@@ -365,3 +358,5 @@ class SlurmClusterSubmission(ClusterSubmission):
                 ).format(state, exit_code, error_output)
 
                 job.mark_failed(error_msg)
+
+        self._last_time_checking_for_failures = time.time()

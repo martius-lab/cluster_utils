@@ -60,6 +60,10 @@ class DummyClusterSubmission(ClusterSubmission):
                 future.cancel()
         concurrent.futures.wait(self.futures)
 
+    def is_ready_to_check_for_failed_jobs(self) -> bool:
+        # no need to throttle checks locally
+        return True
+
     def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
         for job in jobs:
             assert job.futures_object is not None

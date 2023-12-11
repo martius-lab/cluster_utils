@@ -245,6 +245,15 @@ class ClusterSubmission(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def is_ready_to_check_for_failed_jobs(self) -> bool:
+        """Return if it's okay to call :meth:`check_for_failed_jobs`.
+
+        Can be used to reduce the amount of polling on systems where this is a concern,
+        e.g. by only returning True if the last check was more than a minute ago.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
         """Check if the given jobs failed on the cluster.
 
