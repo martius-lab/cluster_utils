@@ -426,7 +426,6 @@ def hp_optimization(
                 pre_iteration_opt(base_paths_and_files)
 
             cluster_interface.check_for_failed_jobs()
-            cluster_interface.check_error_msgs()
 
             max_failed_jobs = (
                 cluster_interface.n_successful_jobs
@@ -621,7 +620,6 @@ def grid_search(
                 cluster_interface.submit(job)
 
             cluster_interface.check_for_failed_jobs()
-            cluster_interface.check_error_msgs()
 
             submitted_bar.update(cluster_interface.n_submitted_jobs)
             running_bar.update_failed_jobs(cluster_interface.n_failed_jobs)

@@ -285,7 +285,10 @@ class ClusterSubmission(ABC):
         ]
         self.mark_failed_jobs(jobs)
 
-    def check_error_msgs(self) -> None:
+        # potentially print error messages
+        self._check_error_msgs()
+
+    def _check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
         for job in self.failed_jobs:
             assert job.error_info is not None, "Failed job has no error_info."
