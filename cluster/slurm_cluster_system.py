@@ -26,7 +26,7 @@ _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
 #SBATCH --time={time}
 #SBATCH --nodes={nodes}
 #SBATCH --ntasks={ntasks}
-
+{extra_sbatch_args}
 
 # Submission ID {id}
 
@@ -52,6 +52,10 @@ class SlurmJobRequirements(NamedTuple):
     mem: str
     time: str
 
+    # list of arbitrary sbatch options for things that are not covered by the settings
+    # above (e.g. something like "--gpu-freq=high")
+    extra_submission_options: list[str]
+
     # keep nodes and ntasks at 1 (use a separate job for each task
     nodes: int = 1
     ntasks: int = 1
@@ -70,6 +74,7 @@ class SlurmJobRequirements(NamedTuple):
                 gpus_per_task=req.pop("request_gpus", 0),
                 mem="{}M".format(req.pop("memory_in_mb")),
                 time=req.pop("request_time"),
+                extra_submission_options=req.pop("extra_submission_options", []),
             )
         except KeyError as e:
             raise settings.SettingsError(
@@ -193,6 +198,11 @@ class SlurmClusterSubmission(ClusterSubmission):
 
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
+
+        extra_sbatch_args = "\n".join(
+            (f"#SBATCH {opt}" for opt in self.requirements.extra_submission_options)
+        )
+
         template_vars = {
             "job_name": job.opt_procedure_name,
             "output_file": stdout_file,
@@ -200,7 +210,14 @@ class SlurmClusterSubmission(ClusterSubmission):
             "id": job.id,
             "cmd": cmd,
             "run_script_file_path": run_script_file_path,
-            **self.requirements._asdict(),
+            "partition": self.requirements.partition,
+            "cpus_per_task": self.requirements.cpus_per_task,
+            "gpus_per_task": self.requirements.gpus_per_task,
+            "mem": self.requirements.mem,
+            "time": self.requirements.time,
+            "nodes": self.requirements.nodes,
+            "ntasks": self.requirements.ntasks,
+            "extra_sbatch_args": extra_sbatch_args,
         }
 
         run_script_file_path.write_text(
@@ -214,10 +231,6 @@ class SlurmClusterSubmission(ClusterSubmission):
             "sbatch",
             str(run_script_file_path),
         ]
-        # TODO: in condor, there are additional `requirement_lines` (see template).
-        # What are they used for?  Can (at least some of) its functionality be
-        # implemented here as well?
-
         logger.debug("Execute command %s", sbatch_cmd)
 
         # TODO This timeout/retry-loop is copied from the Condor implementation.  Does

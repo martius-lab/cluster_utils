@@ -221,14 +221,14 @@ The following options are only used when running on Condor (i.e. the MPI cluster
 Slurm-specific Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
-- ``partition`` --- *str*
+- ``partition`` --- *mandatory, str*
     Name of the partition to run the jobs on.  See documentation of the corresponding
     cluster on what partitions are available.
 
     Multiple partitions can be given as a comma-separated string
     (``partition1,partition2``), in this case jobs will be executed on any of them
     (depending on which has free capacity first).
-- ``request_time`` --- *str*
+- ``request_time`` --- *mandatory, str*
     Time limit for the jobs.  Jobs taking longer than this will be aborted, so make
     sure to request enough time (but don't exaggerate too much as shorter jobs can be
     scheduled more easily).
@@ -240,6 +240,14 @@ Slurm-specific Options
         "days-hours:minutes:seconds".
 
     So for example to request 1 hour per job use ``request_time = "1:00:00"``.
+- ``extra_submission_options`` --- *list[str]*
+    List of additional options for ``sbatch``.  Can be used if a specific
+    setting is needed which is not already covered by the options above.
+    Expects a list with arguments as they are passed to ``sbatch``, for example:
+
+    .. code-block:: toml
+
+       extra_submission_options = ["--gpu-freq=high", "--begin=2010-01-20T12:34:00"]
 
 .. note::
 
@@ -247,6 +255,9 @@ Slurm-specific Options
    of the University of Tübingen, this is currently done via the *partitions*.  See
    https://portal.mlcloud.uni-tuebingen.de/user-guide/batch for a list of available
    partitions.
+
+   If needed, e.g. when using cluster_utils on a different Slurm cluster, missing
+   options can always be provided via ``extra_submission_options``.
 
 
 .. _config_singularity:
