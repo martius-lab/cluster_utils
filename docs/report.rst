@@ -1,9 +1,9 @@
-*****************
-Report Generation
-*****************
+***********************
+How to Generate Reports
+***********************
 
-A report in PDF format can be generated to give an overview over the optimisation
-results.
+A report in PDF format can be generated (either manually or automatically) to give an
+overview over the optimisation results.
 
 .. important::
 

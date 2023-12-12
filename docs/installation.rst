@@ -2,6 +2,11 @@
 Installation
 ************
 
+Requirements
+============
+
+cluster_utils requires Python version >= 3.8.
+
 
 Basic Installation
 ==================
