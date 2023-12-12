@@ -71,6 +71,7 @@ setup(
         "docs": [
             "sphinx",
             "myst-parser",
+            "sphinx-material",
         ],
     },
     entry_points={
