@@ -30,6 +30,25 @@ A non-exhaustive list of features is the following:
   read the code ;).
 
 
+Basic Usage
+===========
+
+There are two basic functionalities:
+
+.. code-block:: bash
+
+   python3 -m cluster.grid_search specification_of_grid_search.json
+
+and
+
+.. code-block:: bash
+
+   python3 -m cluster.hp_optimization specification_of_hp_opt.json
+
+for hyperparameter optimization
+
+See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
+
 
 Documentation Content
 =====================
@@ -62,26 +81,6 @@ Documentation Content
 
 .. todo:: Add a basic getting-started tutorial
 
-
-
-Basic Usage
-===========
-
-There are two basic functionalities:
-
-.. code-block:: bash
-
-   python3 -m cluster.grid_search specification_of_grid_search.json
-
-and
-
-.. code-block:: bash
-
-   python3 -m cluster.hp_optimization specification_of_hp_opt.json
-
-for hyperparameter optimization
-
-See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
 
 
 
