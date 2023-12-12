@@ -76,11 +76,6 @@ Documentation Content
 
    configuration
 
-.. todo:: Add more in-depth topic guides
-
-.. todo:: Add a basic getting-started tutorial
-
-
 
 
 .. _cluster_utils: https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils

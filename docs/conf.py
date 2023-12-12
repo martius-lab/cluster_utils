@@ -62,7 +62,7 @@ author = "Max Planck Institute for Intelligent Systems"
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = "2.5"
+release = "3.0-devel"
 # The short X.Y version.
 version = release
 
