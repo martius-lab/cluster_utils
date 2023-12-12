@@ -20,83 +20,74 @@ General Parameters
 
 These parameters are the same for ``grid_search`` and ``hp_optimization``.
 
-.. list-table::
-   :header-rows: 1
 
-   * - Name
-     - Info
-     - Description
-   * - ``optimization_procedure_name``
-     - Mandatory
-     - Name of the setup.
-   * - ``results_dir``
-     - Mandatory
-     - Result files will be written to
-       ``results_dir/optimization_procedure_name``.
-   * - ``run_in_working_dir``
-     - Optional, default=false
-     - If true, ``git_params`` are ignored and the script specified in
-       ``script_relative_path`` is expected to be in the current working
-       directory.  Otherwise see ``git_params``.
-   * - ``git_params``
-     - Optional
-     - If ``run_in_working_dir`` is false, the specified git repository is
-       cloned to the job directory and the script specified in
-       ``script_relative_path`` is expected to be found there.
+- ``optimization_procedure_name`` -- *mandatory*
+    Name of the setup.
 
-       - ``branch``: Obviously the git branch to use.
-       - ``commit``: TODO
-       - ``url``: [Optional] URL to the repo.  If not set, the application
-         expects the current working directory to be inside a git repository
-         and uses the origin URL of this repo.
-       - TODO: are there more options?
-   * - ``script_relative_path``
-     - Mandatory
-     - Python script that is executed.  If ``run_in_working_dir=true``, the
-       path is resolved relative to the working directory, otherwise relative
-       to the root of the git repository specified in ``git_params``.
-   * - ``remove_jobs_dir``
-     - Optional, bool, default=true
-     - Whether to remove the data stored in ``${HOME}/.cache`` once finished or
-       not.  Note that when running on the cluster this directory also contains
-       the stdout/stderr of the jobs (but not when running locally).
-   * - ``remove_working_dirs``
-     - Optional, bool, default={grid_search: False, hp_optimization: True}
-     - TODO
-   * - ``generate_report``
-     - Optional, default=never
-     - Specifies whether a report should be generated automatically. Can be one of the
-       following values:
+- ``results_dir`` -- *mandatory*
+    Result files will be written to ``results_dir/optimization_procedure_name``.
 
-       - ``never``: Do not generate report automatically.
-       - ``when_finished``: Generate once when the optimization has finished.
-       - ``every_iteration``: Generate report of current state after every iteration
-         (not supported by ``grid_search``).
+- ``run_in_working_dir`` -- *optional, default=false*
+    If true, ``git_params`` are ignored and the script specified in
+    ``script_relative_path`` is expected to be in the current working directory.
+    Otherwise see ``git_params``.
 
-       If enabled, the report is saved as ``result.pdf`` in the results directory (see
-       ``results_dir``).  Note that independent of the setting here, the report can
-       always be generated manually, see :ref:`manual_report_generation`.
+- ``git_params`` -- *optional*
+    If ``run_in_working_dir`` is false, the specified git repository is cloned to the
+    job directory and the script specified in ``script_relative_path`` is expected to be
+    found there.
 
-       *Added in version 3.0.  Set to "every_iteration" to get the behaviour of
-       versions <=2.5*
-   * - ``environment_setup``
-     - Mandatory
-     - TODO.
-       Note: while the ``environment_setup`` argument itself is mandatory, all
-       its content seems to be optional (i.e. it can be empty).
+    - ``branch``: Obviously the git branch to use.
+    - ``commit``: TODO
+    - ``url``: [optional] URL to the repo.  If not set, the application
+      expects the current working directory to be inside a git repository
+      and uses the origin URL of this repo.
+    - TODO: are there more options?
 
-       - ``pre_job_script``:  Probably a script that is run before the actual
-         job.
-   * - ``cluster_requirements``
-     - Mandatory
-     - Settings for the cluster (number of CPUs, bid, etc.).  See
-       :ref:`config_cluster_requirements`.
-   * - ``singularity``
-     - Optional
-     - See :ref:`config_singularity`.
-   * - ``fixed_params``
-     - Mandatory
-     - TODO
+- ``script_relative_path`` -- *mandatory*
+    Python script that is executed.  If ``run_in_working_dir=true``, the path is
+    resolved relative to the working directory, otherwise relative to the root of the
+    git repository specified in ``git_params``.
+
+- ``remove_jobs_dir`` -- *optional, bool, default=true*
+    Whether to remove the data stored in ``${HOME}/.cache`` once finished or not.  Note
+    that when running on the cluster this directory also contains the stdout/stderr of
+    the jobs (but not when running locally).
+
+- ``remove_working_dirs`` -- *optional, bool, default={grid_search: False, hp_optimization: True}*
+    TODO
+
+- ``generate_report`` -- *optional, default=never*
+    Specifies whether a report should be generated automatically. Can be one of the
+    following values:
+
+    - ``never``: Do not generate report automatically.
+    - ``when_finished``: Generate once when the optimization has finished.
+    - ``every_iteration``: Generate report of current state after every iteration
+      (not supported by ``grid_search``).
+
+    If enabled, the report is saved as ``result.pdf`` in the results directory (see
+    ``results_dir``).  Note that independent of the setting here, the report can always
+    be generated manually, see :ref:`manual_report_generation`.
+
+    *Added in version 3.0.  Set to "every_iteration" to get the behaviour of versions
+    <=2.5*
+
+- ``environment_setup`` -- *mandatory*
+    TODO.
+
+    Note: while the ``environment_setup`` argument itself is mandatory, all its content
+    seems to be optional (i.e. it can be empty).
+
+    - ``pre_job_script``:  Probably a script that is run before the actual job.
+
+- ``cluster_requirements`` -- *mandatory*
+    Settings for the cluster (number of CPUs, bid, etc.).  See
+    :ref:`config_cluster_requirements`.
+- ``singularity`` -- *optional*
+    See :ref:`config_singularity`.
+- ``fixed_params`` - *mandatory*
+    TODO
 
 
 .. _config_cluster_requirements:
@@ -127,21 +118,14 @@ Simple example (in TOML):
 Common Options
 ~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
+- ``request_cpus`` -- *int*
+    Number of CPUs that is requested.
 
-   * - Name
-     - Info
-     - Description
-   * - ``request_cpus``
-     - int
-     - Number of CPUs that is requested.
-   * - ``request_gpus``
-     - int
-     - Number of GPUs that is requested.
-   * - ``memory_in_mb``
-     - int
-     - Memory (in MB) that is requested.
+- ``request_gpus`` -- *int*
+    Number of GPUs that is requested.
+
+- ``memory_in_mb`` -- *int*
+    Memory (in MB) that is requested.
 
 
 Condor-specific Options
@@ -149,69 +133,61 @@ Condor-specific Options
 
 The following options are only used when running on Condor (i.e. the MPI cluster).
 
-.. list-table::
-   :header-rows: 1
+- ``bid`` -- *int*
+    The amount of cluster money you are bidding for each job.  See documentation of the
+    MPI-IS cluster on how the bidding system works.
 
-   * - Name
-     - Info
-     - Description
-   * - ``bid``
-     - int
-     - The amount of cluster money you are bidding for each job.  See documentation of
-       the MPI-IS cluster on how the bidding system works.
-   * - ``cuda_requirement``
-     - ?
-     - ``cuda_requirement`` has multiple behaviors. If it is a number, it specifies the
-       *minimum* CUDA capability the GPU should have. If the number is prefixed with
-       ``<`` or ``<=``, it specifies the *maximum* CUDA capability. Otherwise, the value
-       is taken as a full requirement string, example (in TOML):
+- ``cuda_requirement`` -- *?*
+    ``cuda_requirement`` has multiple behaviors. If it is a number, it specifies the
+    *minimum* CUDA capability the GPU should have. If the number is prefixed with ``<``
+    or ``<=``, it specifies the *maximum* CUDA capability. Otherwise, the value is taken
+    as a full requirement string, example (in TOML):
 
-       .. code-block:: toml
+    .. code-block:: toml
 
-          [cluster_requirements]
-          # ...
-          cuda_requirement = "TARGET.CUDACapability >= 5.0 && TARGET.CUDACapability <= 8.0"
-          # ...
+       [cluster_requirements]
+       # ...
+       cuda_requirement = "TARGET.CUDACapability >= 5.0 && TARGET.CUDACapability <= 8.0"
+       # ...
 
-       Remember to prefix the constraints with ``TARGET.``. See
-       https://atlas.is.localnet/confluence/display/IT/Specific+GPU+needs for the kind
-       of constraints that are possible.
+    Remember to prefix the constraints with ``TARGET.``. See
+    https://atlas.is.localnet/confluence/display/IT/Specific+GPU+needs for the kind
+    of constraints that are possible.
 
-   * - ``gpu_memory_mb``
-     - int
-     - Minimum memory size the GPU should have, in megabytes.
-   * - ``concurrency_limit`` / ``concurrency_limit_tag``
-     - Optional
-     - Limit the number of concurrent jobs. You can assign a resource (tag) to your jobs
-       and specify how many tokens each jobs consumes. There is a total of 10,000 tokens
-       per resource. If you want to run 10 concurrent jobs, each job has to consume
-       1,000 tokens.
+- ``gpu_memory_mb`` -- *int*
+    Minimum memory size the GPU should have, in megabytes.
 
-       To use this feature, it is as easy as adding (example in TOML)
+- ``concurrency_limit`` / ``concurrency_limit_tag`` -- *optional*
+    Limit the number of concurrent jobs. You can assign a resource (tag) to your jobs
+    and specify how many tokens each jobs consumes. There is a total of 10,000 tokens
+    per resource. If you want to run 10 concurrent jobs, each job has to consume
+    1,000 tokens.
 
-       .. code-block:: toml
+    To use this feature, it is as easy as adding (example in TOML)
 
-          [cluster_requirements]
-          # ...
-          concurrency_limit_tag = "gpu"
-          concurrency_limit = 10
-          # ...
+    .. code-block:: toml
 
-       to the settings.
+       [cluster_requirements]
+       # ...
+       concurrency_limit_tag = "gpu"
+       concurrency_limit = 10
+       # ...
 
-       You can assign different tags to different runs. In that way you can limit only
-       the number of gpu jobs, for instance.
-   * - ``hostname_list``
-     - list of strings
-     - Cluster nodes to exclusively use for running jobs.
-   * - ``forbidden_hostnames``
-     - list of strings
-     - Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
-   * - ``extra_submission_options``
-     - dictionary, list or string
-     - This allows to add additional lines to the `.sub` file used for submitting jobs
-       to the cluster. Note that this setting is normally not needed, as cluster_utils
-       automatically builds the submission file for you.
+    to the settings.
+
+    You can assign different tags to different runs. In that way you can limit only
+    the number of gpu jobs, for instance.
+
+- ``hostname_list`` -- *list of strings*
+    Cluster nodes to exclusively use for running jobs.
+
+- ``forbidden_hostnames`` -- *list of strings*
+    Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
+
+- ``extra_submission_options`` -- *dictionary, list or string*
+    This allows to add additional lines to the `.sub` file used for submitting jobs to
+    the cluster. Note that this setting is normally not needed, as cluster_utils
+    automatically builds the submission file for you.
 
 
 .. todo:: Is the list above complete?
@@ -220,33 +196,25 @@ The following options are only used when running on Condor (i.e. the MPI cluster
 Slurm-specific Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
+- ``partition`` -- *string*
+    Name of the partition to run the jobs on.  See documentation of the corresponding
+    cluster on what partitions are available.
 
-   * - Name
-     - Info
-     - Description
-   * - ``partition``
-     - string
-     - Name of the partition to run the jobs on.  See documentation of the corresponding
-       cluster on what partitions are available.
+    Multiple partitions can be given as a comma-separated string
+    (``partition1,partition2``), in this case jobs will be executed on any of them
+    (depending on which has free capacity first).
+- ``request_time`` -- *string*
+    Time limit for the jobs.  Jobs taking longer than this will be aborted, so make
+    sure to request enough time (but don't exaggerate too much as shorter jobs can be
+    scheduled more easily).
 
-       Multiple partitions can be given as a comma-separated string
-       (``partition1,partition2``), in this case jobs will be executed on any of them
-       (depending on which has free capacity first).
-   * - ``request_time``
-     - string
-     - Time limit for the jobs.  Jobs taking longer than this will be aborted, so make
-       sure to request enough time (but don't exaggerate too much as shorter jobs can be
-       scheduled more easily).
+    From the `Slurm documentation <https://slurm.schedmd.com/sbatch.html>`_:
 
-       From the `Slurm documentation <https://slurm.schedmd.com/sbatch.html>`_:
+        Acceptable time formats include "minutes", "minutes:seconds",
+        "hours:minutes:seconds", "days-hours", "days-hours:minutes" and
+        "days-hours:minutes:seconds".
 
-           Acceptable time formats include "minutes", "minutes:seconds",
-           "hours:minutes:seconds", "days-hours", "days-hours:minutes" and
-           "days-hours:minutes:seconds".
-
-       So for example to request 1 hour per job use ``request_time = "1:00:00"``.
+    So for example to request 1 hour per job use ``request_time = "1:00:00"``.
 
 .. note::
 
@@ -266,30 +234,24 @@ you full control over the environment, installed packages, etc.  To enable
 containerisation of jobs, add a section ``singularity`` in the config file.  This
 section can have the following parameters:
 
-.. list-table::
-   :header-rows: 1
 
-   * - Name
-     - Info
-     - Description
-   * - ``image``
-     - **Mandatory**
-     - Path to the container image.
-   * - ``executable``
-     - default=singularity
-     - Specify the executable that is used to run the container (mostly useful if you
-       want to explicitly use Apptainer instead of Singularity in an environment where
-       both are installed).
-   * - ``use_run``
-     - default=false
-     - Per default the container is run with ``singularity exec``.  Set this to true to
-       use ``singularity run`` instead.  This is only useful for images that use a
-       wrapper run script that executes the given command (sometimes needed for some
-       environment initialisation).
-   * - ``args``
-     - default=[]
-     - List of additional arguments that are passed to ``singularity exec|run``.  Use
-       this to set flags like ``--nv``, ``--cleanenv``, ``--contain``, etc. if needed.
+- ``image`` -- *mandatory*
+    Path to the container image.
+
+- ``executable`` -- *default=singularity*
+    Specify the executable that is used to run the container (mostly useful if you want
+    to explicitly use Apptainer instead of Singularity in an environment where both are
+    installed).
+
+- ``use_run`` -- *default=false*
+    Per default the container is run with ``singularity exec``.  Set this to true to use
+    ``singularity run`` instead.  This is only useful for images that use a wrapper run
+    script that executes the given command (sometimes needed for some environment
+    initialisation).
+
+- ``args`` -- *default=[]*
+    List of additional arguments that are passed to ``singularity exec|run``.  Use this
+    to set flags like ``--nv``, ``--cleanenv``, ``--contain``, etc. if needed.
 
 Example (in TOML):
 
@@ -304,59 +266,52 @@ Example (in TOML):
 Specific for hp_optimization
 ============================
 
-.. list-table::
-   :header-rows: 1
+- ``num_best_jobs_whose_data_is_kept`` -- *mandatory*
+    Obvious
 
-   * - Name
-     - Info
-     - Description
-   * - ``num_best_jobs_whose_data_is_kept``
-     - Mandatory
-     - Obvious
-   * - ``kill_bad_jobs_early``
-     - Optional, bool, default=False
-     - TODO
-   * - ``early_killing_params``
-     - Optional
-     - TODO
-   * - ``optimizer_str``
-     - Mandatory
-     - The optimisation method that is used to find good hyperparameters.
-       Supported methods are 
+- ``kill_bad_jobs_early`` -- *optional, bool, default=False*
+    TODO
 
-       - cem_metaoptimizer
-       - nevergrad \*
-       - gridsearch
+- ``early_killing_params`` -- *optional*
+    TODO
 
-       \* To use nevergrad, the optional dependencies from the "nevergrad" group are
-       needed, see :ref:`optional_dependencies`.
-   * - ``optimizer_settings``
-     - Mandatory
-     - Settings specific to the optimiser selected in ``optimizer_str``.
-       See :ref:`config.optimizer_settings`.
-   * - ``optimization_setting``
-     - Mandatory
-     - General settings for the optimisation (independent of the optimisation
-       method).  See :ref:`config.optimization_settings`.
-   * - ``optimized_params``
-     - Mandatory
-     - Probably defines the parameters that are optimised over.  It is a list
-       of dicts with each entry having the following elements:
+- ``optimizer_str`` -- *mandatory*
+    The optimisation method that is used to find good hyperparameters.
+    Supported methods are 
 
-       - ``param``:  Name of the parameter.  Apparently can have
-         object/attribute structure, e.g. "fn_args.x".
-       - ``distribution``: Distribution that is used for sampling.  Options
-         are:
+    - cem_metaoptimizer
+    - nevergrad \*
+    - gridsearch
 
-           - TruncatedNormal
-           - TruncatedLogNormal
-           - IntLogNormal
-           - IntNormal
-           - Discrete
-           - TODO: more?
-       - ``bounds``:  List ``[min_value, max_value]``
-       - ``options``:  List of possible values (used instead of bounds for
-         "Discrete" distribution.
+    \* To use nevergrad, the optional dependencies from the "nevergrad" group are
+    needed, see :ref:`optional_dependencies`.
+
+- ``optimizer_settings`` -- *mandatory*
+    Settings specific to the optimiser selected in ``optimizer_str``. See
+    :ref:`config.optimizer_settings`.
+
+- ``optimization_setting`` -- *mandatory*
+    General settings for the optimisation (independent of the optimisation method).  See
+    :ref:`config.optimization_settings`.
+
+- ``optimized_params`` -- *mandatory*
+    Probably defines the parameters that are optimised over.  It is a list
+    of dicts with each entry having the following elements:
+
+    - ``param``:  Name of the parameter.  Apparently can have
+      object/attribute structure, e.g. "fn_args.x".
+    - ``distribution``: Distribution that is used for sampling.  Options
+      are:
+
+      - TruncatedNormal
+      - TruncatedLogNormal
+      - IntLogNormal
+      - IntNormal
+      - Discrete
+      - TODO: more?
+    - ``bounds``:  List ``[min_value, max_value]``
+    - ``options``:  List of possible values (used instead of bounds for
+      "Discrete" distribution).
 
 
 .. _config.optimization_settings:
@@ -368,37 +323,29 @@ The ``optimization_setting`` parameter defines the general optimisation
 settings (i.e. the ones independent of the optimisation method set in
 ``optimizer_str``).  A dictionary with the following values is expected:
 
-.. list-table::
-   :header-rows: 1
 
-   * - Name
-     - Info
-     - Description
-   * - ``metric_to_optimize``
-     - Mandatory, string
-     - Name of the metric that is used for the optimisation.  Has to match the
-       name of one of the metrics that are saved with
-       :func:`cluster.save_metrics_params`.
-   * - ``minimize``
-     - Mandatory, bool
-     - Specify whether the metric shall be minimized (true) or maximised
-       (false).
-   * - ``number_of_samples``
-     - Mandatory, int
-     - The total number of jobs that will be run.
-   * - ``n_jobs_per_iteration``
-     - Mandatory, int
-     - The number of jobs submitted to the cluster concurrently, and also the
-       number of finished jobs per report iteration.
-   * - ``n_completed_jobs_before_resubmit``
-     - Optional, int, default=1
-     - The number of jobs that have to be finished before another
-       ``n_completed_jobs_before_resubmit`` jobs are submitted.  Defaults to 1
-       (i.e. submit new job immediately when one finishes).
-   * - ``run_local``
-     - Optional, bool
-     - Specify if the optimisation shall be run locally if the cluster is not
-       detected.  If not set, the user will be asked at runtime in this case.
+- ``metric_to_optimize`` -- *mandatory, string*
+    Name of the metric that is used for the optimisation.  Has to match the name of one
+    of the metrics that are saved with :func:`cluster.save_metrics_params`.
+
+- ``minimize`` -- *mandatory, bool*
+    Specify whether the metric shall be minimized (true) or maximised (false).
+
+- ``number_of_samples`` -- *mandatory, int*
+    The total number of jobs that will be run.
+
+- ``n_jobs_per_iteration`` -- *mandatory, int*
+    The number of jobs submitted to the cluster concurrently, and also the number of
+    finished jobs per report iteration.
+
+- ``n_completed_jobs_before_resubmit`` -- *optional, int, default=1*
+    The number of jobs that have to be finished before another
+    ``n_completed_jobs_before_resubmit`` jobs are submitted.  Defaults to 1 (i.e. submit
+    new job immediately when one finishes).
+
+- ``run_local`` -- *optional, bool*
+    Specify if the optimisation shall be run locally if the cluster is not detected.  If
+    not set, the user will be asked at runtime in this case.
 
 
 About Iterations
@@ -453,24 +400,17 @@ corresponding parameters for each method.
 cem_metaoptimizer
 ~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
+- ``with_restarts`` -- *mandatory, bool*
+    Whether a specific set of settings can be run multiple times. This can be useful to
+    automatically verify if good runs were just lucky runs because of e.g. the random
+    seed, making the found solutions more robust.
 
-   * - Name
-     - Info
-     - Description
-   * - ``with_restarts``
-     - Mandatory, bool
-     - Whether a specific set of settings can be run multiple times. This can be
-       useful to automatically verify if good runs were just lucky runs because
-       of e.g. the random seed, making the found solutions more robust.
+    If enabled, new settings are sampled for the first ``num_jobs_in_elite`` jobs.
+    After that each new job has a 20% chance to use the same settings as a previous job
+    (drawn from the set of best jobs).
 
-       If enabled, new settings are sampled for the first ``num_jobs_in_elite``
-       jobs.  After that each new job has a 20% chance to use the same settings
-       as a previous job (drawn from the set of best jobs).
-   * - ``num_jobs_in_elite``
-     - Mandatory, int
-     - TODO
+- ``num_jobs_in_elite`` -- *mandatory, int*
+    TODO
 
 
 nevergrad
@@ -481,60 +421,39 @@ nevergrad
    To use nevergrad, the optional dependencies from the "nevergrad" group are needed,
    see :ref:`optional_dependencies`.
 
-.. list-table::
-   :header-rows: 1
-
-   * - Name
-     - Info
-     - Description
-   * - ``opt_alg``
-     - Mandatory
-     - TODO
+- ``opt_alg`` -- *mandatory*
+    TODO
 
 gridsearch
 ~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-
-   * - Name
-     - Info
-     - Description
-   * - ``restarts``
-     - Mandatory
-     - TODO
+- ``restarts`` -- *mandatory*
+    TODO
 
 
 Specific for grid_search
 ========================
 
-.. list-table::
-   :header-rows: 1
+- ``local_run`` -- *optional*
+    TODO
 
-   * - Name
-     - Info
-     - Description
-   * - ``local_run``
-     - Optional
-     - TODO
-   * - ``load_existing_results``
-     - Optional, bool, default=False
-     - TODO
-   * - ``restarts``
-     - Mandatory
-     - How often to run each configuration (useful if there is some randomness
-       in the result).
-   * - ``samples``
-     -
-     - TODO:  Does not seem to be used in grid_search
-   * - ``hyperparam_list``
-     - Mandatory
-     - Probably list of parameters over which the grid search is performed.
-       List of dicts:
+- ``load_existing_results`` -- *optional, bool, default=False*
+    TODO
 
-       - ``param``:  Parameter name (e.g. "fn_args.x").
-       - ``values``:  List of values.  Be careful with types, ``42`` will be passed as
-         int, use ``42.0`` if you want float instead.
+- ``restarts`` -- *mandatory*
+    How often to run each configuration (useful if there is some randomness in the
+    result).
+
+- ``samples``
+    TODO:  Does not seem to be used in grid_search
+
+- ``hyperparam_list`` -- *mandatory*
+    Probably list of parameters over which the grid search is performed.
+    List of dicts:
+
+    - ``param``:  Parameter name (e.g. "fn_args.x").
+    - ``values``:  List of values.  Be careful with types, ``42`` will be passed as
+      int, use ``42.0`` if you want float instead.
 
 
 Overwriting Parameters on the Command Line
