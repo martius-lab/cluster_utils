@@ -1,14 +1,38 @@
-*****************************************
-Welcome to cluster_utils's documentation!
-*****************************************
+***************************
+Cluster Utils Documentation
+***************************
 
 
-`cluster_utils`_ has been powering my cluster runs since 2017. It has grown ever
-since and now it is a proper monster. Enjoy :).
+`cluster_utils`_ is a tool for easily running hyperparameter optimization or
+grid search on a HTCondor or Slurm cluster.  It takes care of submitting and
+monitoring the jobs as well as aggregating the results.
+
+Note that the implementation for HTCondor is tailored specifically for the
+cluster of the Max Planck Institute of Intelligent Systems.  The Slurm
+implementation is more generic but not as feature-complete yet.
 
 
-Content
-=======
+Main Features
+=============
+
+A non-exhaustive list of features is the following:
+
+- **Automatic Condor/Slurm usage** Jobs are submitted, monitored (with error
+  reporting), and cleaned up in an automated and highly customizable way.
+- **Integrated with git**. Jobs are run from a ``git clone`` with customizable
+  branch and commit number.
+- **PDF & CSV reporting** Both grid search and optimization produce a pdf report
+  with the specification, basic summaries, and plots.
+- **Advanced setting handling** Cluster utils offer a customized settings system
+  based on JSON. Pointers within the JSON file and to other JSON files are
+  supported.
+- **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also,
+  read the code ;).
+
+
+
+Documentation Content
+=====================
 
 .. toctree::
    :caption: How-to Guides
@@ -52,23 +76,6 @@ for hyperparameter optimization
 
 See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
 
-
-Main features
-=============
-
-A non-exhaustive list of features is the following:
-
-- **Automatic condor usage** Jobs are submitted, monitored (with error
-  reporting), and cleaned up in an automated and highly customizable way.
-- **Integrated with git**. Jobs are run from a `git clone` with customizable
-  branch and commit number.
-- **PDF&CSV reporting** Both grid search and optimization produce a pdf report
-  with the specification, basic summaries, and plots.
-- **Advanced setting handling** Cluster utils offer a customized settings system
-  based on JSON. Pointers within the JSON file and to other JSON files are
-  supported.
-- **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also,
-  read the code ;).
 
 
 Usage Mindset and Rules of Thumb
