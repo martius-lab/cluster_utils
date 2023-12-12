@@ -109,6 +109,16 @@ html_theme_options = {
             "href": "changelog",
             "internal": True,
         },
+        {
+            "title": "Source",
+            "href": "https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils",
+            "internal": False,
+        },
+        {
+            "title": "Bug Tracker",
+            "href": "https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils/-/issues",
+            "internal": False,
+        },
     ],
 }
 
