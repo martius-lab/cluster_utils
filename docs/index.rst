@@ -75,7 +75,6 @@ Documentation Content
    :caption: References
 
    configuration
-   changelog
 
 .. todo:: Add more in-depth topic guides
 

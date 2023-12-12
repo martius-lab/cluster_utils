@@ -102,6 +102,14 @@ html_theme_options = {
     "globaltoc_collapse": True,
     # If True, show hidden TOC entries
     "globaltoc_includehidden": False,
+    # Additional for the top navigation bar
+    "nav_links": [
+        {
+            "title": "Changelog",
+            "href": "changelog",
+            "internal": True,
+        },
+    ],
 }
 
 # Custom sidebar templates, must be a dictionary that maps document names
