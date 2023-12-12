@@ -2,26 +2,35 @@
 Welcome to cluster_utils's documentation!
 *****************************************
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   installation
-   configuration
-   report
-   troubleshooting
-   changelog
-
 
 `cluster_utils`_ has been powering my cluster runs since 2017. It has grown ever
 since and now it is a proper monster. Enjoy :).
 
 
+Content
+=======
 
-Installation
-============
+.. toctree::
+   :caption: How-to Guides
+   :maxdepth: 1
 
-see :doc:`installation`.
+   installation
+   report
+   troubleshooting
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: References
+
+   configuration
+   changelog
+
+
+.. todo:: Add more in-depth explanations
+
+.. todo:: Add a basic getting-started tutorial
+
 
 
 Basic Usage
@@ -53,20 +62,13 @@ A non-exhaustive list of features is the following:
   reporting), and cleaned up in an automated and highly customizable way.
 - **Integrated with git**. Jobs are run from a `git clone` with customizable
   branch and commit number.
-- **Pdf&csv reporting** Both grid search and optimization produce a pdf report
+- **PDF&CSV reporting** Both grid search and optimization produce a pdf report
   with the specification, basic summaries, and plots.
 - **Advanced setting handling** Cluster utils offer a customized settings system
   based on JSON. Pointers within the JSON file and to other JSON files are
   supported.
 - **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also,
   read the code ;).
-
-
-Settings
-========
-
-See :doc:`configuration`.
-
 
 
 Usage Mindset and Rules of Thumb
