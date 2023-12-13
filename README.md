@@ -3,6 +3,21 @@
 This code has been powering my cluster runs since 2017. It has grown ever since and now it is a proper monster. Enjoy :).
 
 
+## Main features
+
+A non-exhaustive list of features is the following:
+
+* **Automatic condor usage** Jobs are submitted, monitored (with error reporting), and cleaned up in an automated and highly customizable way.
+
+* **Integrated with git**. Jobs are run from a `git clone` with customizable branch and commit number.
+
+* **PDF & CSV reporting**. Both grid search and optimization produce a pdf report with the specification, basic summaries, and plots.
+
+* **Advanced setting handling**. Cluster utils offer a customized settings system based on JSON. Pointers within the JSON file and to other JSON files are supported.
+
+* **A LOT OF ADDITIONAL SWEETNESS**. Most are demonstrated in the examples. Also, read the code ;).
+
+
 ## Documentation
 
 A more detailed documentation is included in the `docs/` folder of the repository.
@@ -20,24 +35,15 @@ make html  # build documentation
 When the build is finished, open ``docs/_build/html/index.html`` with the browser of
 your choice.
 
+Below there are several links to parts of the documentation, which can also be
+viewed relatively well in GitLab.
 
-## Run to install:
 
-```bash
-python3 -m pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
-```
 
-or if `ssh` is configured:
+## Installation
 
-```bash
-python3 -m pip install git+ssh://git@gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
-```
+See [docs/installation.rst](docs/installation.rst)
 
-To enable pdf reporting add this line to your .bashrc (.zshrc) on the cluster
-
-```bash
-export MPLBACKEND="agg"
-```
 
 ## Quick Start
 
@@ -57,20 +63,6 @@ for hyperparameter optimization
 
 See `examples/basic` and `examples/rosenbrock` for simple demonstrations.
 
-## Main features
-
-A non-exhaustive list of features is the following:
-
-* **Automatic condor usage** Jobs are submitted, monitored (with error reporting), and cleaned up in an automated and highly customizable way.
-
-* **Integrated with git**. Jobs are run from a `git clone` with customizable branch and commit number.
-
-* **PDF & CSV reporting**. Both grid search and optimization produce a pdf report with the specification, basic summaries, and plots.
-
-* **Advanced setting handling**. Cluster utils offer a customized settings system based on JSON. Pointers within the JSON file and to other JSON files are supported.
-
-* **A LOT OF ADDITIONAL SWEETNESS**. Most are demonstrated in the examples. Also, read the code ;).
-
 ## Usage
 
 ### Environment Setup
@@ -79,64 +71,14 @@ The simplest way to specify your Python environment is to activate it (using vir
 The jobs will automatically inherit this environment.
 A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
 
-There are multiple options to further customize the environment in the `environment_setup` configuration section:
-
-* `pre_job_script` (string): Path to an executable (e.g. bash script) that is executed before the main script runs
-* `virtual_env_path` (string): Path of folder of virtual environment to activate
-* `conda_env_path` (string): Name of conda environment to activate (this option might be broken)
-* `variables` (dictionary of strings): Environment variables to set. Variables are set after a virtual/conda environment is activated, thus override environment variables set before.
-* `is_python_script` (boolean): Whether the target to run is a Python script (default: true)
-* `run_as_module` (boolean): Whether to run the script as a Python module (`python -m my_package.my_module`) or as a script (`python my_package/my_module.py`) (default: false)
+There are multiple options to further customize the environment in the
+`environment_setup` configuration section, see
+[docs/configuration.rst](docs/configuration.rst).
 
 ### Condor Cluster System
 
-#### CUDA Requirements
-
-You can specify constraints on the GPUs the jobs should use. This is controlled by the `cuda_requirement` and `gpu_memory_mb` settings in the `cluster_requirements` section.
-
-- `cuda_requirement` has multiple behaviors. If it is a number, it specifies the *minimum* CUDA capability the GPU should have. If the number is prefixed with `<` or `<=`, it specifies the *maximum* CUDA capability. Otherwise, the value is taken as a full requirement string. This allows to specify complex requirements, see below.
-- `gpu_memory_mb` specifies a minimum memory size the GPU should have, in megabytes.
-
-Example:
-```
-...
-"cluster_requirements": {
-   ...
-  "cuda_requirement": "TARGET.CUDACapability >= 5.0 && TARGET.CUDACapability <= 8.0",
-  "gpu_memory_mb": 12000,
-  ...
-}
-```
-This requires that the GPU has at least 12000MB, and a CUDA capability between 5 and 8.
-
-Remember to prefix the constraints with `TARGET.`. See https://atlas.is.localnet/confluence/display/IT/Specific+GPU+needs for the kind of constraints that are possible.
-
-#### Concurrency
-
-Limit the number of concurrent jobs. You can assign a ressource (tag) to your jobs and specify how many tokens each jobs consumes. There is a total of 10,000 tokes per ressource.
-If you want to run 10 concurrent jobs, each job has to consume 1,000 tokens.
-
-To use this feature, it is as easy as adding
-```
-...
-"cluster_requirements": {
-   ...
-  "concurrency_limit_tag": "gpu",
-  "concurrency_limit": 10,
-  ...
-}
-```
-to the settings.
-
-You can assign different tags to different runs. In that way you can limit only the number of gpu jobs, for instance.
-
-#### Other Condor Options
-
-All options here are specified in the `cluster_requirements` section.
-
-- `hostname_list` (list of strings): Cluster nodes to exclusively use for running jobs.
-- `forbidden_hostnames` (list of strings): Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
-- `extra_submission_options` (dictionary, list or string): this allows to add additional lines to the `.sub` file used for submitting jobs to the cluster. Note that this setting is normally not needed, as cluster_utils automatically builds the submission file for you.
+See [docs/configuration.rst](docs/configuration.rst), Section "Cluster
+Requirements".
 
 ### Hyperparameter Optimization Settings
 
@@ -149,96 +91,12 @@ For `optimizer_str="cem_metaoptimizer"`:
 
 - `optimizer_settings.with_restarts`: whether a specific set of settings can be run multiple times. This can be useful to automatically verify if good runs were just lucky runs because of e.g. the random seed, making the found solutions more robust.
 
+See also [docs/configuration.rst](docs/configuration.rst).
+
 ## Hyperparameter Optimization Mindset and Rules of Thumb
 
-Generally, the usage mindset should be *"obtain some interpretable understanding of the influence of the hyperparameters"* rather than *"blackbox optimizer just tells me the best setting"*.
-Usually, early in the project many of the hyperparameters are more like ideas, or strategies.
-Cluster utils can then tell you which ideas (or their combinations) make sense.
-Later in a project, there only tend to be actual hyperparameters (i.e. transferring a working architecture to a new dataset), which can then be fit to this specific setting using cluster utils.
-
-Here are some rules of thumbs to set the configuration values that can help you to get started. Keep in mind that following these does not necessarily lead to optimal results on your specific problem.
-
-**Which optimizer should I use for optimizing hyperparameters of neural networks (depth, width, learning rate, etc.)?**
-
-`cem_metaoptimizer` is a good default recommendation for this case.
-
-**How many jobs should I run? How many concurrently?**
-
-It depends. The number of concurrent jobs (`n_jobs_per_iteration`) should be as high as achievable with the current load on the cluster.
-For CPU jobs, this could be 100 concurrent jobs; for GPU jobs, maybe around 40.
-The total number of jobs (`number_of_samples`) can be lower if you only want to get an initial impression of the behaviour of the hyperparameter; in this case, 3-5 times the number of jobs per iteration is a good number.
-If you want to get a more precise result, or if you have a high number of hyperparameters, up to 10 times the number of jobs per iteration can be used.
-
-**How many hyperparameters can I optimize over at the same time?**
-
-This depends on the number of jobs and number of parallely running jobs. For 5x100 jobs, 5-6 hyperparameters are okay to be optimized. For 5x40 jobs, 3-4 are okay. For a larger scale, e.g. 10x200 jobs, it might be reasonable to optimize up to 10 hyperparameters at the same time.
-
-**How to deal with overfitting?**
-
-You can keep the best validation error achieved over the epochs and report this instead of the error achieved in the last epoch.
+See [docs/usage_mindset_and_rule_of_thumb.rst](docs/usage_mindset_and_rule_of_thumb.rst)
 
 ## Development
 
-### Setting Up a Development Environment
-
-1. Create a development environment (e.g. using virtualenv): `python3 -m virtualenv .venv`, `source .venv/bin/activate`
-2. Install `cluster_utils` in editable mode: `pip install -e ".[dev]"`
-3. Register the pre-commit hooks: `pre-commit install`
-
-### Running Linters and Tests
-
-We use nox to run various linters and tests.  You can simply call `nox` in the root
-directory of the package to run everything, however, you will usually want to restrict a
-bit what is run.
-
-Any merge request to master has to pass the continuous integration pipeline, which
-basically runs `nox`.
-In order to make sure continuous integration passes, you can thus run this command
-locally.
-
-#### Python Versions
-
-nox is configured to test with different Python versions.  You can limit it to a
-specific version (e.g. because you only have that one installed locally) with the `-p`
-option.  For example to run only with Python 3.10:
-```bash
-nox -p "3.10"
-```
-
-#### Reuse Environment
-
-By default nox creates a fresh virtual environment every time you run it.  As this is
-quite a slow process, you can reuse the virtual environment after you set it up once,
-using the `-r` flag.  Example:
-```bash
-nox -p "3.10" -r
-```
-
-#### Run Only Specific Tests
-
-You can restrict which checks (called "sessions") are run with `-s`.  For example to run
-only the mypy check:
-```bash
-nox -s mypy
-```
-You can get a list of all available sessions with
-```bash
-nox --list
-```
-
-As an alternative to listing specific sessions, you can also run a group of related
-sessions using tags with `-t`.  Currently available tags are:
-
-- **lint**:  All linter checks.
-- **test**:  All tests (unit tests and integration tests)
-
-Example: To run all linters with Python 3.10, reusing the environment:
-```bash
-nox -p "3.10" -r -t lint
-```
-
-### Workflow with pre-commit
-
-When you commit, pre-commit will run some checks on the files you are changing. If one of them fails a check, the commit will be aborted. In this case, you should fix and git add the file again, then repeat the commit. pre-commit also runs some automatic formatting on the files (using black). When files are changed this way, you can inspect the changes using git diff, and when everything is okay, run git add to accept the formatted files.
-
-You can also run the pre-commit checks manually on all files in the repository using `pre-commit run -a`. In fact, this is useful to make sure a commit runs through without any checks failing.
+See [docs/setup_devel_env.rst](docs/setup_devel_env.rst)
