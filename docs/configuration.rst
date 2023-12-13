@@ -86,18 +86,31 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
     <=2.5*
 
 - ``environment_setup`` --- *mandatory*
-    TODO.
+    Note: while the ``environment_setup`` argument itself is mandatory, all its
+    content are optional (i.e. it can be empty).
 
-    Note: while the ``environment_setup`` argument itself is mandatory, all its content
-    seems to be optional (i.e. it can be empty).
-
-    - ``pre_job_script``:  Probably a script that is run before the actual job.
+    - ``pre_job_script`` --- *string*:  Path to an executable (e.g. bash script)
+      that is executed before the main script runs.
+    - ``virtual_env_path`` --- *string*:  Path of folder of virtual environment
+      to activate.
+    - ``conda_env_path`` --- *string*:  Name of conda environment to activate
+      (this option might be broken).
+    - ``variables`` --- *dict[str]*:  Environment variables to set. Variables
+      are set after a virtual/conda environment is activated, thus override
+      environment variables set before.
+    - ``is_python_script`` --- *bool, default=true*:  Whether the target to run
+      is a Python script.
+    - ``run_as_module`` --- *bool, default=false*:  Whether to run the script as
+      a Python module (``python -m my_package.my_module``) or as a script
+      (``python my_package/my_module.py``).
 
 - ``cluster_requirements`` --- *mandatory*
     Settings for the cluster (number of CPUs, bid, etc.).  See
     :ref:`config_cluster_requirements`.
+
 - ``singularity`` --- *optional*
     See :ref:`config_singularity`.
+
 - ``fixed_params`` - *mandatory*
     TODO
 
