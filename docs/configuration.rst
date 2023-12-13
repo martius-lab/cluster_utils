@@ -89,11 +89,11 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
     Note: while the ``environment_setup`` argument itself is mandatory, all its
     content are optional (i.e. it can be empty).
 
-    - ``pre_job_script`` --- *string*:  Path to an executable (e.g. bash script)
+    - ``pre_job_script`` --- *str*:  Path to an executable (e.g. bash script)
       that is executed before the main script runs.
-    - ``virtual_env_path`` --- *string*:  Path of folder of virtual environment
+    - ``virtual_env_path`` --- *str*:  Path of folder of virtual environment
       to activate.
-    - ``conda_env_path`` --- *string*:  Name of conda environment to activate
+    - ``conda_env_path`` --- *str*:  Name of conda environment to activate
       (this option might be broken).
     - ``variables`` --- *dict[str]*:  Environment variables to set. Variables
       are set after a virtual/conda environment is activated, thus override
@@ -203,13 +203,13 @@ The following options are only used when running on Condor (i.e. the MPI cluster
     You can assign different tags to different runs. In that way you can limit only
     the number of gpu jobs, for instance.
 
-- ``hostname_list`` --- *list of strings*
+- ``hostname_list`` --- *list[str]*
     Cluster nodes to exclusively use for running jobs.
 
-- ``forbidden_hostnames`` --- *list of strings*
+- ``forbidden_hostnames`` --- *list[str]*
     Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
 
-- ``extra_submission_options`` --- *dictionary, list or string*
+- ``extra_submission_options`` --- *dict | list | str*
     This allows to add additional lines to the `.sub` file used for submitting jobs to
     the cluster. Note that this setting is normally not needed, as cluster_utils
     automatically builds the submission file for you.
@@ -221,14 +221,14 @@ The following options are only used when running on Condor (i.e. the MPI cluster
 Slurm-specific Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
-- ``partition`` --- *string*
+- ``partition`` --- *str*
     Name of the partition to run the jobs on.  See documentation of the corresponding
     cluster on what partitions are available.
 
     Multiple partitions can be given as a comma-separated string
     (``partition1,partition2``), in this case jobs will be executed on any of them
     (depending on which has free capacity first).
-- ``request_time`` --- *string*
+- ``request_time`` --- *str*
     Time limit for the jobs.  Jobs taking longer than this will be aborted, so make
     sure to request enough time (but don't exaggerate too much as shorter jobs can be
     scheduled more easily).
@@ -375,7 +375,7 @@ settings (i.e. the ones independent of the optimisation method set in
 ``optimizer_str``).  A dictionary with the following values is expected:
 
 
-- ``metric_to_optimize`` --- *mandatory, string*
+- ``metric_to_optimize`` --- *mandatory, str*
     Name of the metric that is used for the optimisation.  Has to match the name of one
     of the metrics that are saved with :func:`cluster.save_metrics_params`.
 
