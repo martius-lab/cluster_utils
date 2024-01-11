@@ -21,8 +21,11 @@ A non-exhaustive list of features is the following:
 ## Documentation
 
 A more detailed documentation is included in the `docs/` folder of the repository.
-There is not yet a publicly hosted version of the documentation but you can but you can
-build it yourself with the following commands:
+There is not yet a publicly hosted version of the documentation but they are rendered
+relatively well when viewed on GitLab.  See [docs/README.md](docs/README.md) for a table
+of contents.
+
+You can also build the documentation locally with the following commands:
 
 ```bash
 git clone https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
