@@ -15,19 +15,7 @@ from cluster.job import Job
 # TODO: handle return codes != 0,1,3 ?
 # TODO: exit for resume probably needs different handling here
 _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
-#SBATCH --job-name={job_name}_{id}
-#SBATCH --output={output_file}
-#SBATCH --error={error_file}
-
-#SBATCH --partition={partition}
-#SBATCH --cpus-per-task={cpus_per_task:d}
-#SBATCH --gpus-per-task={gpus_per_task:d}
-#SBATCH --mem={mem}
-#SBATCH --time={time}
-#SBATCH --nodes={nodes}
-#SBATCH --ntasks={ntasks}
-
-{optional_sbatch_arg_lines}
+{sbatch_arg_lines}
 
 # Submission ID {id}
 
@@ -99,6 +87,29 @@ class SlurmJobRequirements(NamedTuple):
             )
 
         return obj
+
+
+class SBatchArgumentBuilder:
+    """Construct an sbatch argument comment block.
+
+    The argument block consists of lines that each start with ``#SBATCH``, followed by
+    an argument.
+    """
+
+    def __init__(self) -> None:
+        self.args: list[str] = []
+
+    def add(self, name: str, value: Any) -> None:
+        """Add an argument (will be added as "--name=value")."""
+        self.args.append(f"--{name}={value}")
+
+    def extend_raw(self, raw_args: list[str]) -> None:
+        """Add list of 'raw' arguments (i.e. already in the form '--name=value')."""
+        self.args.extend(raw_args)
+
+    def construct_argument_comment_block(self) -> str:
+        """Construct block of #SBATCH comments for use in a sbatch run script."""
+        return "\n".join((f"#SBATCH {arg}" for arg in self.args))
 
 
 def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
@@ -207,37 +218,31 @@ class SlurmClusterSubmission(ClusterSubmission):
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
 
-        optional_arguments = []
+        args = SBatchArgumentBuilder()
+        args.add("job-name", f"{job.opt_procedure_name}_{job.id}")
+        args.add("output", stdout_file)
+        args.add("error", stderr_file)
+        args.add("partition", self.requirements.partition)
+        args.add("cpus-per-task", self.requirements.cpus_per_task)
+        args.add("gpus-per-task", self.requirements.gpus_per_task)
+        args.add("mem", self.requirements.mem)
+        args.add("time", self.requirements.time)
+        args.add("nodes", self.requirements.nodes)
+        args.add("ntasks", self.requirements.ntasks)
 
         if self.requirements.nodelist:
-            _nodelist_val = ",".join(self.requirements.nodelist)
-            optional_arguments.append(f"--nodelist={_nodelist_val}")
+            args.add("nodelist", ",".join(self.requirements.nodelist))
 
         if self.requirements.exclude:
-            _exclude_val = ",".join(self.requirements.exclude)
-            optional_arguments.append(f"--exclude={_exclude_val}")
+            args.add("exclude", ",".join(self.requirements.exclude))
 
-        optional_arguments.extend(self.requirements.extra_submission_options)
-
-        optional_sbatch_arg_lines = "\n".join(
-            (f"#SBATCH {opt}" for opt in optional_arguments)
-        )
+        args.extend_raw(self.requirements.extra_submission_options)
 
         template_vars = {
-            "job_name": job.opt_procedure_name,
-            "output_file": stdout_file,
-            "error_file": stderr_file,
             "id": job.id,
             "cmd": cmd,
             "run_script_file_path": run_script_file_path,
-            "partition": self.requirements.partition,
-            "cpus_per_task": self.requirements.cpus_per_task,
-            "gpus_per_task": self.requirements.gpus_per_task,
-            "mem": self.requirements.mem,
-            "time": self.requirements.time,
-            "nodes": self.requirements.nodes,
-            "ntasks": self.requirements.ntasks,
-            "optional_sbatch_arg_lines": optional_sbatch_arg_lines,
+            "sbatch_arg_lines": args.construct_argument_comment_block(),
         }
 
         run_script_file_path.write_text(
