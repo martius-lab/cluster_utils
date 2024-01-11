@@ -152,6 +152,12 @@ Common Options
 - ``memory_in_mb`` --- *int*
     Memory (in MB) that is requested.
 
+- ``hostname_list`` --- *list[str]*
+    Cluster nodes to exclusively use for running jobs.
+
+- ``forbidden_hostnames`` --- *list[str]*
+    Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
+
 
 Condor-specific Options
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,12 +208,6 @@ The following options are only used when running on Condor (i.e. the MPI cluster
 
     You can assign different tags to different runs. In that way you can limit only
     the number of gpu jobs, for instance.
-
-- ``hostname_list`` --- *list[str]*
-    Cluster nodes to exclusively use for running jobs.
-
-- ``forbidden_hostnames`` --- *list[str]*
-    Cluster nodes to exclude from running jobs. Useful if nodes are malfunctioning.
 
 - ``extra_submission_options`` --- *dict | list | str*
     This allows to add additional lines to the `.sub` file used for submitting jobs to

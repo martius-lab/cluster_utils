@@ -26,7 +26,8 @@ _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
 #SBATCH --time={time}
 #SBATCH --nodes={nodes}
 #SBATCH --ntasks={ntasks}
-{extra_sbatch_args}
+
+{optional_sbatch_arg_lines}
 
 # Submission ID {id}
 
@@ -52,6 +53,11 @@ class SlurmJobRequirements(NamedTuple):
     mem: str
     time: str
 
+    # request specific list of hosts
+    nodelist: list[str]
+    # exclude specific list of hosts
+    exclude: list[str]
+
     # list of arbitrary sbatch options for things that are not covered by the settings
     # above (e.g. something like "--gpu-freq=high")
     extra_submission_options: list[str]
@@ -74,6 +80,8 @@ class SlurmJobRequirements(NamedTuple):
                 gpus_per_task=req.pop("request_gpus", 0),
                 mem="{}M".format(req.pop("memory_in_mb")),
                 time=req.pop("request_time"),
+                nodelist=req.pop("hostname_list", []),
+                exclude=req.pop("forbidden_hostnames", []),
                 extra_submission_options=req.pop("extra_submission_options", []),
             )
         except KeyError as e:
@@ -199,8 +207,20 @@ class SlurmClusterSubmission(ClusterSubmission):
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
 
-        extra_sbatch_args = "\n".join(
-            (f"#SBATCH {opt}" for opt in self.requirements.extra_submission_options)
+        optional_arguments = []
+
+        if self.requirements.nodelist:
+            _nodelist_val = ",".join(self.requirements.nodelist)
+            optional_arguments.append(f"--nodelist={_nodelist_val}")
+
+        if self.requirements.exclude:
+            _exclude_val = ",".join(self.requirements.exclude)
+            optional_arguments.append(f"--exclude={_exclude_val}")
+
+        optional_arguments.extend(self.requirements.extra_submission_options)
+
+        optional_sbatch_arg_lines = "\n".join(
+            (f"#SBATCH {opt}" for opt in optional_arguments)
         )
 
         template_vars = {
@@ -217,7 +237,7 @@ class SlurmClusterSubmission(ClusterSubmission):
             "time": self.requirements.time,
             "nodes": self.requirements.nodes,
             "ntasks": self.requirements.ntasks,
-            "extra_sbatch_args": extra_sbatch_args,
+            "optional_sbatch_arg_lines": optional_sbatch_arg_lines,
         }
 
         run_script_file_path.write_text(
