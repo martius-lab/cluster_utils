@@ -53,6 +53,8 @@ See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
 Documentation Content
 =====================
 
+.. If something is changed here, please also update docs/README.md
+
 .. toctree::
    :caption: How-to Guides
    :maxdepth: 1
