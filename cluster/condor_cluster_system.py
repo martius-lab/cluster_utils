@@ -96,6 +96,11 @@ class CondorClusterSubmission(ClusterSubmission):
         cmd = "condor_rm {}".format(cluster_id)
         run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
 
+    def is_ready_to_check_for_failed_jobs(self) -> bool:
+        # TODO: should we throttle this a bit?  Probably doesn't need to be checked
+        # multiple times per second
+        return True
+
     def mark_failed_jobs(self, jobs: Sequence[Job]) -> None:
         for job in jobs:
             assert job.run_script_path is not None
