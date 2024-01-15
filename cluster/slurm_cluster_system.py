@@ -207,7 +207,8 @@ class SlurmClusterSubmission(ClusterSubmission):
         #: Time stamp of the last time checking for errors
         self._last_time_checking_for_failures = 0.0
 
-    def submit_fn(self, job: Job) -> ClusterJobId:
+    def _generate_run_script(self, job: Job) -> pathlib.Path:
+        """Generate a sbatch run script for the given job and return the path to it."""
         logger = logging.getLogger("cluster_utils")
 
         runs_script_name = "job_{}_{}.sh".format(job.iteration, job.id)
@@ -245,12 +246,20 @@ class SlurmClusterSubmission(ClusterSubmission):
             "sbatch_arg_lines": args.construct_argument_comment_block(),
         }
 
+        logger.debug("Write run script to %s", run_script_file_path)
         run_script_file_path.write_text(
             _SLURM_RUN_SCRIPT_TEMPLATE.format(**template_vars)
         )
         run_script_file_path.chmod(0o755)  # Make executable
 
         job.run_script_path = str(run_script_file_path)
+
+        return run_script_file_path
+
+    def submit_fn(self, job: Job) -> ClusterJobId:
+        logger = logging.getLogger("cluster_utils")
+
+        run_script_file_path = self._generate_run_script(job)
 
         sbatch_cmd = [
             "sbatch",
