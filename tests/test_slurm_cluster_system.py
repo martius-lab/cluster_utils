@@ -1,0 +1,146 @@
+import pathlib
+from types import SimpleNamespace
+
+import pytest
+
+from cluster.job import Job
+from cluster.slurm_cluster_system import SBatchArgumentBuilder, SlurmClusterSubmission
+
+
+@pytest.fixture()
+def job_data(tmp_path: pathlib.Path) -> SimpleNamespace:
+    base_requirements = {
+        "partition": "part-foo",
+        "request_cpus": 10,
+        "request_gpus": 2,
+        "memory_in_mb": 1000,
+        "request_time": "12:34",
+    }
+
+    jobs_dir = tmp_path / "jobs_dir"
+    jobs_dir.mkdir()
+    paths = {
+        "main_path": str(tmp_path / "main_path"),
+        "script_to_run": "foobar.py",
+        "jobs_dir": str(jobs_dir),
+        "current_result_dir": str(tmp_path / "current_result_dir"),
+    }
+
+    job = Job(
+        id=13,
+        settings={},
+        other_params={},
+        paths=paths,
+        iteration=2,
+        connection_info={"ip": "127.0.0.1", "port": 12345},
+        opt_procedure_name="unittest",
+        singularity_settings=None,
+    )
+
+    return SimpleNamespace(
+        requirements=base_requirements,
+        paths=paths,
+        jobs_dir=jobs_dir,
+        job=job,
+    )
+
+
+def test_sbatch_argument_builder():
+    args = SBatchArgumentBuilder()
+    args.add("foo", "bar")
+    args.add("x", 42)
+    args.extend_raw(["--extra1", "--extra2=val"])
+
+    expected = """#SBATCH --foo=bar
+#SBATCH --x=42
+#SBATCH --extra1
+#SBATCH --extra2=val"""
+
+    assert args.construct_argument_comment_block() == expected
+
+
+# Below is one big test, checking the whole run script file with only basic
+# requirements, followed by several tests with optional requirements which only check
+# that the corresponding argument appears in the file.
+
+
+def test_generate_run_script(job_data):
+    slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
+    run_script_path = slurm_sub._generate_run_script(job_data.job)
+
+    expected_path = job_data.jobs_dir / "job_2_13.sh"
+
+    assert run_script_path == expected_path
+    assert job_data.job.run_script_path == str(expected_path)
+
+    job_cmd = job_data.job.generate_execution_cmd(job_data.paths)
+    run_script = run_script_path.read_text()
+    assert (
+        run_script
+        == f"""#!/bin/bash
+#SBATCH --job-name=unittest_13
+#SBATCH --output={job_data.jobs_dir}/job_2_13.out
+#SBATCH --error={job_data.jobs_dir}/job_2_13.err
+#SBATCH --partition=part-foo
+#SBATCH --cpus-per-task=10
+#SBATCH --gpus-per-task=2
+#SBATCH --mem=1000M
+#SBATCH --time=12:34
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+
+# Submission ID 13
+
+{job_cmd}
+rc=$?
+if [[ $rc == 3 ]]; then
+    echo "exit with code 3 for resume"
+    exit 3
+elif [[ $rc == 1 ]]; then
+    # add an indicator file to more easily identify failed jobs
+    touch "{job_data.jobs_dir}/job_2_13.sh.FAILED"
+    exit 1
+fi
+"""
+    )
+
+
+def test_generate_run_script_exclude_one(job_data):
+    job_data.requirements["forbidden_hostnames"] = ["node1"]
+
+    slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
+    run_script_path = slurm_sub._generate_run_script(job_data.job)
+
+    run_script_lines = run_script_path.read_text().splitlines(keepends=False)
+    assert "#SBATCH --exclude=node1" in run_script_lines
+
+
+def test_generate_run_script_exclude_many(job_data):
+    job_data.requirements["forbidden_hostnames"] = ["node1", "node2", "node3"]
+
+    slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
+    run_script_path = slurm_sub._generate_run_script(job_data.job)
+
+    run_script_lines = run_script_path.read_text().splitlines(keepends=False)
+    assert "#SBATCH --exclude=node1,node2,node3" in run_script_lines
+
+
+def test_generate_run_script_exclude_empty(job_data):
+    job_data.requirements["forbidden_hostnames"] = []
+
+    slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
+    run_script_path = slurm_sub._generate_run_script(job_data.job)
+
+    run_script_text = run_script_path.read_text()
+    assert "#SBATCH --exclude=" not in run_script_text
+
+
+def test_generate_run_script_extra_options(job_data):
+    job_data.requirements["extra_submission_options"] = ["--one", "--two=2"]
+
+    slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
+    run_script_path = slurm_sub._generate_run_script(job_data.job)
+
+    run_script_lines = run_script_path.read_text().splitlines(keepends=False)
+    assert "#SBATCH --one" in run_script_lines
+    assert "#SBATCH --two=2" in run_script_lines
