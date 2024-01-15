@@ -41,8 +41,6 @@ class SlurmJobRequirements(NamedTuple):
     mem: str
     time: str
 
-    # request specific list of hosts
-    nodelist: list[str]
     # exclude specific list of hosts
     exclude: list[str]
 
@@ -68,7 +66,6 @@ class SlurmJobRequirements(NamedTuple):
                 gpus_per_task=req.pop("request_gpus", 0),
                 mem="{}M".format(req.pop("memory_in_mb")),
                 time=req.pop("request_time"),
-                nodelist=req.pop("hostname_list", []),
                 exclude=req.pop("forbidden_hostnames", []),
                 extra_submission_options=req.pop("extra_submission_options", []),
             )
@@ -230,9 +227,6 @@ class SlurmClusterSubmission(ClusterSubmission):
         args.add("time", self.requirements.time)
         args.add("nodes", self.requirements.nodes)
         args.add("ntasks", self.requirements.ntasks)
-
-        if self.requirements.nodelist:
-            args.add("nodelist", ",".join(self.requirements.nodelist))
 
         if self.requirements.exclude:
             args.add("exclude", ",".join(self.requirements.exclude))
