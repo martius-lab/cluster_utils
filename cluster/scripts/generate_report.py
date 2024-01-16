@@ -72,7 +72,7 @@ def initialize_logger(name: str, verbose: bool) -> logging.Logger:
         def __init__(self, *, fmt):
             logging.Formatter.__init__(self, fmt=fmt)
 
-        def format(self, record: logging.LogRecord) -> str:  # noqa: A003
+        def format(self, record: logging.LogRecord) -> str:
             msg = super().format(record)
             try:
                 return f"{self.STYLES[record.levelname]}{msg}{colorama.Style.RESET_ALL}"
