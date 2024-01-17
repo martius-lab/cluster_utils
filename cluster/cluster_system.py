@@ -21,8 +21,30 @@ ClusterJobId = NewType("ClusterJobId", str)
 
 
 class ClusterSubmission(ABC):
+    """Base class for cluster system interfaces.
+
+    Provides the logic for submitting jobs to the cluster system and tracking their
+    status.  Cluster system specific classes should be derived from this base class,
+    implementing the abstract methods.
+
+    How to submit a job
+    -------------------
+
+    First, a new job needs to be registered with :meth:`add_jobs`.  By default (with
+    `enqueue=True`), this automatically adds the job to the *submission queue*, a queue
+    which contains the jobs that are about to be submitted to the cluster.
+    Alternatively, `enqueue` can be set to False in which case in which case the job has
+    to be explicitly enqueued by calling :meth:`enqueue_job_for_submission`.
+
+    By calling :meth:`submit_next` you can then submit jobs from the queue one by one in
+    FIFO order.
+    """
+
     def __init__(self, paths: dict[str, str], remove_jobs_dir: bool = True) -> None:
+        #: List of all jobs that have been registered via :meth:`add_jobs`.
         self.jobs: list[Job] = []
+        #: Queue of jobs that are waiting to be submitted.
+        self.submission_queue: list[Job] = []
         self.remove_jobs_dir = remove_jobs_dir
         self.paths = paths
         self.submission_hooks: dict[str, ClusterSubmissionHook] = dict()
@@ -84,10 +106,46 @@ class ClusterSubmission(ABC):
                 return job
         return None
 
-    def add_jobs(self, jobs: Job | list[Job]):
+    def add_jobs(self, jobs: Job | list[Job], enqueue: bool = True) -> None:
+        """Register a new job.
+
+        Args:
+            jobs: Either a single Job instance or a list of jobs.
+            enqueue: If true, the added job is automatically appended to the submission
+                queue.
+        """
         if not isinstance(jobs, list):
             jobs = [jobs]
         self.jobs = self.jobs + jobs
+
+        if enqueue:
+            self.submission_queue.extend(jobs)
+
+    def enqueue_job_for_submission(self, job: Job) -> None:
+        """Add job to the submission queue."""
+        # TODO ensure that the job as been added first?
+        self.submission_queue.append(job)
+
+    def has_unsubmitted_jobs(self) -> bool:
+        """Check if there are jobs in the submission queue, waiting to be submitted."""
+        return bool(self.submission_queue)
+
+    def submit_next(self) -> None:
+        """Submit the next job from the submission queue.
+
+        Raises:
+            IndexError: if the submission queue is empty.  See also
+                :meth:`has_unsubmitted_jobs`.
+        """
+        logger = logging.getLogger("cluster_utils")
+        logger.debug("Submit next job from queue.")
+        try:
+            job = self.submission_queue.pop(0)
+        except IndexError as e:
+            # provide more understandable error message
+            raise IndexError("No job to submit, queue is empty.") from e
+
+        self.submit(job)
 
     @property
     def submitted_jobs(self) -> list[Job]:
