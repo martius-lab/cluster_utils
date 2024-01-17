@@ -25,8 +25,6 @@ class ClusterSubmission(ABC):
         self.jobs: list[Job] = []
         self.remove_jobs_dir = remove_jobs_dir
         self.paths = paths
-        self.submitted = False
-        self.finished = False
         self.submission_hooks: dict[str, ClusterSubmissionHook] = dict()
         self._inc_job_id = -1
         self.error_msgs: set[str] = set()
