@@ -123,7 +123,6 @@ class ClusterSubmission(ABC):
 
     def enqueue_job_for_submission(self, job: Job) -> None:
         """Add job to the submission queue."""
-        # TODO ensure that the job as been added first?
         self.submission_queue.append(job)
 
     def has_unsubmitted_jobs(self) -> bool:
