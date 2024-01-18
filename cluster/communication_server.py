@@ -8,8 +8,8 @@ import time
 import pyuv
 
 from cluster import constants
-from cluster.job import JobStatus
 from cluster.condor_cluster_system import CondorClusterSubmission
+from cluster.job import JobStatus
 
 
 class MessageTypes:
