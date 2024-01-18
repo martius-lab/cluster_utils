@@ -10,8 +10,6 @@ from multiprocessing import cpu_count
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
-import numpy as np
-
 from cluster import constants
 from cluster.cluster_system import ClusterJobId, ClusterSubmission
 from cluster.job import Job
@@ -29,12 +27,12 @@ class DummyClusterSubmission(ClusterSubmission):
         self.available_cpus = range(cpu_count())
         self.futures_tuple: list[tuple[ClusterJobId, concurrent.futures.Future]] = []
         self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
+        self.next_cluster_id = 0
 
     def generate_cluster_id(self) -> ClusterJobId:
-        cluster_id = np.random.randint(int(1e10))
-        while cluster_id in [c_id for c_id, future in self.futures_tuple]:
-            cluster_id = np.random.randint(int(1e10))
-        return ClusterJobId(str(cluster_id))
+        cluster_id = ClusterJobId(f"local-{self.next_cluster_id}")
+        self.next_cluster_id += 1
+        return cluster_id
 
     def submit_fn(self, job: Job) -> ClusterJobId:
         self.generate_job_spec_file(job)
