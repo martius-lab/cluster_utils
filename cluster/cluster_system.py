@@ -249,6 +249,15 @@ class ClusterSubmission(ABC):
         job.cluster_id = cluster_id
         job.status = JobStatus.SUBMITTED
 
+        if job.waiting_for_resume:
+            logger.info(
+                "Job with id %d re-submitted with cluster id %s", job.id, job.cluster_id
+            )
+        else:
+            logger.info(
+                "Job with id %d submitted with cluster id %s", job.id, job.cluster_id
+            )
+
     def stop(self, job: Job) -> None:
         if job.cluster_id is None:
             raise RuntimeError(
@@ -403,6 +412,7 @@ def get_cluster_type(
                 run_local = True
 
         if run_local:
+            logger.info("No cluster detected, running locally")
             return DummyClusterSubmission
         else:
             raise OSError("Neither CONDOR nor SLURM was found. Not running locally")

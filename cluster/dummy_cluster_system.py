@@ -37,7 +37,6 @@ class DummyClusterSubmission(ClusterSubmission):
         return ClusterJobId(str(cluster_id))
 
     def submit_fn(self, job: Job) -> ClusterJobId:
-        logger = logging.getLogger("cluster_utils")
         self.generate_job_spec_file(job)
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
         free_cpus_str = ",".join(map(str, free_cpus))
@@ -49,9 +48,9 @@ class DummyClusterSubmission(ClusterSubmission):
                 run, cmd, stdout=PIPE, stderr=PIPE, shell=True  # type:ignore
             ),
         )
-        logger.info(f"Job with id {job.id} submitted locally.")
         job.futures_object = new_futures_tuple[1]
         self.futures_tuple.append(new_futures_tuple)
+
         return cluster_id
 
     def stop_fn(self, job_id: ClusterJobId) -> None:

@@ -308,12 +308,6 @@ class SlurmClusterSubmission(ClusterSubmission):
             self.close()
             raise SubmissionError(str(e)) from e
 
-        logger.info(
-            "Job with id %d submitted to Slurm cluster with cluster id %s.",
-            job.id,
-            cluster_job_id,
-        )
-
         if sbatch_stdout.count("\n") > 1:
             logger.warning(
                 "sbatch produced more than one line of output which is unexpected."

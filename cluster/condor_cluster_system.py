@@ -85,10 +85,6 @@ class CondorClusterSubmission(ClusterSubmission):
 
         assert len(good_lines) == 1
         new_cluster_id = good_lines[0].split(" ")[-1][:-1]
-        logger.info(
-            f"Job with id {job.id} submitted to condor cluster with cluster id"
-            f" {new_cluster_id}."
-        )
 
         return ClusterJobId(new_cluster_id)
 
