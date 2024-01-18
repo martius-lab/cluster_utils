@@ -144,7 +144,7 @@ class ClusterSubmission(ABC):
             # provide more understandable error message
             raise IndexError("No job to submit, queue is empty.") from e
 
-        self.submit(job)
+        self._submit(job)
 
     @property
     def submitted_jobs(self) -> list[Job]:
@@ -226,13 +226,7 @@ class ClusterSubmission(ABC):
     def submit_all(self) -> None:
         for job in self.current_jobs:
             if job.cluster_id is None:
-                self.submit(job)
-
-    def submit(self, job: Job) -> None:
-        self._submit(job)
-        # t = Thread(target=self._submit, args=(job,), daemon=True)
-        # self.exec_pre_submission_routines()
-        # t.start()
+                self._submit(job)
 
     def _submit(self, job: Job) -> None:
         logger = logging.getLogger("cluster_utils")
