@@ -35,7 +35,10 @@ class DummyClusterSubmission(ClusterSubmission):
         return cluster_id
 
     def submit_fn(self, job: Job) -> ClusterJobId:
-        self.generate_job_spec_file(job)
+        # only generate run script for jobs that are submitted the first time
+        if not job.waiting_for_resume:
+            self.generate_job_spec_file(job)
+
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
         free_cpus_str = ",".join(map(str, free_cpus))
         cmd = "taskset --cpu-list {} bash {}".format(free_cpus_str, job.run_script_path)
@@ -72,6 +75,9 @@ class DummyClusterSubmission(ClusterSubmission):
                 job.mark_failed(msg)
 
     def generate_job_spec_file(self, job: Job) -> None:
+        logger = logging.getLogger("cluster_utils")
+        logger.debug("Generate run script for job %d.", job.id)
+
         job_file_name = "{}_{}.sh".format(job.iteration, job.id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
         cmd = job.generate_execution_cmd(self.paths)

@@ -84,29 +84,20 @@ queue
 """
 
 
-LOCAL_RUN_SCRIPT = f"""#!/bin/bash
+LOCAL_RUN_SCRIPT = """#!/bin/bash
 # %(id)d
 
-error=%(run_script_file_path)s.err
-output=%(run_script_file_path)s.out
+error="%(run_script_file_path)s.err"
+output="%(run_script_file_path)s.out"
 
 # Close standard output and error file descriptors
 exec 1<&-
 exec 2<&-
 
 # Redirect output and error streams to files from here on
-exec 1<>$output
-exec 2<>$error
+exec 1>>"$output"
+exec 2>>"$error"
 
-while true; do
-    %(cmd)s
-
-    rc=$?
-    if [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
-        echo "exit with code {RETURN_CODE_FOR_RESUME} for resume: restarting"
-        sleep 1
-    else
-        exit $rc
-    fi
-done
+%(cmd)s
+exit $?
 """

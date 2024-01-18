@@ -393,24 +393,25 @@ def hp_optimization(
                 and cluster_interface.n_submitted_jobs < number_of_samples
                 and not iteration_finished
             ):
-                if not cluster_interface.has_unsubmitted_jobs():
-                    new_settings = hp_optimizer.ask()
-                    new_job = Job(
-                        id=cluster_interface.inc_job_id,
-                        settings=new_settings,
-                        other_params=processed_other_params,
-                        paths=base_paths_and_files,
-                        iteration=hp_optimizer.iteration + 1,
-                        connection_info=comm_server.connection_info,
-                        metric_to_watch=metric_to_optimize,
-                        opt_procedure_name=opt_procedure_name,
-                        singularity_settings=singularity_settings,
-                    )
-                    if isinstance(hp_optimizer, NGOptimizer):
-                        hp_optimizer.add_candidate(new_job.id)
-                    cluster_interface.add_jobs(new_job)
+                new_settings = hp_optimizer.ask()
+                new_job = Job(
+                    id=cluster_interface.inc_job_id,
+                    settings=new_settings,
+                    other_params=processed_other_params,
+                    paths=base_paths_and_files,
+                    iteration=hp_optimizer.iteration + 1,
+                    connection_info=comm_server.connection_info,
+                    metric_to_watch=metric_to_optimize,
+                    opt_procedure_name=opt_procedure_name,
+                    singularity_settings=singularity_settings,
+                )
+                if isinstance(hp_optimizer, NGOptimizer):
+                    hp_optimizer.add_candidate(new_job.id)
+                cluster_interface.add_jobs(new_job)
 
+            if cluster_interface.has_unsubmitted_jobs():
                 cluster_interface.submit_next()
+
             if iteration_finished:
                 post_iteration_opt(
                     cluster_interface,

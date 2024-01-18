@@ -237,7 +237,7 @@ class ClusterSubmission(ABC):
 
     def _submit(self, job: Job) -> None:
         logger = logging.getLogger("cluster_utils")
-        if job.cluster_id is not None:
+        if job.cluster_id is not None and not job.waiting_for_resume:
             raise RuntimeError("Can not run a job that already ran")
         if job not in self.jobs:
             logger.warning(

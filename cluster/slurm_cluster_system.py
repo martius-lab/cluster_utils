@@ -10,26 +10,33 @@ from typing import Any, NamedTuple, Sequence
 
 from cluster import settings
 from cluster.cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
+from cluster.constants import RETURN_CODE_FOR_RESUME
 from cluster.job import Job
 
 # TODO: handle return codes != 0,1,3 ?
-# TODO: exit for resume probably needs different handling here
 _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
 {sbatch_arg_lines}
 
 # Submission ID {id}
 
+echo "==== Start execution. ===="
+echo "Job id: {id}, cluster id: ${{SLURM_JOB_ID}}, hostname: $(hostname), time: $(date)"
+echo
+
 {cmd}
 rc=$?
-if [[ $rc == 3 ]]; then
-    echo "exit with code 3 for resume"
-    exit 3
+if [[ $rc == %(RETURN_CODE_FOR_RESUME)d ]]; then
+    echo "exit with code %(RETURN_CODE_FOR_RESUME)d for resume"
+    # do not forward the exit code, as otherwise Slurm will think there was an error
+    exit 0
 elif [[ $rc == 1 ]]; then
     # add an indicator file to more easily identify failed jobs
     touch "{run_script_file_path}.FAILED"
     exit 1
 fi
-"""
+""" % {
+    "RETURN_CODE_FOR_RESUME": RETURN_CODE_FOR_RESUME
+}
 
 
 class SlurmJobRequirements(NamedTuple):
@@ -204,8 +211,11 @@ class SlurmClusterSubmission(ClusterSubmission):
         #: Time stamp of the last time checking for errors
         self._last_time_checking_for_failures = 0.0
 
-    def _generate_run_script(self, job: Job) -> pathlib.Path:
-        """Generate a sbatch run script for the given job and return the path to it."""
+    def _generate_run_script(self, job: Job):
+        """Generate a sbatch run script for the given job and return the path to it.
+
+        The path to the script is written to ``job.runs_script_path``.
+        """
         logger = logging.getLogger("cluster_utils")
 
         runs_script_name = "job_{}_{}.sh".format(job.iteration, job.id)
@@ -248,17 +258,18 @@ class SlurmClusterSubmission(ClusterSubmission):
 
         job.run_script_path = str(run_script_file_path)
 
-        return run_script_file_path
-
     def submit_fn(self, job: Job) -> ClusterJobId:
         logger = logging.getLogger("cluster_utils")
 
-        run_script_file_path = self._generate_run_script(job)
+        # only generate run script for jobs that are submitted the first time
+        if not job.waiting_for_resume:
+            self._generate_run_script(job)
 
-        sbatch_cmd = [
-            "sbatch",
-            str(run_script_file_path),
-        ]
+        assert job.run_script_path is not None
+
+        # use open-mode=append so that output of jobs that are restarted (via
+        # exit_for_resume) does not overwrite the output of previous runs
+        sbatch_cmd = ["sbatch", "--open-mode=append", job.run_script_path]
         logger.debug("Execute command %s", sbatch_cmd)
 
         # TODO This timeout/retry-loop is copied from the Condor implementation.  Does

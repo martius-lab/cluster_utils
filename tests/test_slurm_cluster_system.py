@@ -66,11 +66,11 @@ def test_sbatch_argument_builder():
 
 def test_generate_run_script(job_data):
     slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
-    run_script_path = slurm_sub._generate_run_script(job_data.job)
+    slurm_sub._generate_run_script(job_data.job)
+    run_script_path = pathlib.Path(job_data.job.run_script_path)
 
     expected_path = job_data.jobs_dir / "job_2_13.sh"
 
-    assert run_script_path == expected_path
     assert job_data.job.run_script_path == str(expected_path)
 
     job_cmd = job_data.job.generate_execution_cmd(job_data.paths)
@@ -91,11 +91,16 @@ def test_generate_run_script(job_data):
 
 # Submission ID 13
 
+echo "==== Start execution. ===="
+echo "Job id: 13, cluster id: ${{SLURM_JOB_ID}}, hostname: $(hostname), time: $(date)"
+echo
+
 {job_cmd}
 rc=$?
 if [[ $rc == 3 ]]; then
     echo "exit with code 3 for resume"
-    exit 3
+    # do not forward the exit code, as otherwise Slurm will think there was an error
+    exit 0
 elif [[ $rc == 1 ]]; then
     # add an indicator file to more easily identify failed jobs
     touch "{job_data.jobs_dir}/job_2_13.sh.FAILED"
@@ -109,7 +114,8 @@ def test_generate_run_script_exclude_one(job_data):
     job_data.requirements["forbidden_hostnames"] = ["node1"]
 
     slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
-    run_script_path = slurm_sub._generate_run_script(job_data.job)
+    slurm_sub._generate_run_script(job_data.job)
+    run_script_path = pathlib.Path(job_data.job.run_script_path)
 
     run_script_lines = run_script_path.read_text().splitlines(keepends=False)
     assert "#SBATCH --exclude=node1" in run_script_lines
@@ -119,7 +125,8 @@ def test_generate_run_script_exclude_many(job_data):
     job_data.requirements["forbidden_hostnames"] = ["node1", "node2", "node3"]
 
     slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
-    run_script_path = slurm_sub._generate_run_script(job_data.job)
+    slurm_sub._generate_run_script(job_data.job)
+    run_script_path = pathlib.Path(job_data.job.run_script_path)
 
     run_script_lines = run_script_path.read_text().splitlines(keepends=False)
     assert "#SBATCH --exclude=node1,node2,node3" in run_script_lines
@@ -129,7 +136,8 @@ def test_generate_run_script_exclude_empty(job_data):
     job_data.requirements["forbidden_hostnames"] = []
 
     slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
-    run_script_path = slurm_sub._generate_run_script(job_data.job)
+    slurm_sub._generate_run_script(job_data.job)
+    run_script_path = pathlib.Path(job_data.job.run_script_path)
 
     run_script_text = run_script_path.read_text()
     assert "#SBATCH --exclude=" not in run_script_text
@@ -139,7 +147,8 @@ def test_generate_run_script_extra_options(job_data):
     job_data.requirements["extra_submission_options"] = ["--one", "--two=2"]
 
     slurm_sub = SlurmClusterSubmission(job_data.requirements, job_data.paths)
-    run_script_path = slurm_sub._generate_run_script(job_data.job)
+    slurm_sub._generate_run_script(job_data.job)
+    run_script_path = pathlib.Path(job_data.job.run_script_path)
 
     run_script_lines = run_script_path.read_text().splitlines(keepends=False)
     assert "#SBATCH --one" in run_script_lines
