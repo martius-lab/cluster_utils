@@ -40,4 +40,12 @@ python -m cluster.grid_search tests/grid_search_resume.json \
 y
 y
 EOF
+
+python -m cluster.hp_optimization tests/hp_opt_resume.toml \
+    "no_user_interaction=True" \
+    "results_dir=\"$test_dir\"" \
+    <<EOF
+y
+y
+EOF
 # ^This is a temporary crutch because we need to say Yes to the questions cluster_utils asks
