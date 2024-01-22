@@ -38,7 +38,7 @@ function assert_report_exists {
 #
 (
     set -x
-    python -m cluster.grid_search tests/grid_search.json \
+    python -m cluster_utils.grid_search tests/grid_search.json \
         "no_user_interaction=True" \
         "results_dir=\"$test_dir\"" \
         "generate_report=\"when_finished\"" \
@@ -53,7 +53,7 @@ assert_report_exists grid_search "${test_dir}/test_grid_search/test_grid_search_
 # test manual report generation
 (
     set -x
-    python -m cluster.scripts.generate_report \
+    python -m cluster_utils.scripts.generate_report \
         "${test_dir}/test_grid_search" \
         "${test_dir}/test_grid_search/offline_report.pdf"
 )
@@ -66,7 +66,7 @@ assert_report_exists "generate_report (grid_search)" \
 #
 (
     set -x
-    python -m cluster.hp_optimization tests/hp_opt.json \
+    python -m cluster_utils.hp_optimization tests/hp_opt.json \
         "no_user_interaction=True" \
         "results_dir=\"$test_dir\"" \
         "generate_report=\"every_iteration\"" \
@@ -80,7 +80,7 @@ assert_report_exists hp_optimization "${test_dir}/test_hp_opt/result.pdf"
 # test manual report generation
 (
     set -x
-    python -m cluster.scripts.generate_report \
+    python -m cluster_utils.scripts.generate_report \
         "${test_dir}/test_hp_opt" "${test_dir}/test_hp_opt/offline_report.pdf"
 )
 assert_report_exists "generate_report (hp_optimization)" \

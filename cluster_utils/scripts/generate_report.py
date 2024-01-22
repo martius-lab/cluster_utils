@@ -19,15 +19,15 @@ import typing
 import colorama
 import pandas as pd
 
-from cluster import report
-from cluster.constants import (
+from cluster_utils import report
+from cluster_utils.constants import (
     FULL_DF_FILE,
     METADATA_FILE,
     REPORT_DATA_FILE,
     STATUS_PICKLE_FILE,
 )
-from cluster.optimizers import Optimizer
-from cluster.utils import ClusterRunType
+from cluster_utils.optimizers import Optimizer
+from cluster_utils.utils import ClusterRunType
 
 LOGGER_NAME = "generate_report"
 

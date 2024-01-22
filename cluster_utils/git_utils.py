@@ -6,8 +6,8 @@ from time import sleep
 
 import git
 
-from cluster.cluster_system import ClusterSubmissionHook
-from cluster.utils import rm_dir_full
+from .cluster_system import ClusterSubmissionHook
+from .utils import rm_dir_full
 
 
 def sanitize_for_latex(string):

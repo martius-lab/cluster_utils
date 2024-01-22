@@ -53,13 +53,13 @@ See [docs/installation.rst](docs/installation.rst)
 There are two basic functionalities:
 
 ```bash
-python3 -m cluster.grid_search specification_of_grid_search.json
+python3 -m cluster_utils.grid_search specification_of_grid_search.json
 ```
 
 and
 
 ```bash
-python3 -m cluster.hp_optimization specification_of_hp_opt.json
+python3 -m cluster_utils.hp_optimization specification_of_hp_opt.json
 ```
 
 for hyperparameter optimization
@@ -70,7 +70,7 @@ See `examples/basic` and `examples/rosenbrock` for simple demonstrations.
 
 ### Environment Setup
 
-The simplest way to specify your Python environment is to activate it (using virtualenv, pipenv, conda, etc.) before calling `python -m cluster.grid_search` or `python -m cluster.hp_optimization`.
+The simplest way to specify your Python environment is to activate it (using virtualenv, pipenv, conda, etc.) before calling `python -m cluster_utils.grid_search` or `python -m cluster_utils.hp_optimization`.
 The jobs will automatically inherit this environment.
 A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
 

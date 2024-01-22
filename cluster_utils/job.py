@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 
-from cluster import constants
-from cluster.utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
+from . import constants
+from .utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
 
 if TYPE_CHECKING:
     import concurrent.futures
 
-    from cluster.cluster_system import ClusterJobId
-    from cluster.settings import SingularitySettings
+    from .cluster_system import ClusterJobId
+    from .settings import SingularitySettings
 
 
 class JobStatus:

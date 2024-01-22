@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING, NewType, Optional, Sequence
 
 import colorama
 
-from cluster.job import Job, JobStatus
-from cluster.utils import rm_dir_full, styled
+from .job import Job, JobStatus
+from .utils import rm_dir_full, styled
 
 if TYPE_CHECKING:
-    from cluster.condor_cluster_system import CondorClusterSubmission
-    from cluster.dummy_cluster_system import DummyClusterSubmission
-    from cluster.slurm_cluster_system import SlurmClusterSubmission
+    from .condor_cluster_system import CondorClusterSubmission
+    from .dummy_cluster_system import DummyClusterSubmission
+    from .slurm_cluster_system import SlurmClusterSubmission
 
 # use a dedicated type for cluster job ids instead of 'str' (this makes function
 # signatures easier to understand).  ClusterJobId will behave like a subclass of str.
@@ -253,7 +253,7 @@ class ClusterSubmission(ABC):
             )
 
     def resume(self, job: Job) -> None:
-        """Resume a job that was terminated with :func:`~cluster.exit_for_resume`."""
+        """Resume a job that was terminated with :func:`~cluster_utils.exit_for_resume`."""
         job.waiting_for_resume = True
         self.resume_fn(job)
 
@@ -395,9 +395,9 @@ def get_cluster_type(
     | type[SlurmClusterSubmission]
     | type[DummyClusterSubmission]
 ):
-    from cluster.condor_cluster_system import CondorClusterSubmission
-    from cluster.dummy_cluster_system import DummyClusterSubmission
-    from cluster.slurm_cluster_system import SlurmClusterSubmission
+    from .condor_cluster_system import CondorClusterSubmission
+    from .dummy_cluster_system import DummyClusterSubmission
+    from .slurm_cluster_system import SlurmClusterSubmission
 
     logger = logging.getLogger("cluster_utils")
 

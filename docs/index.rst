@@ -37,13 +37,13 @@ There are two basic functionalities:
 
 .. code-block:: bash
 
-   python3 -m cluster.grid_search specification_of_grid_search.json
+   python3 -m cluster_utils.grid_search specification_of_grid_search.json
 
 and
 
 .. code-block:: bash
 
-   python3 -m cluster.hp_optimization specification_of_hp_opt.json
+   python3 -m cluster_utils.hp_optimization specification_of_hp_opt.json
 
 for hyperparameter optimization
 

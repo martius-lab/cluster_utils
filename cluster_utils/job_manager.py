@@ -11,21 +11,21 @@ import time
 import numpy as np
 import pandas as pd
 
-from cluster import constants
-from cluster.cluster_system import get_cluster_type
-from cluster.communication_server import CommunicationServer
-from cluster.git_utils import ClusterSubmissionGitHook
-from cluster.job import Job, JobStatus
-from cluster.optimizers import NGOptimizer
-from cluster.progress_bars import (
+from . import constants
+from .cluster_system import get_cluster_type
+from .communication_server import CommunicationServer
+from .git_utils import ClusterSubmissionGitHook
+from .job import Job, JobStatus
+from .optimizers import NGOptimizer
+from .progress_bars import (
     CompletedJobsBar,
     RunningJobsBar,
     SubmittedJobsBar,
     redirect_stdout_to_tqdm,
 )
-from cluster.settings import GenerateReportSetting, optimizer_dict
-from cluster.user_interaction import InteractiveMode, NonInteractiveMode
-from cluster.utils import (
+from .settings import GenerateReportSetting, optimizer_dict
+from .user_interaction import InteractiveMode, NonInteractiveMode
+from .utils import (
     ClusterRunType,
     log_and_print,
     make_red,
@@ -258,7 +258,7 @@ def post_iteration_opt(
 
     if generate_report:
         # conditional import as it depends on optional dependencies
-        from cluster.report import produce_optimization_report
+        from .report import produce_optimization_report
 
         produce_optimization_report(
             hp_optimizer,

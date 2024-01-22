@@ -1,6 +1,6 @@
 import time
 
-from cluster import read_params_from_cmdline
+from cluster_utils import read_params_from_cmdline
 
 if __name__ == "__main__":
     params = read_params_from_cmdline()

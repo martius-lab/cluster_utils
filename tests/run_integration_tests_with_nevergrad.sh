@@ -5,7 +5,7 @@ test_dir=$1
 set -e
 set -x
 
-python -m cluster.hp_optimization tests/hp_opt_nevergrad.json \
+python -m cluster_utils.hp_optimization tests/hp_opt_nevergrad.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF

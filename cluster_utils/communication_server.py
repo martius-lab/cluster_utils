@@ -7,8 +7,8 @@ import time
 
 import pyuv
 
-from cluster import constants
-from cluster.job import JobStatus
+from . import constants
+from .job import JobStatus
 
 
 class MessageTypes:

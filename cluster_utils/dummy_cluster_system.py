@@ -10,8 +10,8 @@ from multiprocessing import cpu_count
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
-from cluster.cluster_system import ClusterJobId, ClusterSubmission
-from cluster.job import Job
+from .cluster_system import ClusterJobId, ClusterSubmission
+from .job import Job
 
 LOCAL_RUN_SCRIPT = """#!/bin/bash
 # %(id)d

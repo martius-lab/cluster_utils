@@ -4,7 +4,7 @@ import sys
 import termios
 import tty
 
-from cluster.utils import log_and_print, make_red
+from .utils import log_and_print, make_red
 
 
 class InteractiveMode:

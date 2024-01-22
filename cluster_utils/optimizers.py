@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Sequence
 
 import pandas as pd
 
-from cluster import constants, data_analysis, distributions
-from cluster.utils import OptionalDependencyImport, get_sample_generator, nested_to_dict
+from . import constants, data_analysis, distributions
+from .utils import OptionalDependencyImport, get_sample_generator, nested_to_dict
 
 if TYPE_CHECKING:
-    from cluster import latex_utils
+    from . import latex_utils
 
 
 class Optimizer(ABC):

@@ -6,7 +6,14 @@ import nox
 
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
-LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
+LOCATIONS = (
+    "cluster_utils/",
+    "cluster/",
+    "examples/",
+    "tests/",
+    "noxfile.py",
+    "setup.py",
+)
 
 
 @nox.session(python=PYTHON_VERSIONS, tags=["lint"])

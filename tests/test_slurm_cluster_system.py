@@ -3,8 +3,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from cluster.job import Job
-from cluster.slurm_cluster_system import SBatchArgumentBuilder, SlurmClusterSubmission
+from cluster_utils.job import Job
+from cluster_utils.slurm_cluster_system import (
+    SBatchArgumentBuilder,
+    SlurmClusterSubmission,
+)
 
 
 @pytest.fixture()

@@ -8,10 +8,10 @@ import time
 from subprocess import PIPE, run
 from typing import Any, NamedTuple, Sequence
 
-from cluster import settings
-from cluster.cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
-from cluster.constants import RETURN_CODE_FOR_RESUME
-from cluster.job import Job
+from . import settings
+from .cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
+from .constants import RETURN_CODE_FOR_RESUME
+from .job import Job
 
 # TODO: handle return codes != 0,1,3 ?
 _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
