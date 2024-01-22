@@ -10,9 +10,26 @@ from multiprocessing import cpu_count
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
-from cluster import constants
 from cluster.cluster_system import ClusterJobId, ClusterSubmission
 from cluster.job import Job
+
+LOCAL_RUN_SCRIPT = """#!/bin/bash
+# %(id)d
+
+error="%(run_script_file_path)s.err"
+output="%(run_script_file_path)s.out"
+
+# Close standard output and error file descriptors
+exec 1<&-
+exec 2<&-
+
+# Redirect output and error streams to files from here on
+exec 1>>"$output"
+exec 2>>"$error"
+
+%(cmd)s
+exit $?
+"""
 
 
 class DummyClusterSubmission(ClusterSubmission):
@@ -46,7 +63,11 @@ class DummyClusterSubmission(ClusterSubmission):
         new_futures_tuple = (
             cluster_id,
             self.executor.submit(
-                run, cmd, stdout=PIPE, stderr=PIPE, shell=True  # type:ignore
+                run,
+                cmd,
+                stdout=PIPE,
+                stderr=PIPE,
+                shell=True,  # type:ignore
             ),
         )
         job.futures_object = new_futures_tuple[1]
@@ -87,7 +108,7 @@ class DummyClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, "w") as script_file:
-            script_file.write(constants.LOCAL_RUN_SCRIPT % namespace)
+            script_file.write(LOCAL_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0o755)  # Make executable
 
         job.run_script_path = run_script_file_path

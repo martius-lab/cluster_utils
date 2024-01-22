@@ -10,9 +10,59 @@ from copy import copy
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
-from cluster import constants
 from cluster.cluster_system import ClusterJobId, ClusterSubmission
+from cluster.constants import RETURN_CODE_FOR_RESUME
 from cluster.job import Job
+
+MPI_CLUSTER_MAX_NUM_TOKENS = 10000
+
+MPI_CLUSTER_RUN_SCRIPT = f"""#!/bin/bash
+# Submission ID %(id)d
+
+%(cmd)s
+rc=$?
+if [[ $rc == 0 ]]; then
+    rm -f %(run_script_file_path)s
+    rm -f %(job_spec_file_path)s
+elif [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
+    echo "exit with code {RETURN_CODE_FOR_RESUME} for resume"
+    exit {RETURN_CODE_FOR_RESUME}
+elif [[ $rc == 1 ]]; then
+    exit 1
+fi
+"""
+# TODO: the MPI_CLUSTER_RUN_SCRIPT above does not forward errorcodes other than 1 and 3.
+# Could this be a problem?
+
+MPI_CLUSTER_JOB_SPEC_FILE = f"""# Submission ID %(id)d
+JobBatchName=%(opt_procedure_name)s
+executable = %(run_script_file_path)s
+
+error = %(run_script_file_path)s.err
+output = %(run_script_file_path)s.out
+log = %(run_script_file_path)s.log
+
+request_cpus=%(cpus)s
+request_gpus=%(gpus)s
+request_memory=%(mem)s
+
+%(requirements_line)s
+
+on_exit_hold = (ExitCode =?= {RETURN_CODE_FOR_RESUME})
+on_exit_hold_reason = "Checkpointed, will resume"
+on_exit_hold_subcode = 2
+periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= {RETURN_CODE_FOR_RESUME}) && (HoldReasonSubCode =?= 2) )
+
+# Inherit environment variables at submission time in job script
+getenv=True
+
+%(concurrent_line)s
+
+%(extra_submission_lines)s
+
+queue
+"""
+
 
 CondorRecord = namedtuple(
     "CondorRecord",
@@ -139,11 +189,11 @@ class CondorClusterSubmission(ClusterSubmission):
         namespace.update(locals())
 
         with open(run_script_file_path, "w") as script_file:
-            script_file.write(constants.MPI_CLUSTER_RUN_SCRIPT % namespace)
+            script_file.write(MPI_CLUSTER_RUN_SCRIPT % namespace)
         os.chmod(run_script_file_path, 0o755)  # Make executable
 
         with open(job_spec_file_path, "w") as spec_file:
-            spec_file.write(constants.MPI_CLUSTER_JOB_SPEC_FILE % namespace)
+            spec_file.write(MPI_CLUSTER_JOB_SPEC_FILE % namespace)
 
         job.job_spec_file_path = job_spec_file_path
         job.run_script_path = run_script_file_path
@@ -215,9 +265,7 @@ class CondorClusterSubmission(ClusterSubmission):
 
         self.concurrent_line = ""
         if concurrency_limit_tag is not None and concurrency_limit is not None:
-            concurrency_limit = (
-                constants.MPI_CLUSTER_MAX_NUM_TOKENS // concurrency_limit
-            )
+            concurrency_limit = MPI_CLUSTER_MAX_NUM_TOKENS // concurrency_limit
             self.concurrent_line = (
                 f"concurrency_limits=user.{concurrency_limit_tag}:{concurrency_limit}"
             )

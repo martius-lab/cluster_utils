@@ -8,6 +8,13 @@ import pandas as pd
 
 from cluster import constants
 
+DISTR_BASE_COLORS = [
+    (0.99, 0.7, 0.18),
+    (0.7, 0.7, 0.9),
+    (0.56, 0.692, 0.195),
+    (0.923, 0.386, 0.209),
+]
+
 
 def performance_summary(df, metrics):
     perf = {}
@@ -88,7 +95,7 @@ def darker(color, factor=0.85):
 
 def color_scheme():
     while True:
-        for color in constants.DISTR_BASE_COLORS:
+        for color in DISTR_BASE_COLORS:
             for _ in range(5):
                 yield color
                 color = darker(color)
