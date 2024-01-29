@@ -36,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   use-case is to enable debug output via `export CLUSTER_UTILS_LOG_LEVEL=debug`.
 - Option to run jobs in Singularity/Apptainer containers (see
   {ref}`config_singularity`).
-- Basic Slurm support (only basic options in `cluster_requirements` are
-  supported so far, see {ref}`config_cluster_requirements`).
+- Basic Slurm support (Note supported options in `cluster_requirements` differs a bit
+  from HTCondor, see {ref}`config_cluster_requirements`).
 
 ### Fixed
 - Make it work with Python >=3.10

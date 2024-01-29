@@ -15,18 +15,7 @@ from cluster.job import Job
 # TODO: handle return codes != 0,1,3 ?
 # TODO: exit for resume probably needs different handling here
 _SLURM_RUN_SCRIPT_TEMPLATE = """#!/bin/bash
-#SBATCH --job-name={job_name}_{id}
-#SBATCH --output={output_file}
-#SBATCH --error={error_file}
-
-#SBATCH --partition={partition}
-#SBATCH --cpus-per-task={cpus_per_task:d}
-#SBATCH --gpus-per-task={gpus_per_task:d}
-#SBATCH --mem={mem}
-#SBATCH --time={time}
-#SBATCH --nodes={nodes}
-#SBATCH --ntasks={ntasks}
-{extra_sbatch_args}
+{sbatch_arg_lines}
 
 # Submission ID {id}
 
@@ -52,6 +41,9 @@ class SlurmJobRequirements(NamedTuple):
     mem: str
     time: str
 
+    # exclude specific list of hosts
+    exclude: list[str]
+
     # list of arbitrary sbatch options for things that are not covered by the settings
     # above (e.g. something like "--gpu-freq=high")
     extra_submission_options: list[str]
@@ -74,6 +66,7 @@ class SlurmJobRequirements(NamedTuple):
                 gpus_per_task=req.pop("request_gpus", 0),
                 mem="{}M".format(req.pop("memory_in_mb")),
                 time=req.pop("request_time"),
+                exclude=req.pop("forbidden_hostnames", []),
                 extra_submission_options=req.pop("extra_submission_options", []),
             )
         except KeyError as e:
@@ -91,6 +84,29 @@ class SlurmJobRequirements(NamedTuple):
             )
 
         return obj
+
+
+class SBatchArgumentBuilder:
+    """Construct an sbatch argument comment block.
+
+    The argument block consists of lines that each start with ``#SBATCH``, followed by
+    an argument.
+    """
+
+    def __init__(self) -> None:
+        self.args: list[str] = []
+
+    def add(self, name: str, value: Any) -> None:
+        """Add an argument (will be added as "--name=value")."""
+        self.args.append(f"--{name}={value}")
+
+    def extend_raw(self, raw_args: list[str]) -> None:
+        """Add list of 'raw' arguments (i.e. already in the form '--name=value')."""
+        self.args.extend(raw_args)
+
+    def construct_argument_comment_block(self) -> str:
+        """Construct block of #SBATCH comments for use in a sbatch run script."""
+        return "\n".join((f"#SBATCH {arg}" for arg in self.args))
 
 
 def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
@@ -188,7 +204,8 @@ class SlurmClusterSubmission(ClusterSubmission):
         #: Time stamp of the last time checking for errors
         self._last_time_checking_for_failures = 0.0
 
-    def submit_fn(self, job: Job) -> ClusterJobId:
+    def _generate_run_script(self, job: Job) -> pathlib.Path:
+        """Generate a sbatch run script for the given job and return the path to it."""
         logger = logging.getLogger("cluster_utils")
 
         runs_script_name = "job_{}_{}.sh".format(job.iteration, job.id)
@@ -199,33 +216,44 @@ class SlurmClusterSubmission(ClusterSubmission):
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
 
-        extra_sbatch_args = "\n".join(
-            (f"#SBATCH {opt}" for opt in self.requirements.extra_submission_options)
-        )
+        args = SBatchArgumentBuilder()
+        args.add("job-name", f"{job.opt_procedure_name}_{job.id}")
+        args.add("output", stdout_file)
+        args.add("error", stderr_file)
+        args.add("partition", self.requirements.partition)
+        args.add("cpus-per-task", self.requirements.cpus_per_task)
+        args.add("gpus-per-task", self.requirements.gpus_per_task)
+        args.add("mem", self.requirements.mem)
+        args.add("time", self.requirements.time)
+        args.add("nodes", self.requirements.nodes)
+        args.add("ntasks", self.requirements.ntasks)
+
+        if self.requirements.exclude:
+            args.add("exclude", ",".join(self.requirements.exclude))
+
+        args.extend_raw(self.requirements.extra_submission_options)
 
         template_vars = {
-            "job_name": job.opt_procedure_name,
-            "output_file": stdout_file,
-            "error_file": stderr_file,
             "id": job.id,
             "cmd": cmd,
             "run_script_file_path": run_script_file_path,
-            "partition": self.requirements.partition,
-            "cpus_per_task": self.requirements.cpus_per_task,
-            "gpus_per_task": self.requirements.gpus_per_task,
-            "mem": self.requirements.mem,
-            "time": self.requirements.time,
-            "nodes": self.requirements.nodes,
-            "ntasks": self.requirements.ntasks,
-            "extra_sbatch_args": extra_sbatch_args,
+            "sbatch_arg_lines": args.construct_argument_comment_block(),
         }
 
+        logger.debug("Write run script to %s", run_script_file_path)
         run_script_file_path.write_text(
             _SLURM_RUN_SCRIPT_TEMPLATE.format(**template_vars)
         )
         run_script_file_path.chmod(0o755)  # Make executable
 
         job.run_script_path = str(run_script_file_path)
+
+        return run_script_file_path
+
+    def submit_fn(self, job: Job) -> ClusterJobId:
+        logger = logging.getLogger("cluster_utils")
+
+        run_script_file_path = self._generate_run_script(job)
 
         sbatch_cmd = [
             "sbatch",
