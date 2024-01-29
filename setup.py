@@ -54,10 +54,13 @@ setup(
         "nevergrad": [
             "nevergrad",
         ],
+        "lint": [
+            "black==23.10",
+            "ruff==0.1.14",
+        ],
         "dev": [
+            "cluster[lint]",
             "absolufy-imports",
-            "black",
-            "ruff",
             "nox>=2022.8.7",
             "pre-commit",
             "pytest",

@@ -11,8 +11,7 @@ LOCATIONS = ("cluster/", "examples/", "tests/", "noxfile.py", "setup.py")
 
 @nox.session(python=PYTHON_VERSIONS, tags=["lint"])
 def lint(session):
-    session.install("black")
-    session.install("ruff")
+    session.install(".[lint]")
     session.run("black", "--check", *LOCATIONS)
     session.run("ruff", ".")
 
