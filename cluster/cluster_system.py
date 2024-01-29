@@ -252,6 +252,11 @@ class ClusterSubmission(ABC):
                 "Job with id %d submitted with cluster id %s", job.id, job.cluster_id
             )
 
+    def resume(self, job: Job) -> None:
+        """Resume a job that was terminated with :func:`~cluster.exit_for_resume`."""
+        job.waiting_for_resume = True
+        self.resume_fn(job)
+
     def stop(self, job: Job) -> None:
         if job.cluster_id is None:
             raise RuntimeError(
@@ -294,6 +299,11 @@ class ClusterSubmission(ABC):
             return min(latest)
         else:
             return max(latest)
+
+    def resume_fn(self, job: Job) -> None:
+        # Default behaviour is to simply re-enqueue it.  Overwrite this method for
+        # cluster systems where resuming should be handled differently.
+        self.enqueue_job_for_submission(job)
 
     @abstractmethod
     def submit_fn(self, job: Job) -> ClusterJobId:

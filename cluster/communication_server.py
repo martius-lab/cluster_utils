@@ -8,7 +8,6 @@ import time
 import pyuv
 
 from cluster import constants
-from cluster.condor_cluster_system import CondorClusterSubmission
 from cluster.job import JobStatus
 
 
@@ -198,13 +197,9 @@ class CommunicationServer:
         logger = logging.getLogger("cluster_utils")
         (job_id,) = message
         logger.info(f"Job {job_id} exited to be resumed.")
-        job = self.cluster_system.get_job(job_id)
-        job.waiting_for_resume = True
 
-        # add job to queue again, so it is restarted (except on Condor, where this is
-        # handled by the cluster itself).
-        if not isinstance(self.cluster_system, CondorClusterSubmission):
-            self.cluster_system.enqueue_job_for_submission(job)
+        job = self.cluster_system.get_job(job_id)
+        self.cluster_system.resume(job)
 
     def handle_job_progress(self, message):
         logger = logging.getLogger("cluster_utils")
