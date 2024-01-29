@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import shutil
 from abc import ABC, abstractmethod
+from collections import deque
 from typing import TYPE_CHECKING, NewType, Optional, Sequence
 
 import colorama
@@ -44,7 +45,7 @@ class ClusterSubmission(ABC):
         #: List of all jobs that have been registered via :meth:`add_jobs`.
         self.jobs: list[Job] = []
         #: Queue of jobs that are waiting to be submitted.
-        self.submission_queue: list[Job] = []
+        self.submission_queue: deque[Job] = deque()
         self.remove_jobs_dir = remove_jobs_dir
         self.paths = paths
         self.submission_hooks: dict[str, ClusterSubmissionHook] = dict()
@@ -139,7 +140,7 @@ class ClusterSubmission(ABC):
         logger = logging.getLogger("cluster_utils")
         logger.debug("Submit next job from queue.")
         try:
-            job = self.submission_queue.pop(0)
+            job = self.submission_queue.popleft()
         except IndexError as e:
             # provide more understandable error message
             raise IndexError("No job to submit, queue is empty.") from e
