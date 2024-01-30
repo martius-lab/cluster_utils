@@ -1,5 +1,5 @@
 [tool.black]
-preview = false
+preview = true
 target-version = ['py38']
 
 [tool.ruff]
