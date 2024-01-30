@@ -193,6 +193,7 @@ def announce_early_results(metrics):
 
 def exit_for_resume():
     if not submission_state.connection_active:
+        # TODO: shouldn't it at least sys.exit() in any case?
         return
     atexit.unregister(report_exit_at_server)  # Disable exit reporting
     send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))

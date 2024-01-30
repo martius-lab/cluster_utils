@@ -42,10 +42,12 @@ class Optimizer(ABC):
 
     @abstractmethod
     def ask(self):
+        """Return parameters for next job."""
         pass
 
     @abstractmethod
     def tell(self, df, jobs):
+        """Add results of finished jobs."""
         for job in jobs:
             job.results_used_for_update = True
         df[constants.ITERATION] = self.iteration + 1

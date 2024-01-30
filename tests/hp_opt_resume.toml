@@ -1,0 +1,81 @@
+optimization_procedure_name = "test_hp_opt_resume"
+run_in_working_dir = true
+generate_report = "never"
+script_relative_path = "examples/basic/main_no_fail.py"
+num_best_jobs_whose_data_is_kept = 1
+remove_working_dirs = true
+optimizer_str = "cem_metaoptimizer"
+
+[git_params]
+branch = "master"
+
+[environment_setup]
+pre_job_script = "examples/basic/pre_job_script.sh"
+
+[cluster_requirements]
+request_cpus = 1
+request_gpus = 0
+memory_in_mb = 1000
+bid = 1000
+
+[optimizer_settings]
+with_restarts = true
+num_jobs_in_elite = 10
+
+[optimization_setting]
+metric_to_optimize = "result"
+minimize = true
+number_of_samples = 3
+n_jobs_per_iteration = 2
+
+[fixed_params]
+test_resume = true
+max_sleep_time = 1
+
+[[optimized_params]]
+param = "fn_args.u"
+distribution = "TruncatedNormal"
+bounds = [
+    -3.0,
+    3.0,
+]
+
+[[optimized_params]]
+param = "fn_args.v"
+distribution = "IntLogNormal"
+bounds = [
+    1,
+    1000,
+]
+
+[[optimized_params]]
+param = "fn_args.w"
+distribution = "IntNormal"
+bounds = [
+    -5,
+    5,
+]
+
+[[optimized_params]]
+param = "fn_args.x"
+distribution = "TruncatedNormal"
+bounds = [
+    0.0,
+    4.0,
+]
+
+[[optimized_params]]
+param = "fn_args.y"
+distribution = "TruncatedLogNormal"
+bounds = [
+    0.01,
+    100.0,
+]
+
+[[optimized_params]]
+param = "fn_args.sharp_penalty"
+distribution = "Discrete"
+options = [
+    false,
+    true,
+]

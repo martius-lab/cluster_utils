@@ -408,7 +408,10 @@ def hp_optimization(
                 if isinstance(hp_optimizer, NGOptimizer):
                     hp_optimizer.add_candidate(new_job.id)
                 cluster_interface.add_jobs(new_job)
-                cluster_interface.submit(new_job)
+
+            if cluster_interface.has_unsubmitted_jobs():
+                cluster_interface.submit_next()
+
             if iteration_finished:
                 post_iteration_opt(
                     cluster_interface,
@@ -529,8 +532,9 @@ def kill_bad_looking_jobs(
         if len(job.reported_metric_values) > intermediate_results_np.shape[1] // 2:
             # If a job runs more than half of its runtime, don't kill it
             continue
-        index, value = len(job.reported_metric_values) - 1, np.array(
-            job.reported_metric_values[-1]
+        index, value = (
+            len(job.reported_metric_values) - 1,
+            np.array(job.reported_metric_values[-1]),
         )
         all_values = np.concatenate(
             [intermediate_results_np[:, index], value.reshape(1)]
@@ -615,10 +619,16 @@ def grid_search(
         running_bar = RunningJobsBar(total_jobs=len(jobs))
         successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
 
+        num_jobs_to_submit_per_iteration = 5
         while cluster_interface.n_completed_jobs != len(jobs):
-            to_submit = [job for job in jobs if job.status == JobStatus.INITIAL_STATUS]
-            for job in to_submit[:5]:
-                cluster_interface.submit(job)
+            # submit next batch of jobs
+            i = 0
+            while (
+                cluster_interface.has_unsubmitted_jobs()
+                and i < num_jobs_to_submit_per_iteration
+            ):
+                cluster_interface.submit_next()
+                i += 1
 
             if cluster_interface.is_ready_to_check_for_failed_jobs():
                 cluster_interface.check_for_failed_jobs()
@@ -636,7 +646,7 @@ def grid_search(
             max_failed_jobs = (
                 cluster_interface.n_successful_jobs
                 + cluster_interface.n_running_jobs
-                + 5
+                + num_jobs_to_submit_per_iteration
             )
             if cluster_interface.n_failed_jobs > max_failed_jobs:
                 cluster_interface.close()

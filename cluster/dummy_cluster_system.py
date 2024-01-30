@@ -10,8 +10,6 @@ from multiprocessing import cpu_count
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
-import numpy as np
-
 from cluster import constants
 from cluster.cluster_system import ClusterJobId, ClusterSubmission
 from cluster.job import Job
@@ -29,16 +27,18 @@ class DummyClusterSubmission(ClusterSubmission):
         self.available_cpus = range(cpu_count())
         self.futures_tuple: list[tuple[ClusterJobId, concurrent.futures.Future]] = []
         self.executor = concurrent.futures.ProcessPoolExecutor(self.concurrent_jobs)
+        self.next_cluster_id = 0
 
     def generate_cluster_id(self) -> ClusterJobId:
-        cluster_id = np.random.randint(int(1e10))
-        while cluster_id in [c_id for c_id, future in self.futures_tuple]:
-            cluster_id = np.random.randint(int(1e10))
-        return ClusterJobId(str(cluster_id))
+        cluster_id = ClusterJobId(f"local-{self.next_cluster_id}")
+        self.next_cluster_id += 1
+        return cluster_id
 
     def submit_fn(self, job: Job) -> ClusterJobId:
-        logger = logging.getLogger("cluster_utils")
-        self.generate_job_spec_file(job)
+        # only generate run script for jobs that are submitted the first time
+        if not job.waiting_for_resume:
+            self.generate_job_spec_file(job)
+
         free_cpus = random.sample(self.available_cpus, self.cpus_per_job)
         free_cpus_str = ",".join(map(str, free_cpus))
         cmd = "taskset --cpu-list {} bash {}".format(free_cpus_str, job.run_script_path)
@@ -49,9 +49,9 @@ class DummyClusterSubmission(ClusterSubmission):
                 run, cmd, stdout=PIPE, stderr=PIPE, shell=True  # type:ignore
             ),
         )
-        logger.info(f"Job with id {job.id} submitted locally.")
         job.futures_object = new_futures_tuple[1]
         self.futures_tuple.append(new_futures_tuple)
+
         return cluster_id
 
     def stop_fn(self, job_id: ClusterJobId) -> None:
@@ -75,6 +75,9 @@ class DummyClusterSubmission(ClusterSubmission):
                 job.mark_failed(msg)
 
     def generate_job_spec_file(self, job: Job) -> None:
+        logger = logging.getLogger("cluster_utils")
+        logger.debug("Generate run script for job %d.", job.id)
+
         job_file_name = "{}_{}.sh".format(job.iteration, job.id)
         run_script_file_path = os.path.join(self.submission_dir, job_file_name)
         cmd = job.generate_execution_cmd(self.paths)

@@ -85,16 +85,18 @@ class CondorClusterSubmission(ClusterSubmission):
 
         assert len(good_lines) == 1
         new_cluster_id = good_lines[0].split(" ")[-1][:-1]
-        logger.info(
-            f"Job with id {job.id} submitted to condor cluster with cluster id"
-            f" {new_cluster_id}."
-        )
 
         return ClusterJobId(new_cluster_id)
 
     def stop_fn(self, cluster_id: ClusterJobId) -> None:
         cmd = "condor_rm {}".format(cluster_id)
         run([cmd], shell=True, stderr=PIPE, stdout=PIPE)
+
+    def resume_fn(self, job: Job) -> None:
+        # On HTCondor the restarting is handled by the scheduler itself (due to
+        # special handling of return code RETURN_CODE_FOR_RESUME in the submission
+        # file), so nothing to do here.
+        pass
 
     def is_ready_to_check_for_failed_jobs(self) -> bool:
         # TODO: should we throttle this a bit?  Probably doesn't need to be checked

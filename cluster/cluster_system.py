@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import shutil
 from abc import ABC, abstractmethod
+from collections import deque
 from typing import TYPE_CHECKING, NewType, Optional, Sequence
 
 import colorama
@@ -21,12 +22,32 @@ ClusterJobId = NewType("ClusterJobId", str)
 
 
 class ClusterSubmission(ABC):
+    """Base class for cluster system interfaces.
+
+    Provides the logic for submitting jobs to the cluster system and tracking their
+    status.  Cluster system specific classes should be derived from this base class,
+    implementing the abstract methods.
+
+    How to submit a job
+    -------------------
+
+    First, a new job needs to be registered with :meth:`add_jobs`.  By default (with
+    `enqueue=True`), this automatically adds the job to the *submission queue*, a queue
+    which contains the jobs that are about to be submitted to the cluster.
+    Alternatively, `enqueue` can be set to False in which case in which case the job has
+    to be explicitly enqueued by calling :meth:`enqueue_job_for_submission`.
+
+    By calling :meth:`submit_next` you can then submit jobs from the queue one by one in
+    FIFO order.
+    """
+
     def __init__(self, paths: dict[str, str], remove_jobs_dir: bool = True) -> None:
+        #: List of all jobs that have been registered via :meth:`add_jobs`.
         self.jobs: list[Job] = []
+        #: Queue of jobs that are waiting to be submitted.
+        self.submission_queue: deque[Job] = deque()
         self.remove_jobs_dir = remove_jobs_dir
         self.paths = paths
-        self.submitted = False
-        self.finished = False
         self.submission_hooks: dict[str, ClusterSubmissionHook] = dict()
         self._inc_job_id = -1
         self.error_msgs: set[str] = set()
@@ -86,10 +107,45 @@ class ClusterSubmission(ABC):
                 return job
         return None
 
-    def add_jobs(self, jobs: Job | list[Job]):
+    def add_jobs(self, jobs: Job | list[Job], enqueue: bool = True) -> None:
+        """Register a new job.
+
+        Args:
+            jobs: Either a single Job instance or a list of jobs.
+            enqueue: If true, the added job is automatically appended to the submission
+                queue.
+        """
         if not isinstance(jobs, list):
             jobs = [jobs]
         self.jobs = self.jobs + jobs
+
+        if enqueue:
+            self.submission_queue.extend(jobs)
+
+    def enqueue_job_for_submission(self, job: Job) -> None:
+        """Add job to the submission queue."""
+        self.submission_queue.append(job)
+
+    def has_unsubmitted_jobs(self) -> bool:
+        """Check if there are jobs in the submission queue, waiting to be submitted."""
+        return bool(self.submission_queue)
+
+    def submit_next(self) -> None:
+        """Submit the next job from the submission queue.
+
+        Raises:
+            IndexError: if the submission queue is empty.  See also
+                :meth:`has_unsubmitted_jobs`.
+        """
+        logger = logging.getLogger("cluster_utils")
+        logger.debug("Submit next job from queue.")
+        try:
+            job = self.submission_queue.popleft()
+        except IndexError as e:
+            # provide more understandable error message
+            raise IndexError("No job to submit, queue is empty.") from e
+
+        self._submit(job)
 
     @property
     def submitted_jobs(self) -> list[Job]:
@@ -171,17 +227,11 @@ class ClusterSubmission(ABC):
     def submit_all(self) -> None:
         for job in self.current_jobs:
             if job.cluster_id is None:
-                self.submit(job)
-
-    def submit(self, job: Job) -> None:
-        self._submit(job)
-        # t = Thread(target=self._submit, args=(job,), daemon=True)
-        # self.exec_pre_submission_routines()
-        # t.start()
+                self._submit(job)
 
     def _submit(self, job: Job) -> None:
         logger = logging.getLogger("cluster_utils")
-        if job.cluster_id is not None:
+        if job.cluster_id is not None and not job.waiting_for_resume:
             raise RuntimeError("Can not run a job that already ran")
         if job not in self.jobs:
             logger.warning(
@@ -192,6 +242,20 @@ class ClusterSubmission(ABC):
         cluster_id = self.submit_fn(job)
         job.cluster_id = cluster_id
         job.status = JobStatus.SUBMITTED
+
+        if job.waiting_for_resume:
+            logger.info(
+                "Job with id %d re-submitted with cluster id %s", job.id, job.cluster_id
+            )
+        else:
+            logger.info(
+                "Job with id %d submitted with cluster id %s", job.id, job.cluster_id
+            )
+
+    def resume(self, job: Job) -> None:
+        """Resume a job that was terminated with :func:`~cluster.exit_for_resume`."""
+        job.waiting_for_resume = True
+        self.resume_fn(job)
 
     def stop(self, job: Job) -> None:
         if job.cluster_id is None:
@@ -235,6 +299,11 @@ class ClusterSubmission(ABC):
             return min(latest)
         else:
             return max(latest)
+
+    def resume_fn(self, job: Job) -> None:
+        # Default behaviour is to simply re-enqueue it.  Overwrite this method for
+        # cluster systems where resuming should be handled differently.
+        self.enqueue_job_for_submission(job)
 
     @abstractmethod
     def submit_fn(self, job: Job) -> ClusterJobId:
@@ -347,6 +416,7 @@ def get_cluster_type(
                 run_local = True
 
         if run_local:
+            logger.info("No cluster detected, running locally")
             return DummyClusterSubmission
         else:
             raise OSError("Neither CONDOR nor SLURM was found. Not running locally")

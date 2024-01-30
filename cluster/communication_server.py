@@ -197,8 +197,9 @@ class CommunicationServer:
         logger = logging.getLogger("cluster_utils")
         (job_id,) = message
         logger.info(f"Job {job_id} exited to be resumed.")
+
         job = self.cluster_system.get_job(job_id)
-        job.waiting_for_resume = True
+        self.cluster_system.resume(job)
 
     def handle_job_progress(self, message):
         logger = logging.getLogger("cluster_utils")
