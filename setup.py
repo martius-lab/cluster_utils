@@ -55,7 +55,7 @@ setup(
             "nevergrad",
         ],
         "lint": [
-            "black==23.10",
+            "black==24.1.1",
             "ruff==0.1.14",
         ],
         "dev": [
