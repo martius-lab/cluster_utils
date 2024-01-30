@@ -1,4 +1,5 @@
 """ClusterSubmission implementation for running on the local machine."""
+
 from __future__ import annotations
 
 import concurrent.futures

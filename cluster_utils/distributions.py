@@ -207,12 +207,9 @@ class Discrete(Distribution):
         # convert all 'list' options into tuples, because they are hashable etc
         self.option_list = [o if not isinstance(o, list) else tuple(o) for o in options]
         for item in self.option_list:
-            if not any(
-                [
-                    isinstance(item, allowed_type)
-                    for allowed_type in constants.PARAM_TYPES
-                ]
-            ):
+            if not any([
+                isinstance(item, allowed_type) for allowed_type in constants.PARAM_TYPES
+            ]):
                 raise TypeError(
                     "Discrete options must from the following types: {}, not {}".format(
                         constants.PARAM_TYPES, type(item)
