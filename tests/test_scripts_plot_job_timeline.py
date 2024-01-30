@@ -3,7 +3,7 @@ import pathlib
 
 import pytest  # type: ignore
 
-from cluster.scripts.plot_job_timeline import JobStatus, parse_cluster_run_log
+from cluster_utils.scripts.plot_job_timeline import JobStatus, parse_cluster_run_log
 
 
 @pytest.fixture()

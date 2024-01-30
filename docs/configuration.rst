@@ -388,7 +388,7 @@ settings (i.e. the ones independent of the optimisation method set in
 
 - ``metric_to_optimize`` --- *mandatory, str*
     Name of the metric that is used for the optimisation.  Has to match the name of one
-    of the metrics that are saved with :func:`cluster.save_metrics_params`.
+    of the metrics that are saved with :func:`cluster_utils.save_metrics_params`.
 
 - ``minimize`` --- *mandatory, bool*
     Specify whether the metric shall be minimized (true) or maximised (false).
@@ -532,14 +532,14 @@ shell.  So for example to use a custom name for the output directory:
 
 ::
 
-    python3 -m cluster.grid_search config.json 'optimization_procedure_name="foo"'
+    python3 -m cluster_utils.grid_search config.json 'optimization_procedure_name="foo"'
 
 
 Nested parameters can be set using dots:
 
 ::
 
-    python3 -m cluster.grid_search config.json 'git_params.branch="foo"'
+    python3 -m cluster_utils.grid_search config.json 'git_params.branch="foo"'
 
 
 

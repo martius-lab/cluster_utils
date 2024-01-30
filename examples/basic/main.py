@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 
-from cluster import exit_for_resume, read_params_from_cmdline, save_metrics_params
+from cluster_utils import exit_for_resume, read_params_from_cmdline, save_metrics_params
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):

@@ -3,9 +3,9 @@ import pathlib
 
 import pytest
 
-from cluster import constants
-from cluster import settings as s
-from cluster.utils import (
+from cluster_utils import constants
+from cluster_utils import settings as s
+from cluster_utils.utils import (
     check_import_in_fixed_params,
     rename_import_promise,
 )

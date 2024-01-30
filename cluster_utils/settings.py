@@ -16,10 +16,10 @@ from typing import Any, NamedTuple
 import pyuv
 import smart_settings
 
-from cluster import constants, submission_state
-from cluster.communication_server import MessageTypes
-from cluster.optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
-from cluster.utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+from . import constants, submission_state
+from .communication_server import MessageTypes
+from .optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
+from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
 
 
 class SettingsError(Exception):

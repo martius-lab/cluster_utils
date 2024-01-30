@@ -3,7 +3,11 @@ import sys
 
 import torch
 
-from cluster import exit_for_resume, save_metrics_params, update_params_from_cmdline
+from cluster_utils import (
+    exit_for_resume,
+    save_metrics_params,
+    update_params_from_cmdline,
+)
 
 
 def save_checkpoint(save_path, model, optim, iteration):

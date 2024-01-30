@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   versions.
 - **Breaking:** `Optimizer.save_pdf_report()` is moved out of the `Optimizer` class to
   `report.produce_optimization_report()`.
+- **Breaking:** Renamed the package from "cluster" to "cluster_utils".  Imports will
+  still work for now (see Deprecated section) but in commands for running
+  hp_optimization/grid_search need to be changed accordingly (e.g. `python3 -m
+  cluster_utils.grid_search ...`)
 - The raw data of `grid_search` is saved to a file "all_data.csv" instead of
   "results_raw.csv" to be consistent with `hp_optimization` (the format of the file
   didn't change, only the name).
@@ -48,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `exit_for_resume` not working on local submissions. If a job called `exit_for_resume`,
   the job would just exit, not restart, and `cluster_utils` would indefinitely hang waiting for the
   job to fully finish. Now, local submissions restart the job if the job instructs them too.
+
+
+### Deprecated
+- The package has been renamed from "cluster" to "cluster_utils", please update your
+  imports accordingly.  There is still a wrapper package with the old name (so existing
+  code should still work) but it will be removed in the next major release.
 
 
 ## 2.5 - 2023-10-05

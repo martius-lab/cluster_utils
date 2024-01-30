@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(
-    name="cluster",
+    name="cluster_utils",
     version="2.5",
     description="Cluster utilities",
     url="https://github.com/martius-lab",
     author="Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning",
     author_email="michalrolinek@gmail.com",
     license="MIT",
-    packages=["cluster"],
+    packages=["cluster_utils", "cluster"],
     python_requires=">=3.8",
     install_requires=[
         "gitpython>=3.0.5",
@@ -35,15 +35,15 @@ setup(
     extras_require={
         # all optional dependencies, excluding the ones only needed for development
         "all": [
-            "cluster[report]",
-            "cluster[nevergrad]",
+            "cluster_utils[report]",
+            "cluster_utils[nevergrad]",
         ],
         # really all optional dependencies
         "all-dev": [
-            "cluster[all]",
-            "cluster[dev]",
-            "cluster[mypy]",
-            "cluster[docs]",
+            "cluster_utils[all]",
+            "cluster_utils[dev]",
+            "cluster_utils[mypy]",
+            "cluster_utils[docs]",
         ],
         # optional dependencies required for generating the report
         "report": [
@@ -79,7 +79,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "cluster_utils_plot_timeline=cluster.scripts.plot_job_timeline:main",
+            "cluster_utils_plot_timeline=cluster_utils.scripts.plot_job_timeline:main",
         ]
     },
     zip_safe=False,

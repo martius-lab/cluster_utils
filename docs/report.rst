@@ -20,7 +20,7 @@ directory from which the report can be generated with
 
 .. code-block:: bash
 
-   python3 -m cluster.scripts.generate_report <results_directory> <output_file>
+   python3 -m cluster_utils.scripts.generate_report <results_directory> <output_file>
 
 Use ``--help`` to get a list of all options.
 

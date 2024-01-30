@@ -22,7 +22,7 @@ from typing import Any
 
 import colorama
 
-from cluster import constants
+from . import constants
 
 
 class OptionalDependencyNotFoundError(ModuleNotFoundError):

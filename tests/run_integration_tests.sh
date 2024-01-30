@@ -6,7 +6,7 @@ set -e
 set -x
 
 
-python -m cluster.grid_search tests/grid_search.json \
+python -m cluster_utils.grid_search tests/grid_search.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF
@@ -15,7 +15,7 @@ y
 EOF
 
 
-python -m cluster.hp_optimization tests/hp_opt.json \
+python -m cluster_utils.hp_optimization tests/hp_opt.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF
@@ -24,7 +24,7 @@ y
 EOF
 
 
-python -m cluster.grid_search tests/grid_search_main_w_decorator.json \
+python -m cluster_utils.grid_search tests/grid_search_main_w_decorator.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF
@@ -33,7 +33,7 @@ y
 EOF
 
 
-python -m cluster.grid_search tests/grid_search_resume.json \
+python -m cluster_utils.grid_search tests/grid_search_resume.json \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF
@@ -41,7 +41,7 @@ y
 y
 EOF
 
-python -m cluster.hp_optimization tests/hp_opt_resume.toml \
+python -m cluster_utils.hp_optimization tests/hp_opt_resume.toml \
     "no_user_interaction=True" \
     "results_dir=\"$test_dir\"" \
     <<EOF

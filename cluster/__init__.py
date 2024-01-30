@@ -1,20 +1,12 @@
-from cluster.job_manager import grid_search, hp_optimization
-from cluster.settings import (
-    announce_early_results,
-    announce_fraction_finished,
-    cluster_main,
-    exit_for_resume,
-    read_params_from_cmdline,
-    save_metrics_params,
+"""This is package is deprecated!  Use `cluster_utils` instead."""
+import warnings
+
+warnings.warn(
+    "The 'cluster' package has been renamed to 'cluster_utils'.  Please update your"
+    " code accordingly.  Importing 'cluster' is deprecated and will be removed in the"
+    " next major release!",
+    FutureWarning,
+    stacklevel=2,
 )
 
-__all__ = [
-    "grid_search",
-    "hp_optimization",
-    "announce_early_results",
-    "announce_fraction_finished",
-    "cluster_main",
-    "exit_for_resume",
-    "save_metrics_params",
-    "read_params_from_cmdline",
-]
+from cluster_utils import *  # noqa F403

@@ -3,7 +3,11 @@ import time
 import numpy as np
 import torch
 
-from cluster import announce_early_results, announce_fraction_finished, cluster_main
+from cluster_utils import (
+    announce_early_results,
+    announce_fraction_finished,
+    cluster_main,
+)
 
 
 def rosenbrock(x, y):

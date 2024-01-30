@@ -7,7 +7,7 @@ from itertools import combinations, count
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator, Mapping, Optional, Sequence
 
-from cluster.utils import OptionalDependencyImport
+from .utils import OptionalDependencyImport
 
 with OptionalDependencyImport("report"):
     import matplotlib.pyplot as plt
@@ -17,10 +17,10 @@ with OptionalDependencyImport("report"):
     from matplotlib import rc
     from sklearn.ensemble import RandomForestRegressor
 
-from cluster import constants, data_analysis, distributions
-from cluster.latex_utils import LatexFile
-from cluster.optimizers import Optimizer
-from cluster.utils import log_and_print, shorten_string
+from . import constants, data_analysis, distributions
+from .latex_utils import LatexFile
+from .optimizers import Optimizer
+from .utils import log_and_print, shorten_string
 
 
 def init_plotting():

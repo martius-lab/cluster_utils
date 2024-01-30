@@ -6,8 +6,8 @@ import numpy as np
 import scipy
 import scipy.stats
 
-from cluster import constants
-from cluster.utils import check_valid_param_name
+from . import constants
+from .utils import check_valid_param_name
 
 
 def clip(number, bounds):
