@@ -174,16 +174,14 @@ class Job:
                 current_setting["working_dir"],
             )
 
-        res = "\n".join(
-            [
-                set_cwd,
-                pre_job_script,
-                virtual_env_activate,
-                conda_env_activate,
-                set_env_variables,
-                exec_cmd,
-            ]
-        )
+        res = "\n".join([
+            set_cwd,
+            pre_job_script,
+            virtual_env_activate,
+            conda_env_activate,
+            set_env_variables,
+            exec_cmd,
+        ])
         return res
 
     def singularity_wrap(

@@ -55,8 +55,8 @@ setup(
             "nevergrad",
         ],
         "lint": [
-            "black==23.10",
-            "ruff==0.1.14",
+            "black==24.1.1",
+            "ruff==0.1.15",
         ],
         "dev": [
             "cluster[lint]",

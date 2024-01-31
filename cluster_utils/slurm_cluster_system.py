@@ -1,4 +1,5 @@
 """ClusterSubmission implementation for Slurm."""
+
 from __future__ import annotations
 
 import logging
