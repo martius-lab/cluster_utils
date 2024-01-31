@@ -56,7 +56,7 @@ setup(
         ],
         "lint": [
             "black==24.1.1",
-            "ruff==0.1.14",
+            "ruff==0.1.15",
         ],
         "dev": [
             "cluster[lint]",
