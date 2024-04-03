@@ -123,11 +123,13 @@ def test_parse_cluster_run_log(cluster_run_logfile):
                 JobStatus.FAILED,
             ),
         ],
-        5: [(
-            dt(2022, 4, 20, 17, 14, 11, 149000),
-            dt(2022, 4, 20, 17, 14, 11, 149000),
-            JobStatus.SUBMITTED,
-        )],
+        5: [
+            (
+                dt(2022, 4, 20, 17, 14, 11, 149000),
+                dt(2022, 4, 20, 17, 14, 11, 149000),
+                JobStatus.SUBMITTED,
+            )
+        ],
     }
 
     assert log[0] == expected_log[0]
