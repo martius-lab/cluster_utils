@@ -63,6 +63,7 @@ Documentation Content
    report
    troubleshooting
    setup_devel_env
+   examples/index.rst
 
 
 .. toctree::
