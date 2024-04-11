@@ -24,7 +24,7 @@ echo "==== Start execution. ===="
 echo "Job id: {id}, cluster id: ${{SLURM_JOB_ID}}, hostname: $(hostname), time: $(date)"
 echo
 
-{cmd}
+srun {cmd}
 rc=$?
 if [[ $rc == %(RETURN_CODE_FOR_RESUME)d ]]; then
     echo "exit with code %(RETURN_CODE_FOR_RESUME)d for resume"
