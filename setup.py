@@ -5,8 +5,18 @@ setup(
     version="2.5",
     description="Cluster utilities",
     url="https://github.com/martius-lab",
-    author="Michal Rolinek, MPI-IS Tuebingen, Autonomous Learning",
+    author=(
+        "Michal Rolinek, "
+        "Dominik Zietlow, "
+        "Sebastian Blaes, "
+        "Georg Martius, "
+        "Marin Vlastelica, "
+        "Maximilian Seitzer, "
+        "Pierre Schuhmacher, "
+        "Felix Kloss"
+    ),
     author_email="michalrolinek@gmail.com",
+    maintainer_email="georg.martius@uni-tuebingen.de",
     license="MIT",
     packages=["cluster_utils", "cluster"],
     python_requires=">=3.8",
