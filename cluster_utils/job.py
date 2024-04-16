@@ -84,7 +84,19 @@ class Job:
         current_setting["id"] = self.id
         return current_setting
 
-    def generate_execution_cmd(self, paths):
+    def generate_execution_cmd(self, paths, cmd_prefix: Optional[str] = None):
+        """Generate the commands to execute the job.
+
+        Args:
+            paths: Dictionary containing relevant paths.
+            cmd_prefix: String that is prepended to the command that runs the user
+                script.  Can be used to wrap in in some cluster-system-specific command
+                (e.g. to use `srun` on Slurm).
+
+        Returns:
+            Shell script running the job (includes cd-ing to the source directory,
+            activating virtual environments, etc.).
+        """
         logger = logging.getLogger("cluster_utils")
         current_setting = self.generate_final_setting(paths)
 
@@ -170,6 +182,9 @@ class Job:
                 paths["main_path"],
                 current_setting["working_dir"],
             )
+
+        if cmd_prefix:
+            exec_cmd = f"{cmd_prefix} {exec_cmd}"
 
         res = "\n".join(
             [
