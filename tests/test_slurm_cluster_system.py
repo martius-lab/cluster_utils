@@ -76,7 +76,7 @@ def test_generate_run_script(job_data):
 
     assert job_data.job.run_script_path == str(expected_path)
 
-    job_cmd = job_data.job.generate_execution_cmd(job_data.paths)
+    job_cmd = job_data.job.generate_execution_cmd(job_data.paths, cmd_prefix="srun")
     run_script = run_script_path.read_text()
     assert (
         run_script

@@ -24,7 +24,7 @@ echo "==== Start execution. ===="
 echo "Job id: {id}, cluster id: ${{SLURM_JOB_ID}}, hostname: $(hostname), time: $(date)"
 echo
 
-srun {cmd}
+{cmd}
 rc=$?
 if [[ $rc == %(RETURN_CODE_FOR_RESUME)d ]]; then
     echo "exit with code %(RETURN_CODE_FOR_RESUME)d for resume"
@@ -231,7 +231,8 @@ class SlurmClusterSubmission(ClusterSubmission):
         runs_script_name = "job_{}_{}.sh".format(job.iteration, job.id)
         submission_dir = pathlib.Path(self.submission_dir)
         run_script_file_path = submission_dir / runs_script_name
-        cmd = job.generate_execution_cmd(self.paths)
+        # need to prefix the actual job command with `srun` so that --signal works.
+        cmd = job.generate_execution_cmd(self.paths, cmd_prefix="srun")
 
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
