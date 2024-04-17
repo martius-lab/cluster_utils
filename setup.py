@@ -69,7 +69,7 @@ setup(
             "ruff==0.1.15",
         ],
         "dev": [
-            "cluster[lint]",
+            "cluster_utils[lint]",
             "absolufy-imports",
             "nox>=2022.8.7",
             "pre-commit",
