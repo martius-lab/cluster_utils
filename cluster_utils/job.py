@@ -147,10 +147,7 @@ class Job:
                 module_name = (
                     paths["script_to_run"].replace("/", ".").replace(".py", "")
                 )
-                exec_cmd = (
-                    f"cd {paths['main_path']}; {python_executor} -m"
-                    f" {module_name} {comm_info_string} {setting_string}"
-                )
+                exec_cmd = f"{python_executor} -m {module_name} {comm_info_string} {setting_string}"
             else:
                 base_exec_cmd = "{}".format(python_executor) + " {} {} {}"
                 exec_cmd = base_exec_cmd.format(
