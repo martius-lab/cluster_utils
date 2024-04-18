@@ -6,7 +6,7 @@ GitLab.  It is not included in the rendered documentation.*
 
 
 The package is currently hosted here:
-https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils
+https://github.com/martius-lab/cluster_utils
 
 For a high-level overview and basic usage see the [main README](../README.md).
 

@@ -452,7 +452,7 @@ iteration with another ``n_jobs_per_iteration`` jobs.
 
 .. _config.optimizer_settings:
 
-Optimiser Settings
+Optimizer Settings
 ------------------
 
 ``optimizer_settings`` expects as value a dictionary with configuration specific
