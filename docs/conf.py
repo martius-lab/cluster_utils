@@ -111,12 +111,12 @@ html_theme_options = {
         },
         {
             "title": "Source",
-            "href": "https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils",
+            "href": "https://github.com/martius-lab/cluster_utils",
             "internal": False,
         },
         {
             "title": "Bug Tracker",
-            "href": "https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils/-/issues",
+            "href": "https://github.com/martius-lab/cluster_utils/issues",
             "internal": False,
         },
     ],

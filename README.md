@@ -42,7 +42,7 @@ See [docs/README.md](docs/README.md) for a table of contents.
 You can also build the documentation locally with the following commands:
 
 ```bash
-git clone https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+git clone https://github.com/martius-lab/cluster_utils.git
 cd cluster_utils
 # install package with the additional dependencies needed to build the documentation
 pip install ".[docs]"

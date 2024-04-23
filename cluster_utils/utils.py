@@ -47,8 +47,8 @@ class OptionalDependencyNotFoundError(ModuleNotFoundError):
             Failed to import '{module}'.  Make sure you installed the optional '{group}' dependencies.
             You can do this with:
             ```
-            # when installing directly from GitLab:
-            pip install "cluster[{group}] @ git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git"
+            # when installing directly from git:
+            pip install "cluster[{group}] @ git+https://github.com/martius-lab/cluster_utils.git"
 
             # when installing from local working copy:
             pip install ".[{group}]"

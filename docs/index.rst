@@ -80,4 +80,4 @@ Documentation Content
 
 
 
-.. _cluster_utils: https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils
+.. _cluster_utils: https://github.com/martius-lab/cluster_utils
