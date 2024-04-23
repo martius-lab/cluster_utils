@@ -31,13 +31,11 @@ If you encounter any bugs or have suggestions for improvements, please submit an
 pip install git+https://github.com/martius-lab/cluster_utils.git
 ```
 
-See also [docs/installation.rst](docs/installation.rst) for more details.
+See [documentation](https://martius-lab.github.io/cluster_utils/installation.html) for more details.
 
 ## Documentation
 
-A more detailed documentation is included in the `docs/` folder of the repository.
-There is not yet a publicly hosted version of the documentation but they are rendered relatively well when viewed on Github.
-See [docs/README.md](docs/README.md) for a table of contents.
+The documentation is hosted at https://martius-lab.github.io/cluster_utils.
 
 You can also build the documentation locally with the following commands:
 
@@ -118,20 +116,11 @@ The simplest way to specify your Python environment is to activate it (using vir
 The jobs will automatically inherit this environment.
 A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
 
-There are multiple options to further customize the environment in the `environment_setup` configuration section, see [docs/configuration.rst](docs/configuration.rst).
+There are multiple options to further customize the environment in the `environment_setup` configuration section, see [the documentation](https://martius-lab.github.io/cluster_utils/configuration.html).
 
-### Slurm & Condor Cluster Systems
+### Further Documentation Links
 
-See [docs/configuration.rst](docs/configuration.rst), Section "Cluster Requirements".
-
-### Hyperparameter Optimization Settings
-
-See [docs/configuration.rst](docs/configuration.rst), Section "Optimizer Settings".
-
-## Hyperparameter Optimization Mindset and Rules of Thumb
-
-See [docs/usage_mindset_and_rule_of_thumb.rst](docs/usage_mindset_and_rule_of_thumb.rst).
-
-## Development
-
-See [docs/setup_devel_env.rst](docs/setup_devel_env.rst).
+- [Configuration for Slurm & Condor Cluster Systems](https://martius-lab.github.io/cluster_utils/configuration.html#cluster-requirements)
+- [Hyperparameter Optimization Settings](https://martius-lab.github.io/cluster_utils/configuration.html#optimizer-settings)
+- [Hyperparameter Optimization Mindset and Rules of Thumb](https://martius-lab.github.io/cluster_utils/usage_mindset_and_rule_of_thumb.html)
+- [Development](https://martius-lab.github.io/cluster_utils/setup_devel_env.html)
