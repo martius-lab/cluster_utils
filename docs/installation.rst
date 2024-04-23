@@ -13,7 +13,7 @@ Basic Installation
 
 .. code-block:: bash
 
-   pip install git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git
+   pip install git+https://github.com/martius-lab/cluster_utils.git
 
 
 .. _optional_dependencies:
@@ -27,7 +27,7 @@ this:
 
 .. code-block:: bash
 
-   pip install "cluster[EXTRA] @ git+https://gitlab.tuebingen.mpg.de/mrolinek/cluster_utils.git"
+   pip install "cluster[EXTRA] @ git+https://github.com/martius-lab/cluster_utils.git"
 
 where ``EXTRA`` should be replaced by one of the following identifiers (or multiple,
 separated by commas):
