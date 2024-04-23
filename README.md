@@ -28,7 +28,7 @@ If you encounter any bugs or have suggestions for improvements, please submit an
 ## Installation
 
 ```
-pip install https://github.com/martius-lab/cluster_utils.git
+pip install git+https://github.com/martius-lab/cluster_utils.git
 ```
 
 See also [docs/installation.rst](docs/installation.rst) for more details.
