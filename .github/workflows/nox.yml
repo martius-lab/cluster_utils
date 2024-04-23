@@ -5,6 +5,9 @@ on:
     branches:
      - master
   pull_request:
+    paths-ignore:
+      - "docs/**"  # no need to run any of those for pure documentation changes
+      - "*.md"
   workflow_dispatch:
 
 jobs:
