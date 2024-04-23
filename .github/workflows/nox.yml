@@ -1,0 +1,59 @@
+name: Nox
+
+on:
+  push:
+    branches:
+     - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install nox
+        run: |
+          python -m pip install nox>=2022.8.7
+      - name: Run linters
+        run: |
+          nox -p "3.10" -s lint
+
+  mypy:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install nox
+        run: |
+          python -m pip install nox>=2022.8.7
+      - name: Run linters
+        run: |
+          nox -p "3.10" -s mypy
+
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Install nox
+        run: |
+          python -m pip install nox>=2022.8.7
+      - name: Install dummy pdflatex
+        run: |
+          cp ./tests/dummy_pdflatex.sh /usr/local/bin/pdflatex
+          chmod a+x /usr/local/bin/pdflatex
+      - name: Run tests
+        run: |
+          nox -p ${{ matrix.python_version }} -t test
