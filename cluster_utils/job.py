@@ -90,7 +90,7 @@ class Job:
         Args:
             paths: Dictionary containing relevant paths.
             cmd_prefix: String that is prepended to the command that runs the user
-                script.  Can be used to wrap in in some cluster-system-specific command
+                script.  Can be used to wrap in some cluster-system-specific command
                 (e.g. to use `srun` on Slurm).
 
         Returns:
