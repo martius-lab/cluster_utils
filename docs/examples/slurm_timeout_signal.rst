@@ -44,3 +44,11 @@ checkpoint will be saved and the script terminates with ``exit_for_resume``.
 
    This example is included in ``cluster_utils/examples/slurm_timeout_signal``
    and can be directly run from there.
+
+.. warning::
+
+   In case you are using a wrapper script around your main.py (can for example be needed
+   for some environment setup inside containers), the signal will only be sent to the
+   wrapper script and not automatically be forwarded to the main.py process.
+   So in this case, you need to catch the signal in the wrapper script as well and sent
+   it to the child process from there.
