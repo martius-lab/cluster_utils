@@ -22,7 +22,7 @@ can be done is shown below as well.
 
 .. literalinclude:: ../../examples/slurm_timeout_signal/grid_search.toml
 
-The relevant part here is the definition of ``timeout_signal_time`` in the
+The relevant part here is the definition of ``signal_seconds_to_timeout`` in the
 ``[cluster_requirements]`` section.  When defining it, Slurm will be configured to send a ``USR1`` signal to warn about the approaching timeout.  The value is the approximate time in seconds before the TIMEOUT at which the signal will be sent.  Make sure to choose a value large enough to allow your job to actually save the intermediate data before the timeout is reached.
 
 The main script of the job can then look something like this:

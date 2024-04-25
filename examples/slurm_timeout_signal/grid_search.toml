@@ -15,7 +15,7 @@ partition = "cpu-galvani"
 request_cpus = 1
 memory_in_mb = 1000
 request_time = "00:04:00"  # jobs get killed after 4 minutes
-timeout_signal_time = 30  # sent signal at least 30 seconds before timeout
+signal_seconds_to_timeout = 30  # sent signal at least 30 seconds before timeout
 
 [fixed_params]
 

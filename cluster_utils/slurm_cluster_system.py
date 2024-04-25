@@ -70,7 +70,7 @@ class SlurmJobRequirements(NamedTuple):
         req = dict(requirements)
 
         try:
-            signal_time = req.pop("timeout_signal_time", None)
+            signal_time = req.pop("signal_seconds_to_timeout", None)
             if signal_time:
                 signal = f"USR1@{signal_time:d}"
             else:

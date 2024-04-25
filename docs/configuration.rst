@@ -240,7 +240,7 @@ Slurm-specific Options
         "days-hours:minutes:seconds".
 
     So for example to request 1 hour per job use ``request_time = "1:00:00"``.
-- ``timeout_signal_time`` --- *int*
+- ``signal_seconds_to_timeout`` --- *int*
     Time in seconds before timeout at which Slurm sends a USR1 signal to the job (see
     ``--signal`` of ``sbatch``).  If not set, no signal is sent.
 
