@@ -7,7 +7,7 @@ import pathlib
 import subprocess
 import time
 from subprocess import PIPE, run
-from typing import Any, NamedTuple, Sequence
+from typing import Any, NamedTuple, Optional, Sequence
 
 from . import settings
 from .cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
@@ -52,6 +52,8 @@ class SlurmJobRequirements(NamedTuple):
     # exclude specific list of hosts
     exclude: list[str]
 
+    signal: Optional[str]
+
     # list of arbitrary sbatch options for things that are not covered by the settings
     # above (e.g. something like "--gpu-freq=high")
     extra_submission_options: list[str]
@@ -68,6 +70,12 @@ class SlurmJobRequirements(NamedTuple):
         req = dict(requirements)
 
         try:
+            signal_time = req.pop("signal_seconds_to_timeout", None)
+            if signal_time:
+                signal = f"USR1@{signal_time:d}"
+            else:
+                signal = None
+
             obj = cls(
                 partition=req.pop("partition"),
                 cpus_per_task=req.pop("request_cpus"),
@@ -75,6 +83,7 @@ class SlurmJobRequirements(NamedTuple):
                 mem="{}M".format(req.pop("memory_in_mb")),
                 time=req.pop("request_time"),
                 exclude=req.pop("forbidden_hostnames", []),
+                signal=signal,
                 extra_submission_options=req.pop("extra_submission_options", []),
             )
         except KeyError as e:
@@ -222,7 +231,8 @@ class SlurmClusterSubmission(ClusterSubmission):
         runs_script_name = "job_{}_{}.sh".format(job.iteration, job.id)
         submission_dir = pathlib.Path(self.submission_dir)
         run_script_file_path = submission_dir / runs_script_name
-        cmd = job.generate_execution_cmd(self.paths)
+        # need to prefix the actual job command with `srun` so that --signal works.
+        cmd = job.generate_execution_cmd(self.paths, cmd_prefix="srun")
 
         stdout_file = run_script_file_path.with_suffix(".out")
         stderr_file = run_script_file_path.with_suffix(".err")
@@ -241,6 +251,9 @@ class SlurmClusterSubmission(ClusterSubmission):
 
         if self.requirements.exclude:
             args.add("exclude", ",".join(self.requirements.exclude))
+
+        if self.requirements.signal:
+            args.add("signal", self.requirements.signal)
 
         args.extend_raw(self.requirements.extra_submission_options)
 

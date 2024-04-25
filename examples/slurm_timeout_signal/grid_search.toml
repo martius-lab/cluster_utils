@@ -1,0 +1,28 @@
+optimization_procedure_name = "timeout_signal_test"
+results_dir = "/tmp/slurm_timeout_signal_example"
+generate_report = "when_finished"
+script_relative_path = "examples/slurm_timeout_signal/main.py"
+remove_jobs_dir = false
+restarts = 1
+
+[git_params]
+branch = "master"
+
+[environment_setup]
+
+[cluster_requirements]
+partition = "cpu-galvani"
+request_cpus = 1
+memory_in_mb = 1000
+request_time = "00:04:00"  # jobs get killed after 4 minutes
+signal_seconds_to_timeout = 30  # sent signal at least 30 seconds before timeout
+
+[fixed_params]
+
+[[hyperparam_list]]
+param = "x"
+values = [0, 1]
+
+[[hyperparam_list]]
+param = "y"
+values = [0, 1]
