@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import logging.handlers
 import os
 import shutil
 import signal
@@ -40,13 +41,18 @@ def init_logging(working_dir):
     from importlib import reload
 
     reload(logging)
-    filename = os.path.join(working_dir, "cluster_run.log")
-    level = os.environ.get("CLUSTER_UTILS_LOG_LEVEL", "INFO").upper()
-    logging.basicConfig(
-        filename=filename,
-        level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
+    filename = os.path.join(working_dir, "cluster_run.log")
+    file_handler = logging.handlers.WatchedFileHandler(filename)
+    file_handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.addHandler(file_handler)
+    level = os.environ.get("CLUSTER_UTILS_LOG_LEVEL", "INFO").upper()
+    root_logger.setLevel(level)
+
     print(f"Detailed logging available in {filename}")
 
 
