@@ -4,9 +4,8 @@ import logging
 import os
 import pathlib
 import time
-import typing
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 import pandas as pd
 
@@ -103,15 +102,19 @@ class Job:
         set_cwd = "cd {}".format(paths["main_path"])
 
         if "variables" in paths:
-            if not isinstance(paths, dict):
+            if not isinstance(paths["variables"], dict):
                 raise ValueError(
                     'Expected type dict for "variables", but got type'
                     f' {type(paths["variables"])} instead'
                 )
+            env_variables = {
+                str(name): str(value) for name, value in paths["variables"].items()
+            }
             set_env_variables = "\n".join(
-                f"export {name}={value}" for name, value in paths["variables"].items()
+                f'export {name}="{value}"' for name, value in env_variables.items()
             )
         else:
+            env_variables = None
             set_env_variables = ""
 
         if "pre_job_script" in paths:
@@ -181,6 +184,7 @@ class Job:
                 self.singularity_settings,
                 paths["main_path"],
                 current_setting["working_dir"],
+                env_variables,
             )
 
         if cmd_prefix:
@@ -189,10 +193,10 @@ class Job:
         res = "\n".join(
             [
                 set_cwd,
-                pre_job_script,
                 virtual_env_activate,
                 conda_env_activate,
                 set_env_variables,
+                pre_job_script,
                 exec_cmd,
             ]
         )
@@ -202,8 +206,9 @@ class Job:
         self,
         exec_cmd: str,
         singularity_settings: SingularitySettings,
-        exec_dir: typing.Union[str, os.PathLike],
-        working_dir: typing.Union[str, os.PathLike],
+        exec_dir: Union[str, os.PathLike],
+        working_dir: Union[str, os.PathLike],
+        env_variables: Optional[Dict[str, str]],
     ) -> str:
         """Wrap the given command to execute it in a Singularity container.
 
@@ -223,6 +228,9 @@ class Job:
         # create model directory (so it can be bound into the container)
         working_dir.mkdir(exist_ok=True)
 
+        if env_variables is None:
+            env_variables = {}
+
         # construct singularity command
         cwd = os.fspath(exec_dir)
         bind_dirs = ["/tmp", os.fspath(working_dir), cwd]
@@ -231,6 +239,9 @@ class Job:
             "run" if singularity_settings.use_run else "exec",
             "--bind=%s" % ",".join(bind_dirs),
             "--pwd=%s" % cwd,
+            " ".join(
+                f'--env {name}="{value}"' for name, value in env_variables.items()
+            ),
             *singularity_settings.args,
             os.fspath(singularity_image),
         ]
