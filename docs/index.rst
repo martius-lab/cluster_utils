@@ -78,7 +78,7 @@ Documentation Content
    :caption: References
 
    configuration
-
+   changelog
 
 
 .. _cluster_utils: https://github.com/martius-lab/cluster_utils
