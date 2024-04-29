@@ -192,6 +192,11 @@ def announce_early_results(metrics):
 
 
 def exit_for_resume():
+    """Send a "resume"-request to the cluster_utils server and exit with returncode 3.
+
+    Use this to split a single long-running job into multiple shorter jobs by frequently
+    saving intermediate results and restarting by calling this function.
+    """
     if not submission_state.connection_active:
         # TODO: shouldn't it at least sys.exit() in any case?
         return

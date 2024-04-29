@@ -1,3 +1,5 @@
+.. _example_slurm_timeout_signal:
+
 **********************************
 Get Signal Before Timeout on Slurm
 **********************************
@@ -7,9 +9,9 @@ duration will get killed.  This can be a problem in cases where you do not know
 the exact run duration of your jobs in advance.  Fortunately, Slurm can be
 configured to send a signal to the job a bit before the timeout.  This allows
 the job to save a checkpoint with the current results and use cluster_utils'
-``exit_for_resume`` to terminate.  cluster_utils will then automatically restart
-the job, allowing it to load the previously saved checkpoint and resume the
-computations.
+:func:`~cluster_utils.exit_for_resume` to terminate.  cluster_utils will then
+automatically restart the job, allowing it to load the previously saved checkpoint and
+resume the computations.
 
 
 Below is a small example on how to configure cluster_utils such that
@@ -37,7 +39,8 @@ timeout_signal_handler)``.  This means the given function will be called when
 the process receives a ``USR1`` signal.  What this function does will then
 depend on the actual application.  In the example, it simply sets a flag which
 will be checked in each iteration of the dummy training loop.  If set True, a
-checkpoint will be saved and the script terminates with ``exit_for_resume``.
+checkpoint will be saved and the script terminates with
+:func:`~cluster_utils.exit_for_resume`.
 
 
 .. note::
