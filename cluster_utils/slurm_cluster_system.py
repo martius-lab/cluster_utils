@@ -451,7 +451,8 @@ class SlurmClusterSubmission(ClusterSubmission):
 
         job_statuses = extract_job_status_from_sacct_output(output)
 
-        for job_id, status in job_statuses.items():
+        for job_id in job_map:
+            status = job_statuses[job_id]
             if not status.is_okay():
                 job = job_map[ClusterJobId(job_id)]
                 assert job.run_script_path is not None
