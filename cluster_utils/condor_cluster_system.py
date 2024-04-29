@@ -28,8 +28,8 @@ if [[ $rc == 0 ]]; then
 elif [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
     echo "exit with code {RETURN_CODE_FOR_RESUME} for resume"
     exit {RETURN_CODE_FOR_RESUME}
-elif [[ $rc == 1 ]]; then
-    exit 1
+elif [[ $rc != 0 ]]; then
+    exit $rc
 fi
 """
 # TODO: the MPI_CLUSTER_RUN_SCRIPT above does not forward errorcodes other than 1 and 3.

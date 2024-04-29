@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   still work for now (see Deprecated section) but in commands for running
   hp_optimization/grid_search need to be changed accordingly (e.g. `python3 -m
   cluster_utils.grid_search ...`)
+- **Breaking:** All exit codes other than 0 or 3 (the magic "restart for resume" code)
+  are now considered as failures.  Previously only 1 was considered as failure.
 - The raw data of `grid_search` is saved to a file "all_data.csv" instead of
   "results_raw.csv" to be consistent with `hp_optimization` (the format of the file
   didn't change, only the name).
