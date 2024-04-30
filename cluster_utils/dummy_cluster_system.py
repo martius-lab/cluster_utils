@@ -29,7 +29,15 @@ exec 1>>"$output"
 exec 2>>"$error"
 
 %(cmd)s
-exit $?
+rc=$?
+
+if [[ $rc != 0 ]]; then
+    echo "Failed with exit code $rc"
+    # add an indicator file to more easily identify failed jobs
+    echo "$rc" > "%(run_script_file_path)s.FAILED"
+fi
+
+exit $rc
 """
 
 

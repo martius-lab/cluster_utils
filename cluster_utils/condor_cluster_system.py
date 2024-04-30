@@ -29,6 +29,9 @@ elif [[ $rc == {RETURN_CODE_FOR_RESUME} ]]; then
     echo "exit with code {RETURN_CODE_FOR_RESUME} for resume"
     exit {RETURN_CODE_FOR_RESUME}
 elif [[ $rc != 0 ]]; then
+    echo "Failed with exit code $rc"
+    # add an indicator file to more easily identify failed jobs
+    echo "$rc" > "%(run_script_file_path)s.FAILED"
     exit $rc
 fi
 """
