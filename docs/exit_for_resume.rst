@@ -1,3 +1,5 @@
+.. _exit_for_resume:
+
 ****************************************
 Restart jobs using ``exit_for_resume()``
 ****************************************
@@ -32,8 +34,11 @@ So the high level structure of a job script using
    the job by calling :func:`~cluster_utils.exit_for_resume`.
 
 
-A concrete, runnable example using this in combination with Slurm's timeout signal can
-be found in :ref:`example_slurm_timeout_signal`.
+Usage Examples
+==============
+
+- :ref:`example_checkpointing`
+- :ref:`example_slurm_timeout_signal` (combines restarting with Slurm's timeout signal)
 
 
 API
