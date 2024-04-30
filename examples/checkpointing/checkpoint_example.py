@@ -5,8 +5,8 @@ import torch
 
 from cluster_utils import (
     exit_for_resume,
+    read_params_from_cmdline,
     save_metrics_params,
-    update_params_from_cmdline,
 )
 
 
@@ -41,10 +41,10 @@ def load_checkpoint(load_path, model, optim):
 
 if __name__ == "__main__":
     # parameters are loaded from json file
-    params = update_params_from_cmdline()
+    params = read_params_from_cmdline()
     # a folder for each run is created
-    os.makedirs(params.model_dir, exist_ok=True)
-    checkpoint_path = os.path.join(params.model_dir, "checkpoint.pt")
+    os.makedirs(params.working_dir, exist_ok=True)
+    checkpoint_path = os.path.join(params.working_dir, "checkpoint.pt")
     # these are taken from json file for illustration
     total_iterations = params.total_iterations
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     iteration = load_checkpoint(checkpoint_path, model, optim)
     # redirect output to log file for easier understanding what happens
     # the log file is written after the program ends.
-    sys.stdout = open(f"{params.model_dir}/log_{iteration}.txt", "w")  # noqa: SIM115
+    sys.stdout = open(f"{params.working_dir}/log_{iteration}.txt", "w")  # noqa: SIM115
 
     while True:
         # do some training
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             # we first save the necessary data to restart our job
             save_checkpoint(checkpoint_path, model, optim, iteration)
             # then we exit the job by calling a special function
-            # htcondor internally restarts the job in the same cluster_utils model_dir
+            # htcondor internally restarts the job in the same cluster_utils working_dir
             # you will not see this in the utils progress bar, check
             # /working_directories/0/log.txt after the job
             print(f"Exit job at iteration {iteration}")
