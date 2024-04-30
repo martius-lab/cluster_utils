@@ -111,7 +111,7 @@ if [[ $rc == 3 ]]; then
 elif [[ $rc != 0 ]]; then
     echo "Failed with exit code $rc"
     # add an indicator file to more easily identify failed jobs
-    touch "{job_data.jobs_dir}/job_2_13.sh.FAILED"
+    echo "$rc" > "{job_data.jobs_dir}/job_2_13.sh.FAILED"
     exit $rc
 fi
 """

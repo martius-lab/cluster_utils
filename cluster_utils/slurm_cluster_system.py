@@ -36,7 +36,7 @@ if [[ $rc == %(RETURN_CODE_FOR_RESUME)d ]]; then
 elif [[ $rc != 0 ]]; then
     echo "Failed with exit code $rc"
     # add an indicator file to more easily identify failed jobs
-    touch "{run_script_file_path}.FAILED"
+    echo "$rc" > "{run_script_file_path}.FAILED"
     exit $rc
 fi
 """ % {
