@@ -41,6 +41,7 @@ exclude = ["build/", "examples/"]
 [[tool.mypy.overrides]]
 # list all modules for which no type hints are available
 module = [
+    "docutils.*",
     "matplotlib.*",
     "nevergrad.*",
     "nox",
@@ -51,5 +52,6 @@ module = [
     "setuptools",
     "sklearn.ensemble",
     "smart_settings",  # TODO we can add hints there
+    "sphinx.*",
 ]
 ignore_missing_imports = true
