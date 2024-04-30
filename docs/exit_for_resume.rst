@@ -34,14 +34,14 @@ So the high level structure of a job script using
    the job by calling :func:`~cluster_utils.exit_for_resume`.
 
 
+.. hint::
+
+   It may be useful to report intermediate results using
+   :func:`~cluster_utils.announce_early_results` before exiting for resume.
+
+
 Usage Examples
 ==============
 
 - :ref:`example_checkpointing`
 - :ref:`example_slurm_timeout_signal` (combines restarting with Slurm's timeout signal)
-
-
-API
-===
-
-.. autofunction:: cluster_utils.exit_for_resume
