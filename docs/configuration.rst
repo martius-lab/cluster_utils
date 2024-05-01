@@ -134,8 +134,11 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
 
     .. confval:: environment_setup.variables: dict[str]:
 
-        Environment variables to set. Variables are set after a virtual/conda
-        environment is activated, thus override environment variables set before.
+        Environment variables to set. Variables are set *after* a virtual/conda environment 
+        is activated, thus override environment variables set before. They are also set 
+        *before* the :confval:`environment_setup.pre_job_script`: this can be useful to pass 
+        parameters to the script, e.g. to setup a generic script that changes its behavior based 
+        on the values defined in the cluster_utils config file.
 
     .. confval:: environment_setup.is_python_script: bool, default=true:
 
@@ -408,7 +411,7 @@ Specific for hp_optimization
     **Required.**
 
     The optimisation method that is used to find good hyperparameters.
-    Supported methods are 
+    Supported methods are
 
     - cem_metaoptimizer
     - nevergrad \*
@@ -452,7 +455,7 @@ Specific for hp_optimization
          * - IntNormal
            - Normal distribution using integer values.
          * - IntLogNormal
-           - Log-normal distribution using integer values. 
+           - Log-normal distribution using integer values.
          * - Discrete
            - Discrete list of values.
     - ``bounds``:  List ``[min_value, max_value]``
