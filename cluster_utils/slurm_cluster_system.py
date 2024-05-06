@@ -253,10 +253,10 @@ def extract_job_status_from_sacct_output(
     for line in sacct_output.splitlines():
         job_id, node_list, state, exit_code = line.split("|")
 
-        # we are only interested in the cumulative entry of the job, skip intermediate
-        # statistics
-        if "." in job_id:
-            continue
+        # make sure there are no lines for intermediate steps (having job IDs like
+        # `12345.batch`, `12345.0`, ...) in the given sacct output (this would be the
+        # case when running sacct without `-X`).
+        assert "." not in job_id, f"Unexpected line in sacct output: {line}"
 
         # extract actual exit code from the ExitCode field
         exit_code = exit_code.partition(":")[0]

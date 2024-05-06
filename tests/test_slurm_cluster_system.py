@@ -160,7 +160,7 @@ def test_generate_run_script_extra_options(job_data):
     assert "#SBATCH --two=2" in run_script_lines
 
 
-def test_parse_job_status_from_sacct_output():
+def test_extract_job_status_from_sacct_output():
     # Test output below is from actual jobs. Causes for the sacct output below were:
     #
     #   264154: Finished without error
@@ -208,3 +208,18 @@ def test_parse_job_status_from_sacct_output():
     # ...then check that conclusions drawn from it are correct
     for job_id, expected_is_okay in expected_status_is_okay.items():
         assert actual[job_id].is_okay() == expected_is_okay
+
+
+def test_extract_job_status_from_sacct_output__including_intermediate_steps():
+    # extract_job_status_from_sacct_output() should complain about the *.batch|extern|0
+    # lines.
+    sacct_output = """4597753|cpu-short|FAILED|1:0
+4597753.batch|cpu-short|FAILED|1:0
+4597753.extern|cpu-short|COMPLETED|0:0
+4597753.0|cpu-short|FAILED|1:0
+"""
+    with pytest.raises(
+        AssertionError,
+        match="Unexpected line in sacct output: 4597753.batch|cpu-short|FAILED|1:0",
+    ):
+        extract_job_status_from_sacct_output(sacct_output)
