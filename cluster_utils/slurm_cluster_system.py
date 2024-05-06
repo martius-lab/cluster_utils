@@ -6,6 +6,7 @@ import logging
 import pathlib
 import subprocess
 import time
+from collections import deque
 from subprocess import PIPE, run
 from typing import Any, NamedTuple, Optional, Sequence
 
@@ -202,6 +203,13 @@ class SBatchArgumentBuilder:
     def construct_argument_comment_block(self) -> str:
         """Construct block of #SBATCH comments for use in a sbatch run script."""
         return "\n".join((f"#SBATCH {arg}" for arg in self.args))
+
+
+def tail(filename, n=10):
+    "Return the last n lines of a file"
+    # taken from https://docs.python.org/3/library/collections.html#deque-recipes
+    with open(filename) as f:
+        return deque(f, n)
 
 
 def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
@@ -459,13 +467,15 @@ class SlurmClusterSubmission(ClusterSubmission):
                 # write hostname to job (it is used in the error message)
                 job.hostname = status.node_list
 
-                # read error message from stderr output file
+                # read error message from stderr output file (limit to last few lines)
+                n_error_lines = 5
                 stderr_file = pathlib.Path(job.run_script_path).with_suffix(".err")
-                error_output = stderr_file.read_text()
+                error_output = "".join(tail(stderr_file, n=n_error_lines))
 
                 error_msg = (
-                    "Job failed with state {} / exit code {}.  Error output:\n{}"
-                ).format(status.state, status.exit_code, error_output)
+                    "Job failed with state {} / exit code {}."
+                    " Error output (last {} lines):\n{}"
+                ).format(status.state, status.exit_code, n_error_lines, error_output)
 
                 job.mark_failed(error_msg)
 
