@@ -63,6 +63,7 @@ Documentation Content
    report
    troubleshooting
    setup_devel_env
+   exit_for_resume.rst
    examples/index.rst
 
 
