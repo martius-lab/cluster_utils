@@ -6,6 +6,7 @@ import logging
 import pathlib
 import subprocess
 import time
+from collections import deque
 from subprocess import PIPE, run
 from typing import Any, NamedTuple, Optional, Sequence
 
@@ -37,6 +38,58 @@ elif [[ $rc == 1 ]]; then
 fi
 """ % {
     "RETURN_CODE_FOR_RESUME": RETURN_CODE_FOR_RESUME
+}
+
+
+# Possible job State values (according to `man sacct`)
+#
+#  BF  BOOT_FAIL       Job terminated due to launch failure, typically due to a
+#                      hardware failure (e.g. unable to boot the node or block
+#                      and the job can not be requeued).
+#  CA  CANCELLED       Job was explicitly cancelled by the user or system
+#                      administrator.  The job may or may not have been
+#                      initiated.
+#  CD  COMPLETED       Job has terminated all processes on all nodes with an
+#                      exit code of zero.
+#  DL  DEADLINE        Job terminated on deadline.
+#  F   FAILED          Job terminated with non-zero exit code or other failure
+#                      condition.
+#  NF  NODE_FAIL       Job terminated due to failure of one or more allocated
+#                      nodes.
+#  OOM OUT_OF_MEMORY   Job experienced out of memory error.
+#  PD  PENDING         Job is awaiting resource allocation.
+#  PR  PREEMPTED       Job terminated due to preemption.
+#  R   RUNNING         Job currently has an allocation.
+#  RQ  REQUEUED        Job was requeued.
+#  RS  RESIZING        Job is about to change size.
+#  RV  REVOKED         Sibling was removed from cluster due to other cluster
+#                      starting the job.
+#  S   SUSPENDED       Job has an allocation, but execution has been suspended
+#                      and CPUs have been released for other jobs.
+#  TO  TIMEOUT         Job terminated upon reaching its time limit.
+#
+# job_state_good maps state names to a boolean indicating if the state indicates
+# that the job failed for some reason (False) or if it either succeeded or is still
+# running (True)
+#
+# TODO: I assigned True/False on what I thought makes sense based on the
+# description.  This should be reviewed by someone who is more familiar with Slurm.
+SLURM_JOB_STATE_IS_GOOD = {
+    "BOOT_FAIL": False,
+    "CANCELLED": False,
+    "COMPLETED": True,
+    "DEADLINE": False,
+    "FAILED": False,
+    "NODE_FAIL": False,
+    "OUT_OF_MEMORY": False,
+    "PENDING": True,
+    "PREEMPTED": False,
+    "RUNNING": True,
+    "REQUEUED": True,
+    "RESIZING": True,
+    "REVOKED": False,
+    "SUSPENDED": True,
+    "TIMEOUT": False,
 }
 
 
@@ -103,6 +156,32 @@ class SlurmJobRequirements(NamedTuple):
         return obj
 
 
+class SlurmJobStatus(NamedTuple):
+    """Represents the status of Slurm job.
+
+    Attributes:
+        state: State of the job as reported by ``sacct`` (COMPLETED, FAILED, ...).
+        exit_code: The exit code of the job (undefined if in a non-finished state).
+        node_list: Hostname on which the job is executed.
+    """
+
+    state: str
+    exit_code: int
+    node_list: str
+
+    def is_okay(self) -> bool:
+        """Check if the state is good or if there was a failure.
+
+        Returns:
+            False if in a state that indicates an issue, otherwise True.
+        """
+        return (
+            self.exit_code == 0
+            and self.state in SLURM_JOB_STATE_IS_GOOD
+            and SLURM_JOB_STATE_IS_GOOD[self.state]
+        )
+
+
 class SBatchArgumentBuilder:
     """Construct an sbatch argument comment block.
 
@@ -124,6 +203,13 @@ class SBatchArgumentBuilder:
     def construct_argument_comment_block(self) -> str:
         """Construct block of #SBATCH comments for use in a sbatch run script."""
         return "\n".join((f"#SBATCH {arg}" for arg in self.args))
+
+
+def tail(filename, n=10):
+    "Return the last n lines of a file"
+    # taken from https://docs.python.org/3/library/collections.html#deque-recipes
+    with open(filename) as f:
+        return deque(f, n)
 
 
 def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
@@ -150,59 +236,51 @@ def extract_job_id_from_sbatch_output(sbatch_output: str) -> ClusterJobId:
     )
 
 
+def extract_job_status_from_sacct_output(
+    sacct_output: str,
+) -> dict[ClusterJobId, SlurmJobStatus]:
+    """Extract status of jobs from given sacct output.
+
+    This function expects that sacct was run with the following arguments:
+
+        -X --parsable2 --format=JobID,NodeList,State,ExitCode --noheader
+    """
+    result: dict[ClusterJobId, SlurmJobStatus] = {}
+
+    # Output looks like this: JobID|NodeList|State|ExitCode
+    # For a successful job:
+    #
+    #    239026|galvani-cn001|COMPLETED|0:0
+    #
+    # For a job with errors:
+    #
+    #    264162|galvani-cn002|FAILED|1:0
+    #
+    # The ExitCode field has the format {exit_code}:{signal_that_killed_job_if_any}
+
+    for line in sacct_output.splitlines():
+        job_id, node_list, state, exit_code = line.split("|")
+
+        # make sure there are no lines for intermediate steps (having job IDs like
+        # `12345.batch`, `12345.0`, ...) in the given sacct output (this would be the
+        # case when running sacct without `-X`).
+        assert "." not in job_id, f"Unexpected line in sacct output: {line}"
+
+        # extract actual exit code from the ExitCode field
+        exit_code = exit_code.partition(":")[0]
+        assert exit_code.isdigit()
+
+        result[ClusterJobId(job_id)] = SlurmJobStatus(
+            state=state,
+            exit_code=int(exit_code),
+            node_list=node_list,
+        )
+
+    return result
+
+
 class SlurmClusterSubmission(ClusterSubmission):
     """Interface to submit jobs on a Slurm cluster."""
-
-    # Possible State values (according to `man sacct`)
-    #
-    #  BF  BOOT_FAIL       Job terminated due to launch failure, typically due to a
-    #                      hardware failure (e.g. unable to boot the node or block
-    #                      and the job can not be requeued).
-    #  CA  CANCELLED       Job was explicitly cancelled by the user or system
-    #                      administrator.  The job may or may not have been
-    #                      initiated.
-    #  CD  COMPLETED       Job has terminated all processes on all nodes with an
-    #                      exit code of zero.
-    #  DL  DEADLINE        Job terminated on deadline.
-    #  F   FAILED          Job terminated with non-zero exit code or other failure
-    #                      condition.
-    #  NF  NODE_FAIL       Job terminated due to failure of one or more allocated
-    #                      nodes.
-    #  OOM OUT_OF_MEMORY   Job experienced out of memory error.
-    #  PD  PENDING         Job is awaiting resource allocation.
-    #  PR  PREEMPTED       Job terminated due to preemption.
-    #  R   RUNNING         Job currently has an allocation.
-    #  RQ  REQUEUED        Job was requeued.
-    #  RS  RESIZING        Job is about to change size.
-    #  RV  REVOKED         Sibling was removed from cluster due to other cluster
-    #                      starting the job.
-    #  S   SUSPENDED       Job has an allocation, but execution has been suspended
-    #                      and CPUs have been released for other jobs.
-    #  TO  TIMEOUT         Job terminated upon reaching its time limit.
-    #
-    # job_state_good maps state names to a boolean indicating if the state indicates
-    # that the job failed for some reason (False) or if it either succeeded or is still
-    # running (True)
-    #
-    # TODO: I assigned True/False on what I thought makes sense based on the
-    # description.  This should be reviewed by someone who is more familiar with Slurm.
-    job_state_good = {
-        "BOOT_FAIL": False,
-        "CANCELLED": False,
-        "COMPLETED": True,
-        "DEADLINE": False,
-        "FAILED": False,
-        "NODE_FAIL": False,
-        "OUT_OF_MEMORY": False,
-        "PENDING": True,
-        "PREEMPTED": False,
-        "RUNNING": True,
-        "REQUEUED": True,
-        "RESIZING": True,
-        "REVOKED": False,
-        "SUSPENDED": True,
-        "TIMEOUT": False,
-    }
 
     #: Minimum duration between checks for failing jobs (to avoid polling the system too
     #: much)
@@ -367,6 +445,7 @@ class SlurmClusterSubmission(ClusterSubmission):
             "sacct",
             "--jobs",
             job_id_list,
+            "-X",
             "--parsable2",  # fields are separated by `|`
             "--format=JobID,NodeList,State,ExitCode",
             "--noheader",
@@ -378,44 +457,25 @@ class SlurmClusterSubmission(ClusterSubmission):
         output = proc.stdout.decode()
         logger.debug("Output of sacct:\n%s", output)
 
-        # Output looks like this:
-        #
-        #     4597753|cpu-short|martius|2|FAILED|1:0
-        #     4597753.batch||martius|2|FAILED|1:0
-        #     4597753.extern||martius|2|COMPLETED|0:0
-        #     ...
-        #
-        # The ExitCode field has the format {exit_code}:{signal_that_killed_job_if_any}
+        job_statuses = extract_job_status_from_sacct_output(output)
 
-        for line in output.splitlines():
-            job_id, node_list, state, exit_code = line.split("|")
+        for job_id, status in job_statuses.items():
+            if job_id in job_map and not status.is_okay():
+                job = job_map[ClusterJobId(job_id)]
+                assert job.run_script_path is not None
 
-            # Only check the line where job_id matches exactly the expected cluster id
-            # (ignore the .batch and .extern lines).
-            if job_id not in job_map:
-                continue
-
-            job = job_map[ClusterJobId(job_id)]
-            assert job.run_script_path is not None
-
-            # extract actual exit code from the ExitCode field
-            exit_code = exit_code.partition(":")[0]
-
-            # Job is considered failed if it has return code 1 or if the state indicates
-            # a failure.
-            if exit_code == 1 or (
-                state in self.job_state_good and not self.job_state_good[state]
-            ):
                 # write hostname to job (it is used in the error message)
-                job.hostname = node_list
+                job.hostname = status.node_list
 
-                # read error message from stderr output file
+                # read error message from stderr output file (limit to last few lines)
+                n_error_lines = 5
                 stderr_file = pathlib.Path(job.run_script_path).with_suffix(".err")
-                error_output = stderr_file.read_text()
+                error_output = "".join(tail(stderr_file, n=n_error_lines))
 
                 error_msg = (
-                    "Job failed with state {} / exit code {}.  Error output:\n{}"
-                ).format(state, exit_code, error_output)
+                    "Job failed with state {} / exit code {}."
+                    " Error output (last {} lines):\n{}"
+                ).format(status.state, status.exit_code, n_error_lines, error_output)
 
                 job.mark_failed(error_msg)
 

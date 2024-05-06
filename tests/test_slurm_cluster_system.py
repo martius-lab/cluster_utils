@@ -7,6 +7,8 @@ from cluster_utils.job import Job
 from cluster_utils.slurm_cluster_system import (
     SBatchArgumentBuilder,
     SlurmClusterSubmission,
+    SlurmJobStatus,
+    extract_job_status_from_sacct_output,
 )
 
 
@@ -156,3 +158,68 @@ def test_generate_run_script_extra_options(job_data):
     run_script_lines = run_script_path.read_text().splitlines(keepends=False)
     assert "#SBATCH --one" in run_script_lines
     assert "#SBATCH --two=2" in run_script_lines
+
+
+def test_extract_job_status_from_sacct_output():
+    # Test output below is from actual jobs. Causes for the sacct output below were:
+    #
+    #   264154: Finished without error
+    #   264162: Failed with Python exception
+    #   264329: Terminated itself with exit-code 2 (by calling sys.exit(2))
+    #   264200: Still running
+    #   264226: Terminated by Slurm due to timeout
+    #   239026: Killed by unhandled SIGUSR1 (happens when setting --signal=SIG1)
+    #   264930: Job that terminated with exit_for_resume()
+    #
+    # fields are JobID|NodeList|State|ExitCode
+    sacct_output = """264154|galvani-cn002|COMPLETED|0:0
+264162|galvani-cn002|FAILED|1:0
+264329|galvani-cn002|FAILED|2:0
+264200|galvani-cn002|RUNNING|0:0
+264226|galvani-cn002|TIMEOUT|0:0
+239026|galvani-cn002|FAILED|10:0
+264930|galvani-cn002|COMPLETED|0:0
+"""
+
+    expected_status = {
+        "264154": SlurmJobStatus("COMPLETED", 0, "galvani-cn002"),
+        "264162": SlurmJobStatus("FAILED", 1, "galvani-cn002"),
+        "264329": SlurmJobStatus("FAILED", 2, "galvani-cn002"),
+        "264200": SlurmJobStatus("RUNNING", 0, "galvani-cn002"),
+        "264226": SlurmJobStatus("TIMEOUT", 0, "galvani-cn002"),
+        "239026": SlurmJobStatus("FAILED", 10, "galvani-cn002"),
+        "264930": SlurmJobStatus("COMPLETED", 0, "galvani-cn002"),
+    }
+    expected_status_is_okay = {
+        "264154": True,
+        "264162": False,
+        "264329": False,
+        "264200": True,
+        "264226": False,
+        "239026": False,
+        "264930": True,
+    }
+
+    actual = extract_job_status_from_sacct_output(sacct_output)
+
+    # first check that statuses are parsed as expected
+    assert actual == expected_status
+
+    # ...then check that conclusions drawn from it are correct
+    for job_id, expected_is_okay in expected_status_is_okay.items():
+        assert actual[job_id].is_okay() == expected_is_okay
+
+
+def test_extract_job_status_from_sacct_output__including_intermediate_steps():
+    # extract_job_status_from_sacct_output() should complain about the *.batch|extern|0
+    # lines.
+    sacct_output = """4597753|cpu-short|FAILED|1:0
+4597753.batch|cpu-short|FAILED|1:0
+4597753.extern|cpu-short|COMPLETED|0:0
+4597753.0|cpu-short|FAILED|1:0
+"""
+    with pytest.raises(
+        AssertionError,
+        match="Unexpected line in sacct output: 4597753.batch|cpu-short|FAILED|1:0",
+    ):
+        extract_job_status_from_sacct_output(sacct_output)
