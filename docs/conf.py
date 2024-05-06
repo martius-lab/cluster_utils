@@ -23,7 +23,11 @@
 
 from __future__ import annotations
 
+import re
 import typing
+
+import docutils.nodes
+import sphinx.domains.python
 
 # -- General configuration ------------------------------------------------
 
@@ -124,7 +128,7 @@ html_theme_options = {
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 # This is theme-specific.
-#html_sidebars = {}
+# html_sidebars = {}
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -132,3 +136,64 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
 html_static_path: typing.List[str] = []
+
+
+object_description_options = [
+    ("std:confval", dict(toc_icon_class="data", toc_icon_text="C")),
+]
+
+
+def setup(app):
+    def confval_parse_format(env, sig, node):
+        # Parse confval values for add_object_type().  Possible signatures are:
+        # - foo
+        # - foo: type
+        # - foo = default_value
+        # - foo: type = default_value
+
+        # From Sphinx docs:
+        # If you provide parse_node, it must be a function that takes a string and a
+        # docutils node, and it must populate the node with children parsed from the
+        # string. It must then return the name of the item to be used in
+        # crossreferencing and index entries. See the conf.py file in the source for
+        # this documentation for an example
+
+        m = re.match(r"([a-zA-Z0-9_.]+)\s*(:([^=]+))?\s*(=(.+))?", sig)
+        assert m is not None
+
+        name = m.group(1)
+        value_type = m.group(3)
+        default_value = m.group(5)
+
+        name_parts = name.rsplit(".", maxsplit=1)
+        if len(name_parts) > 1:
+            node += sphinx.addnodes.desc_classname(name_parts[0])
+        node += sphinx.addnodes.desc_name(name_parts[-1], name_parts[-1])
+
+        if value_type is not None:
+            node += sphinx.addnodes.desc_sig_punctuation(" : ", " : ")
+
+            annotations = sphinx.domains.python._parse_annotation(value_type, env)
+            node += sphinx.addnodes.desc_type("", "", *annotations)
+
+        if default_value is not None:
+            node += sphinx.addnodes.desc_sig_punctuation(" = ", " = ")
+
+            node += docutils.nodes.literal(
+                default_value,
+                default_value,
+                language="toml",
+                classes=["python", "code", "highlight"],
+            )
+
+        return name
+
+    # Add custom object type for configuration values.  See ./configuration.rst on how
+    # it is used.
+    app.add_object_type(
+        "confval",
+        "confval",
+        objname="configuration value",
+        indextemplate="pair: %s; configuration value",
+        parse_node=confval_parse_format,
+    )
