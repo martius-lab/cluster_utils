@@ -102,14 +102,17 @@ echo
 
 {job_cmd}
 rc=$?
+
+echo "==== Finished execution. ===="
 if [[ $rc == 3 ]]; then
-    echo "exit with code 3 for resume"
+    echo "Exit with code 3 for resume"
     # do not forward the exit code, as otherwise Slurm will think there was an error
     exit 0
-elif [[ $rc == 1 ]]; then
+elif [[ $rc != 0 ]]; then
+    echo "Failed with exit code $rc"
     # add an indicator file to more easily identify failed jobs
-    touch "{job_data.jobs_dir}/job_2_13.sh.FAILED"
-    exit 1
+    echo "$rc" > "{job_data.jobs_dir}/job_2_13.sh.FAILED"
+    exit $rc
 fi
 """
     )

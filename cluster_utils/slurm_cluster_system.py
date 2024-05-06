@@ -27,14 +27,17 @@ echo
 
 {cmd}
 rc=$?
+
+echo "==== Finished execution. ===="
 if [[ $rc == %(RETURN_CODE_FOR_RESUME)d ]]; then
-    echo "exit with code %(RETURN_CODE_FOR_RESUME)d for resume"
+    echo "Exit with code %(RETURN_CODE_FOR_RESUME)d for resume"
     # do not forward the exit code, as otherwise Slurm will think there was an error
     exit 0
-elif [[ $rc == 1 ]]; then
+elif [[ $rc != 0 ]]; then
+    echo "Failed with exit code $rc"
     # add an indicator file to more easily identify failed jobs
-    touch "{run_script_file_path}.FAILED"
-    exit 1
+    echo "$rc" > "{run_script_file_path}.FAILED"
+    exit $rc
 fi
 """ % {
     "RETURN_CODE_FOR_RESUME": RETURN_CODE_FOR_RESUME
