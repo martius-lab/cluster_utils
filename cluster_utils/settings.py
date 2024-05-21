@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import argparse
 import ast
 import atexit
 import enum
 import functools
 import json
 import os
+import pathlib
 import pickle
 import socket
 import sys
@@ -19,7 +21,12 @@ import smart_settings
 from . import constants, submission_state
 from .communication_server import MessageTypes
 from .optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
-from .utils import flatten_nested_string_dict, save_dict_as_one_line_csv
+from .utils import (
+    check_import_in_fixed_params,
+    flatten_nested_string_dict,
+    rename_import_promise,
+    save_dict_as_one_line_csv,
+)
 
 
 class SettingsError(Exception):
@@ -300,6 +307,60 @@ def report_exit_at_server():
         ),
     )
     send_message(MessageTypes.JOB_CONCLUDED, message=(submission_state.job_id,))
+
+
+def init_main_script_argument_parser(description: str) -> argparse.ArgumentParser:
+    """Initialise ArgumentParser with the base arguments
+
+    Basic construction of an ArgumentParser with everything that is common between the
+    cluster_utils main scripts (i.e. grid_search and hp_optimization).
+
+    Args:
+        description: Used in the help text shown when run with ``--help``.
+
+    Returns:
+        ArgumentParser instance with basic arguments already configured.
+        Script-specific additional options can still be added.
+    """
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "settings_file", type=pathlib.Path, help="Path to the settings file."
+    )
+    parser.add_argument(
+        "settings",
+        nargs="*",
+        type=str,
+        metavar="KEY_VALUE",
+        help="""Additional settings in the format '<key>=<value>'.  This will overwrite
+            settings in the settings file.  Key has to match a configuration option,
+            value has to be valid Python.  Example: 'results_dir="/tmp"'
+            'optimization_setting.run_local=True'
+        """,
+    )
+    return parser
+
+
+def read_main_script_params_from_args(args: argparse.Namespace):
+    """Read settings for grid_search/hp_optimization from command line args.
+
+    Args:
+        args: Arguments parsed by ArgumentParser which was created using
+            :function:`init_main_script_argument_parser`.
+
+    Returns:
+        smart_settings parameter structure.
+    """
+    return read_params_from_cmdline(
+        cmd_line=[sys.argv[0], str(args.settings_file), *args.settings],
+        verbose=False,
+        pre_unpack_hooks=[check_import_in_fixed_params],
+        post_unpack_hooks=[
+            rename_import_promise,
+            GenerateReportSetting.parse_generate_report_setting_hook,
+        ],
+    )
 
 
 def add_cmd_line_params(base_dict, extra_flags):
