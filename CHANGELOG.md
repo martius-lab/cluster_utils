@@ -21,6 +21,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cluster_utils.grid_search ...`)
 - **Breaking:** All exit codes other than 0 or 3 (the magic "restart for resume" code)
   are now considered as failures.  Previously only 1 was considered as failure.
+- **Breaking:** Changed the parsing of arguments in `read_params_from_cmdline()`:
+  1. Server information is now a named argument `--server-connection-info` instead of a
+     positional.
+  2. There is no automatic detection anymore, whether the parameters are passed as file
+     or as dictionary string.  By default a path to a file is expected now.  When using
+     a dictionary instead, the new argument `--dict` has to be set now.
+
+  That is, instead of
+  ```
+  script.py "{server info...}" "{'param1': 1, 'param2': 2, ...}"
+  ```
+  use this now:
+  ```
+  script.py --server-connection-info="{server info...}" --dict \
+      "{'param1': 1, 'param2': 2, ...}"
+  ```
+
+  Running a job script manually using a parameter file still works like before:
+  ```
+  script.py path/to/settings.json
+  ```
+
+  Likewise, arguments are passed to job scripts using the new format now, when they are
+  executed by cluster_utils.  So if you use non-python scripts that process the
+  arguments, they may need to be updated accordingly.
 - The raw data of `grid_search` is saved to a file "all_data.csv" instead of
   "results_raw.csv" to be consistent with `hp_optimization` (the format of the file
   didn't change, only the name).
@@ -44,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {ref}`config_singularity`).
 - Basic Slurm support (Note supported options in `cluster_requirements` differs a bit
   from HTCondor, see {ref}`config_cluster_requirements`).
+- `grid_search` and `hp_optimization` now provide a some help when called with `--help`.
 
 ### Fixed
 - Make it work with Python >=3.10

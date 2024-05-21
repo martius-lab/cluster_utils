@@ -13,7 +13,7 @@ import socket
 import sys
 import time
 import traceback
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 import pyuv
 import smart_settings
@@ -352,15 +352,23 @@ def read_main_script_params_from_args(args: argparse.Namespace):
     Returns:
         smart_settings parameter structure.
     """
-    return read_params_from_cmdline(
-        cmd_line=[sys.argv[0], str(args.settings_file), *args.settings],
-        verbose=False,
+    return read_main_script_params_with_smart_settings(
+        settings_file=args.settings_file,
+        cmdline_settings=args.settings,
         pre_unpack_hooks=[check_import_in_fixed_params],
         post_unpack_hooks=[
             rename_import_promise,
             GenerateReportSetting.parse_generate_report_setting_hook,
         ],
     )
+
+
+def check_reserved_params(orig_dict: dict) -> None:
+    """Check if the given dict contains reserved keys.  If yes, raise ValueError."""
+    for key in orig_dict:
+        if key in constants.RESERVED_PARAMS:
+            msg = f"'{key}' is a reserved param name"
+            raise ValueError(msg)
 
 
 def add_cmd_line_params(base_dict, extra_flags):
@@ -375,74 +383,155 @@ def add_cmd_line_params(base_dict, extra_flags):
             raise RuntimeError(f"Command {cmd} failed") from e
 
 
-def read_params_from_cmdline(
-    cmd_line=None,
-    make_immutable=True,
-    verbose=True,
-    dynamic=True,
-    pre_unpack_hooks=None,
-    post_unpack_hooks=None,
-    save_params=True,
-):
-    """Updates default settings based on command line input.
+def read_main_script_params_with_smart_settings(
+    settings_file: pathlib.Path,
+    cmdline_settings: Optional[list[str]] = None,
+    make_immutable: bool = True,
+    dynamic: bool = True,
+    pre_unpack_hooks: Optional[list] = None,
+    post_unpack_hooks: Optional[list] = None,
+) -> smart_settings.AttributeDict:
+    """Read parameters for the cluster_utils main script using smart_settings.
 
-    :param cmd_line: Expecting (same format as) sys.argv
-    :param verbose: Boolean to determine if final settings are pretty printed
-    :return: Settings object with (deep) dot access.
+    Args:
+        settings_file:  Path to the settings file.
+        cmdline_settings:  List of additional parameters provided via command line.
+        make_immutable:  See ``smart_settings.load()``
+        dynamic:  See ``smart_settings.load()``
+        pre_unpack_hooks:  See ``smart_settings.load()``
+        post_unpack_hooks:  See ``smart_settings.load()``
+
+    Returns:
+        Parameters as loaded by smart_settings.
     """
+    cmdline_settings = cmdline_settings or []
     pre_unpack_hooks = pre_unpack_hooks or []
     post_unpack_hooks = post_unpack_hooks or []
 
+    if not is_settings_file(os.fspath(settings_file)):
+        raise ValueError(f"{settings_file} is not a supported settings file.")
+
+    def add_cmd_params(orig_dict):
+        add_cmd_line_params(orig_dict, cmdline_settings)
+
+    return smart_settings.load(
+        os.fspath(settings_file),
+        make_immutable=make_immutable,
+        dynamic=dynamic,
+        post_unpack_hooks=([add_cmd_params, check_reserved_params] + post_unpack_hooks),
+        pre_unpack_hooks=pre_unpack_hooks,
+    )
+
+
+def read_params_from_cmdline(
+    cmd_line: Optional[list[str]] = None,
+    make_immutable: bool = True,
+    verbose: bool = True,
+    dynamic: bool = True,
+    save_params: bool = True,
+) -> smart_settings.AttributeDict:
+    """Read parameters based on command line input.
+
+    Args:
+        cmd_line:  Command line arguments (defaults to sys.argv).
+        make_immutable:  See ``smart_settings.loads()``
+        verbose:  If true, print the loaded parameters.
+        dynamic:  See ``smart_settings.loads()``
+        save_params:  If true, save the settings as JSON file in the working_dir.
+
+    Returns:
+        Parameters as loaded by smart_settings.
+    """
     if not cmd_line:
         cmd_line = sys.argv
 
-    try:
-        connection_details = ast.literal_eval(cmd_line[1])
-    except (SyntaxError, ValueError):
-        connection_details = {}
-        pass
+    # expected keys of the server connection dictionary
+    server_connection_keys = {constants.ID, "ip", "port"}
 
-    if set(connection_details.keys()) == {constants.ID, "ip", "port"}:
-        submission_state.communication_server_ip = connection_details["ip"]
-        submission_state.communication_server_port = connection_details["port"]
-        submission_state.job_id = connection_details[constants.ID]
-        del cmd_line[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "parameter_file_or_dict",
+        type=str,
+        help="""
+        Path to a configuration file or (if `--dict` is set) a string defining a Python
+        dictionary with the parameters.
+    """,
+    )
+    parser.add_argument(
+        "parameter_overwrites",
+        nargs="*",
+        type=str,
+        default=[],
+        metavar="key_value",
+        help="""Additional parameters in the format '<key>=<value>'.  Values provided
+            here overwrite parameters provided via `parameter_file_or_dict`.  Key has to
+            match a configuration option, value has to be a valid Python literal.
+            Example:
+            `--parameters 'results_dir="/tmp"' 'optimization_setting.run_local=True'`
+        """,
+    )
+    parser.add_argument(
+        "--dict",
+        action="store_true",
+        help="""If set, `parameter_file_or_dict` is expected to be a dictionary instead
+            of a file path.
+        """,
+    )
+    parser.add_argument(
+        "--server-connection-info",
+        type=ast.literal_eval,
+        help="""Information to communicate with the cluster_utils main process.
+           Dictionary with keys {}.
+       """.format(
+            server_connection_keys
+        ),
+    )
+
+    args = parser.parse_args(cmd_line[1:])
+
+    if args.server_connection_info:
+        if not isinstance(args.server_connection_info, dict):
+            msg = "'--server-connection-info' must be a dictionary or `None`."
+            raise ValueError(msg)
+        elif set(args.server_connection_info.keys()) != server_connection_keys:
+            msg = (
+                f"'--server-connection-info' must contain keys {server_connection_keys}"
+            )
+            raise ValueError(msg)
+
+        submission_state.communication_server_ip = args.server_connection_info["ip"]
+        submission_state.communication_server_port = args.server_connection_info["port"]
+        submission_state.job_id = args.server_connection_info[constants.ID]
         submission_state.connection_details_available = True
         submission_state.connection_active = False
 
-    def check_reserved_params(orig_dict):
-        for key in orig_dict:
-            if key in constants.RESERVED_PARAMS:
-                raise ValueError(f"{key} is a reserved param name")
+    def add_cmd_params(orig_dict):
+        add_cmd_line_params(orig_dict, args.parameter_overwrites)
 
-    if len(cmd_line) < 2:
-        final_params = {}
-    elif is_settings_file(cmd_line[1]):
+    if args.dict:
+        parameter_dict = ast.literal_eval(args.parameter_file_or_dict)
+        if not isinstance(parameter_dict, dict):
+            msg = "'parameter_file_or_dict' must be a dictionary (`--dict` is set)."
+            raise ValueError(msg)
 
-        def add_cmd_params(orig_dict):
-            add_cmd_line_params(orig_dict, cmd_line[2:])
-
-        final_params = smart_settings.load(
-            cmd_line[1],
-            make_immutable=make_immutable,
-            dynamic=dynamic,
-            post_unpack_hooks=(
-                [add_cmd_params, check_reserved_params] + post_unpack_hooks
-            ),
-            pre_unpack_hooks=pre_unpack_hooks,
-        )
-
-    elif len(cmd_line) == 2 and is_parseable_dict(cmd_line[1]):
-        final_params = ast.literal_eval(cmd_line[1])
         final_params = smart_settings.loads(
-            json.dumps(final_params),
+            json.dumps(parameter_dict),
             make_immutable=make_immutable,
             dynamic=dynamic,
-            post_unpack_hooks=[check_reserved_params] + post_unpack_hooks,
-            pre_unpack_hooks=pre_unpack_hooks,
+            post_unpack_hooks=([add_cmd_params, check_reserved_params]),
         )
     else:
-        raise ValueError("Failed to parse command line")
+        parameter_file = pathlib.Path(args.parameter_file_or_dict)
+        if not parameter_file.is_file():
+            msg = f"'{parameter_file}' does not exist or is not a file."
+            raise FileNotFoundError(msg)
+
+        final_params = smart_settings.load(
+            os.fspath(parameter_file),
+            make_immutable=make_immutable,
+            dynamic=dynamic,
+            post_unpack_hooks=([add_cmd_params, check_reserved_params]),
+        )
 
     if verbose:
         print(final_params)
@@ -455,7 +544,8 @@ def read_params_from_cmdline(
         sys.excepthook = report_error_at_server
         atexit.register(report_exit_at_server)
         submission_state.connection_active = True
-    read_params_from_cmdline.start_time = time.time()
+
+    read_params_from_cmdline.start_time = time.time()  # type: ignore
 
     if save_params and "working_dir" in final_params:
         os.makedirs(final_params.working_dir, exist_ok=True)
