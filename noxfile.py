@@ -12,7 +12,6 @@ LOCATIONS = (
     "examples/",
     "tests/",
     "noxfile.py",
-    "setup.py",
 )
 
 
