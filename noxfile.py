@@ -33,7 +33,7 @@ def mypy(session):
 @nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def pytest(session):
     session.install(".[all]")
-    session.install("pytest")
+    session.install(".[test]")
     session.run("pytest")
 
 
