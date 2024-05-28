@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "cluster-utils"
-version = "2.5"
+dynamic = ["version"]
 description = "Cluster utilities"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
@@ -34,6 +34,11 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["cluster_utils", "cluster"]
+
+[tool.setuptools_scm]
+# Can be empty if no extra settings are needed, presence enables setuptools_scm.
+# You can check which version it picked by running `python3 -m setuptools_scm` in the
+# package root.
 
 [project.urls]
 Documentation = "https://martius-lab.github.io/cluster_utils"
