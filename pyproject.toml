@@ -1,3 +1,92 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cluster-utils"
+version = "2.5"
+description = "Cluster utilities"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [
+    { name = "Michal Rolinek", email = "michalrolinek@gmail.com" },
+    { name = "Dominik Zietlow" },
+    { name = "Sebastian Blaes" },
+    { name = "Georg Martius" },
+    { name = "Marin Vlastelica" },
+    { name = "Maximilian Seitzer" },
+    { name = "Pierre Schuhmacher" },
+    { name = "Felix Kloss" },
+]
+maintainers = [
+    { email = "georg.martius@uni-tuebingen.de" },
+]
+dependencies = [
+    "colorama",
+    "gitpython>=3.0.5",
+    "numpy",
+    "pandas[output_formatting]==2.0.3",
+    "pyuv @ git+https://github.com/saghul/pyuv.git@2a3d42d44c6315ebd73899a35118380d2d5979b5",
+    "scipy",
+    "smart_settings @ git+https://github.com/martius-lab/smart-settings.git@eb7331fdcad58d314a842087bbf136735e890013",
+    "tqdm",
+]
+
+[tool.setuptools]
+packages = ["cluster_utils", "cluster"]
+
+[project.urls]
+Documentation = "https://martius-lab.github.io/cluster_utils"
+Repository = "https://github.com/martius-lab/cluster_utils"
+Issues = "https://github.com/martius-lab/cluster_utils/issues"
+
+[project.optional-dependencies]
+all = [
+    "cluster_utils[nevergrad]",
+    "cluster_utils[report]",
+]
+all-dev = [
+    "cluster_utils[all]",
+    "cluster_utils[dev]",
+    "cluster_utils[docs]",
+    "cluster_utils[mypy]",
+]
+dev = [
+    "absolufy-imports",
+    "cluster_utils[lint]",
+    "nox>=2022.8.7",
+    "pre-commit",
+    "pytest",
+]
+docs = [
+    "myst-parser",
+    "sphinx",
+    "sphinx-immaterial",
+]
+lint = [
+    "black==24.3.0",
+    "ruff==0.1.15",
+]
+mypy = [
+    "mypy",
+    "pandas-stubs",
+    "types-colorama",
+    "types-tqdm",
+]
+nevergrad = [
+    "nevergrad",
+]
+report = [
+    "matplotlib",
+    "scikit-learn",
+    "seaborn>=0.11.0",
+]
+
+[project.scripts]
+cluster_utils_plot_timeline = "cluster_utils.scripts.plot_job_timeline:main"
+
+
+
 [tool.black]
 preview = true
 target-version = ['py38']
