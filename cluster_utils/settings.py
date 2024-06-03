@@ -423,27 +423,8 @@ def read_main_script_params_with_smart_settings(
     )
 
 
-def read_params_from_cmdline(
-    cmd_line: Optional[list[str]] = None,
-    make_immutable: bool = True,
-    verbose: bool = True,
-    dynamic: bool = True,
-    save_params: bool = True,
-) -> smart_settings.AttributeDict:
-    """Read parameters based on command line input.
-
-    Args:
-        cmd_line:  Command line arguments (defaults to sys.argv).
-        make_immutable:  See ``smart_settings.loads()``
-        verbose:  If true, print the loaded parameters.
-        dynamic:  See ``smart_settings.loads()``
-        save_params:  If true, save the settings as JSON file in the working_dir.
-
-    Returns:
-        Parameters as loaded by smart_settings.
-    """
-    if not cmd_line:
-        cmd_line = sys.argv
+def init_job_script_argument_parser() -> argparse.ArgumentParser:
+    """Initialise ArgumentParser for job scripts."""
 
     def server_info(ip_and_port: str) -> dict[str, str | int]:
         """Split and validate string in "ip:port" format.  For use with argparse."""
@@ -495,9 +476,35 @@ def read_params_from_cmdline(
         help="IP and port used to connect to the cluster_utils main process.",
     )
 
+    return parser
+
+
+def read_params_from_cmdline(
+    cmd_line: Optional[list[str]] = None,
+    make_immutable: bool = True,
+    verbose: bool = True,
+    dynamic: bool = True,
+    save_params: bool = True,
+) -> smart_settings.AttributeDict:
+    """Read parameters based on command line input.
+
+    Args:
+        cmd_line:  Command line arguments (defaults to sys.argv).
+        make_immutable:  See ``smart_settings.loads()``
+        verbose:  If true, print the loaded parameters.
+        dynamic:  See ``smart_settings.loads()``
+        save_params:  If true, save the settings as JSON file in the working_dir.
+
+    Returns:
+        Parameters as loaded by smart_settings.
+    """
+    if not cmd_line:
+        cmd_line = sys.argv
+
+    parser = init_job_script_argument_parser()
     args = parser.parse_args(cmd_line[1:])
 
-    # some argument validation
+    # some argument validation which cannot be done by argparse directly
     if args.cluster_utils_server and args.job_id is None:
         parser.error("--job-id is required when --cluster-utils-server is set.")
 
