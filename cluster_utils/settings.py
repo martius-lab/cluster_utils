@@ -445,8 +445,12 @@ def read_params_from_cmdline(
     if not cmd_line:
         cmd_line = sys.argv
 
-    # expected keys of the server connection dictionary
-    server_connection_keys = {constants.ID, "ip", "port"}
+    def server_info(ip_and_port: str) -> dict[str, str | int]:
+        """Split and validate string in "ip:port" format.  For use with argparse."""
+        ip, port = ip_and_port.rsplit(":", maxsplit=1)
+        if not port.isdigit():
+            raise ValueError("Invalid port")
+        return {"ip": ip, "port": int(port)}
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -462,12 +466,11 @@ def read_params_from_cmdline(
         nargs="*",
         type=str,
         default=[],
-        metavar="key_value",
+        metavar="<key>=<value>",
         help="""Additional parameters in the format '<key>=<value>'.  Values provided
             here overwrite parameters provided via `parameter_file_or_dict`.  Key has to
             match a configuration option, value has to be a valid Python literal.
-            Example:
-            `--parameters 'results_dir="/tmp"' 'optimization_setting.run_local=True'`
+            Example: `'results_dir="/tmp"' 'optimization_setting.run_local=True'`
         """,
     )
     parser.add_argument(
@@ -478,30 +481,30 @@ def read_params_from_cmdline(
         """,
     )
     parser.add_argument(
-        "--server-connection-info",
-        type=ast.literal_eval,
-        help="""Information to communicate with the cluster_utils main process.
-           Dictionary with keys {}.
-       """.format(
-            server_connection_keys
-        ),
+        "--job-id",
+        type=int,
+        metavar="<id>",
+        help="""ID of the cluster_utils job (needed only if `--cluster-utils-server` is
+            set).
+        """,
+    )
+    parser.add_argument(
+        "--cluster-utils-server",
+        type=server_info,
+        metavar="<host>:<port>",
+        help="IP and port used to connect to the cluster_utils main process.",
     )
 
     args = parser.parse_args(cmd_line[1:])
 
-    if args.server_connection_info:
-        if not isinstance(args.server_connection_info, dict):
-            msg = "'--server-connection-info' must be a dictionary or `None`."
-            raise ValueError(msg)
-        elif set(args.server_connection_info.keys()) != server_connection_keys:
-            msg = (
-                f"'--server-connection-info' must contain keys {server_connection_keys}"
-            )
-            raise ValueError(msg)
+    # some argument validation
+    if args.cluster_utils_server and args.job_id is None:
+        parser.error("--job-id is required when --cluster-utils-server is set.")
 
-        submission_state.communication_server_ip = args.server_connection_info["ip"]
-        submission_state.communication_server_port = args.server_connection_info["port"]
-        submission_state.job_id = args.server_connection_info[constants.ID]
+    if args.cluster_utils_server:
+        submission_state.communication_server_ip = args.cluster_utils_server["ip"]
+        submission_state.communication_server_port = args.cluster_utils_server["port"]
+        submission_state.job_id = args.job_id
         submission_state.connection_details_available = True
         submission_state.connection_active = False
 

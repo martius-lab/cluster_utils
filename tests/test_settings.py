@@ -194,7 +194,14 @@ def test_read_params_from_cmdline__file_and_overwrite(tmp_path):
     assert params["three"] == 3
 
 
-def test_read_params_from_cmdline__errors():
+def test_read_params_from_cmdline__errors(monkeypatch):
+    # for better testability, overwrite the ArgumentParser.error method with one that
+    # raises an error instead of exiting
+    def monkey_error(self, message):
+        raise RuntimeError(message)
+
+    monkeypatch.setattr(argparse.ArgumentParser, "error", monkey_error)
+
     argv = [
         "test",
         "{'foo': 13}",  # not a file
@@ -207,25 +214,23 @@ def test_read_params_from_cmdline__errors():
 
     argv = [
         "test",
-        "--server-connection-info='notadictionary'",
+        "--job-id=42",
+        "--cluster-utils-server=invalid_format",
         "--dict",
         "{'foo': 13}",
     ]
-    with pytest.raises(
-        ValueError, match="'--server-connection-info' must be a dictionary."
-    ):
+    with pytest.raises(RuntimeError, match="--cluster-utils-server"):
         s.read_params_from_cmdline(cmd_line=argv)
 
     argv = [
         "test",
-        "--server-connection-info={'wrong': 1, 'keys': 2}",
+        "--cluster-utils-server=127.0.0.1:12345",
         "--dict",
         "{'foo': 13}",
     ]
     with pytest.raises(
-        ValueError,
-        # order of keys in the error message is not explicitly defined, so just match .*
-        match=r"'--server-connection-info' must contain keys \{.*\}",
+        RuntimeError,
+        match="--job-id is required when --cluster-utils-server is set",
     ):
         s.read_params_from_cmdline(cmd_line=argv)
 

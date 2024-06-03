@@ -22,19 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** All exit codes other than 0 or 3 (the magic "restart for resume" code)
   are now considered as failures.  Previously only 1 was considered as failure.
 - **Breaking:** Changed the parsing of arguments in `read_params_from_cmdline()`:
-  1. Server information is now a named argument `--server-connection-info` instead of a
-     positional.
+  1. Server information is now passed using named arguments `--cluster-utils-server` and
+     `--job_id` instead of a positional dictionary string.
   2. There is no automatic detection anymore, whether the parameters are passed as file
      or as dictionary string.  By default a path to a file is expected now.  When using
      a dictionary instead, the new argument `--dict` has to be set now.
 
   That is, instead of
   ```
-  script.py "{server info...}" "{'param1': 1, 'param2': 2, ...}"
+  script.py "{'_id': 42, 'ip': '127.0.0.1', 'port': 12345}" "{'param1': 1, 'param2': 2, ...}"
   ```
   use this now:
   ```
-  script.py --server-connection-info="{server info...}" --dict \
+  script.py --job-id=42 --cluster-utils-server=127.0.0.1:12345 --dict \
       "{'param1': 1, 'param2': 2, ...}"
   ```
 

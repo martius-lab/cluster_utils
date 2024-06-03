@@ -154,9 +154,16 @@ class Job:
         self.final_settings = current_setting
 
         arguments = (
-            f'--server-connection-info="{self.comm_server_info}"'
-            f' --dict "{current_setting}"'
+            "--job-id={job_id}"
+            " --cluster-utils-server={ip}:{port}"
+            ' --dict "{current_setting}"'
+        ).format(
+            job_id=self.comm_server_info[constants.ID],
+            ip=self.comm_server_info["ip"],
+            port=self.comm_server_info["port"],
+            current_setting=current_setting,
         )
+
         if is_python_script:
             run_script_as_module_main = paths.get("run_as_module", False)
             if run_script_as_module_main:
