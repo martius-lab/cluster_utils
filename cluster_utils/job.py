@@ -153,30 +153,31 @@ class Job:
 
         self.final_settings = current_setting
 
+        arguments = (
+            "--job-id={job_id}"
+            " --cluster-utils-server={ip}:{port}"
+            ' --parameter-dict "{current_setting}"'
+        ).format(
+            job_id=self.comm_server_info[constants.ID],
+            ip=self.comm_server_info["ip"],
+            port=self.comm_server_info["port"],
+            current_setting=current_setting,
+        )
+
         if is_python_script:
             run_script_as_module_main = paths.get("run_as_module", False)
-            setting_string = '"' + str(current_setting) + '"'
-            comm_info_string = '"' + str(self.comm_server_info) + '"'
             if run_script_as_module_main:
                 # convert path to module name
                 module_name = (
                     paths["script_to_run"].replace("/", ".").replace(".py", "")
                 )
-                exec_cmd = f"{python_executor} -m {module_name} {comm_info_string} {setting_string}"
+                exec_cmd = f"{python_executor} -m {module_name} {arguments}"
             else:
-                base_exec_cmd = "{}".format(python_executor) + " {} {} {}"
-                exec_cmd = base_exec_cmd.format(
-                    os.path.join(paths["main_path"], paths["script_to_run"]),
-                    comm_info_string,
-                    setting_string,
-                )
+                script_path = os.path.join(paths["main_path"], paths["script_to_run"])
+                exec_cmd = f"{python_executor} {script_path} {arguments}"
         else:
-            base_exec_cmd = "{} {} {}"
-            exec_cmd = base_exec_cmd.format(
-                os.path.join(paths["main_path"], paths["script_to_run"]),
-                '"' + str(self.comm_server_info) + '"',
-                '"' + str(current_setting) + '"',
-            )
+            script_path = os.path.join(paths["main_path"], paths["script_to_run"])
+            exec_cmd = f"{script_path} {arguments}"
 
         if self.singularity_settings:
             exec_cmd = self.singularity_wrap(

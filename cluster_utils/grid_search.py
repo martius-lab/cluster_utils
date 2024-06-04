@@ -1,33 +1,38 @@
+"""Run grid_search over hyperparameters."""
+
 import logging
 import os
 import sys
 from collections import Counter
 from pathlib import Path
 
-from . import grid_search, read_params_from_cmdline
+from . import grid_search
 from .constants import FULL_DF_FILE
 from .git_utils import make_git_params
 from .latex_utils import SectionFromJsonHook, StaticSectionGenerator
-from .settings import GenerateReportSetting, SingularitySettings
+from .settings import (
+    GenerateReportSetting,
+    SingularitySettings,
+    init_main_script_argument_parser,
+    read_main_script_params_from_args,
+)
 from .utils import (
-    check_import_in_fixed_params,
     get_time_string,
     make_temporary_dir,
-    rename_import_promise,
     save_report_data,
 )
 
-if __name__ == "__main__":
-    logger = logging.getLogger("cluster_utils")
 
-    params = read_params_from_cmdline(
-        verbose=False,
-        pre_unpack_hooks=[check_import_in_fixed_params],
-        post_unpack_hooks=[
-            rename_import_promise,
-            GenerateReportSetting.parse_generate_report_setting_hook,
-        ],
-    )
+def main() -> int:
+    parser = init_main_script_argument_parser(description=__doc__)
+    args = parser.parse_args()
+    try:
+        params = read_main_script_params_from_args(args)
+    except Exception as e:
+        print(f"Error while reading parameters: {e}", file=sys.stderr)
+        return 1
+
+    logger = logging.getLogger("cluster_utils")
 
     # check parameters
     if params["generate_report"] == GenerateReportSetting.EVERY_ITERATION:
@@ -114,7 +119,7 @@ if __name__ == "__main__":
             "Exiting because no job results are available. Either the jobs did not exit"
             " properly, or you forgot to call `save_metric_params`."
         )
-        sys.exit(1)
+        return 1
 
     df.to_csv(os.path.join(base_paths_and_files["result_dir"], FULL_DF_FILE))
 
@@ -149,3 +154,9 @@ if __name__ == "__main__":
             output_file=output_pdf,
             report_hooks=[json_hook],
         )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

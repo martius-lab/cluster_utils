@@ -59,9 +59,9 @@ all-dev = [
 dev = [
     "absolufy-imports",
     "cluster_utils[lint]",
+    "cluster_utils[test]",
     "nox>=2022.8.7",
     "pre-commit",
-    "pytest",
 ]
 docs = [
     "myst-parser",
@@ -75,8 +75,14 @@ lint = [
 mypy = [
     "mypy",
     "pandas-stubs",
+    "tomli-w",
     "types-colorama",
     "types-tqdm",
+    "types-PyYaml",
+]
+test = [
+    "pytest",
+    "tomli-w",
 ]
 nevergrad = [
     "nevergrad",

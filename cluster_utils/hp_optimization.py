@@ -1,3 +1,9 @@
+"""Run hyperparameter optimization.
+
+Test various hyperparameter configurations using an iterative optimization method to
+sample the values of the hyperparameters.
+"""
+
 from __future__ import annotations
 
 import os
@@ -8,15 +14,17 @@ from . import (
     distributions,
     hp_optimization,
     latex_utils,
-    read_params_from_cmdline,
 )
 from .git_utils import make_git_params
-from .settings import GenerateReportSetting, SingularitySettings
+from .settings import (
+    GenerateReportSetting,
+    SingularitySettings,
+    init_main_script_argument_parser,
+    read_main_script_params_from_args,
+)
 from .utils import (
-    check_import_in_fixed_params,
     get_time_string,
     make_temporary_dir,
-    rename_import_promise,
 )
 
 
@@ -48,19 +56,14 @@ def get_distribution(distribution, **kwargs):
     return distr_dict[distribution](**kwargs)
 
 
-if __name__ == "__main__":
+def main() -> int:
+    parser = init_main_script_argument_parser(description=__doc__)
+    args = parser.parse_args()
     try:
-        params = read_params_from_cmdline(
-            verbose=False,
-            pre_unpack_hooks=[check_import_in_fixed_params],
-            post_unpack_hooks=[
-                rename_import_promise,
-                GenerateReportSetting.parse_generate_report_setting_hook,
-            ],
-        )
+        params = read_main_script_params_from_args(args)
     except Exception as e:
         print(f"Error while reading parameters: {e}", file=sys.stderr)
-        sys.exit(1)
+        return 1
 
     if params["generate_report"] is not GenerateReportSetting.NEVER:
         # conditional import as it depends on optional dependencies (not used here but
@@ -126,3 +129,9 @@ if __name__ == "__main__":
         singularity_settings=singularity_settings,
         **params.optimization_setting,
     )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
