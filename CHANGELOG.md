@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {ref}`config_singularity`).
 - Basic Slurm support (Note supported options in `cluster_requirements` differs a bit
   from HTCondor, see {ref}`config_cluster_requirements`).
-- `grid_search` and `hp_optimization` now provide a some help when called with `--help`.
+- `grid_search` and `hp_optimization` now provide some help when called with `--help`.
 
 ### Fixed
 - Make it work with Python >=3.10
