@@ -43,14 +43,17 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
 
 @cluster_main
 def main(working_dir, id, **kwargs):  # noqa A002
-    # All parameters in grid_search.json (fixed parameters and the ones searched over)
-    # are passed to main.py as arguments, here caught in <**kwargs>. Could have written
-    # <main(working_dir, id, fn_args, test_resume, ...)>
+    # All parameters in grid_search.json (fixed parameters and the ones
+    # searched over) are passed to main.py as arguments, here caught in
+    # `**kwargs`.
+    # Could have written `main(working_dir, id, fn_args, test_resume, ...)`
     fn_args = kwargs["fn_args"]
     test_resume = kwargs["test_resume"]
+
     # simulate that the jobs take some time
     time.sleep(np.random.randint(0, 10))
     result_file = os.path.join(working_dir, "result.npy")
+
     # here we do a little simulation for checkpointing and resuming
     if os.path.isfile(result_file):
         # If there is a result to resume

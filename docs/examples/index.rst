@@ -7,3 +7,4 @@ Examples
 
    slurm_timeout_signal.rst
    checkpointing.rst
+   cluster_main_decorator.rst
