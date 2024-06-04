@@ -23,7 +23,7 @@ from .utils import (
 )
 
 
-def grid_search_main() -> int:
+def main() -> int:
     parser = init_main_script_argument_parser(description=__doc__)
     args = parser.parse_args()
     try:
@@ -159,4 +159,4 @@ def grid_search_main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(grid_search_main())
+    sys.exit(main())

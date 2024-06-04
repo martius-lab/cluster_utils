@@ -56,7 +56,7 @@ def get_distribution(distribution, **kwargs):
     return distr_dict[distribution](**kwargs)
 
 
-def hp_optimization_main() -> int:
+def main() -> int:
     parser = init_main_script_argument_parser(description=__doc__)
     args = parser.parse_args()
     try:
@@ -134,4 +134,4 @@ def hp_optimization_main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(hp_optimization_main())
+    sys.exit(main())
