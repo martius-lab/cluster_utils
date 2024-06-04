@@ -438,8 +438,8 @@ def init_job_script_argument_parser() -> argparse.ArgumentParser:
         "parameter_file_or_dict",
         type=str,
         help="""
-        Path to a configuration file or (if `--dict` is set) a string defining a Python
-        dictionary with the parameters.
+        Path to a configuration file or (if `--parameter-dict` is set) a string defining
+        a Python dictionary with the parameters.
     """,
     )
     parser.add_argument(
@@ -455,7 +455,7 @@ def init_job_script_argument_parser() -> argparse.ArgumentParser:
         """,
     )
     parser.add_argument(
-        "--dict",
+        "--parameter-dict",
         action="store_true",
         help="""If set, `parameter_file_or_dict` is expected to be a dictionary instead
             of a file path.
@@ -518,10 +518,13 @@ def read_params_from_cmdline(
     def add_cmd_params(orig_dict):
         add_cmd_line_params(orig_dict, args.parameter_overwrites)
 
-    if args.dict:
+    if args.parameter_dict:
         parameter_dict = ast.literal_eval(args.parameter_file_or_dict)
         if not isinstance(parameter_dict, dict):
-            msg = "'parameter_file_or_dict' must be a dictionary (`--dict` is set)."
+            msg = (
+                "'parameter_file_or_dict' must be a dictionary"
+                " (`--parameter-dict` is set)."
+            )
             raise ValueError(msg)
 
         final_params = smart_settings.loads(

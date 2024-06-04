@@ -156,7 +156,7 @@ class Job:
         arguments = (
             "--job-id={job_id}"
             " --cluster-utils-server={ip}:{port}"
-            ' --dict "{current_setting}"'
+            ' --parameter-dict "{current_setting}"'
         ).format(
             job_id=self.comm_server_info[constants.ID],
             ip=self.comm_server_info["ip"],

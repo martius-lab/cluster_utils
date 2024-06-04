@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      `--job_id` instead of a positional dictionary string.
   2. There is no automatic detection anymore, whether the parameters are passed as file
      or as dictionary string.  By default a path to a file is expected now.  When using
-     a dictionary instead, the new argument `--dict` has to be set now.
+     a dictionary instead, the new argument `--parameter-dict` has to be set now.
 
   That is, instead of
   ```
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
   use this now:
   ```
-  script.py --job-id=42 --cluster-utils-server=127.0.0.1:12345 --dict \
+  script.py --job-id=42 --cluster-utils-server=127.0.0.1:12345 --parameter-dict \
       "{'param1': 1, 'param2': 2, ...}"
   ```
 

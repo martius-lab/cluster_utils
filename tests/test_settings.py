@@ -126,7 +126,7 @@ def test_read_main_script_params_from_args__with_cmdline_overwrites(
 
 
 def test_read_params_from_cmdline__dict():
-    argv = ["test", "--dict", "{'foo': 'bar', 'one': {'two': 13}}"]
+    argv = ["test", "--parameter-dict", "{'foo': 'bar', 'one': {'two': 13}}"]
     params = s.read_params_from_cmdline(cmd_line=argv)
 
     assert "foo" in params
@@ -139,7 +139,7 @@ def test_read_params_from_cmdline__dict():
 def test_read_params_from_cmdline__dict_and_overwrite():
     argv = [
         "test",
-        "--dict",
+        "--parameter-dict",
         "{'foo': 'bar', 'one': {'two': 13}}",
         "foo='blub'",
         "three=3",
@@ -216,7 +216,7 @@ def test_read_params_from_cmdline__errors(monkeypatch):
         "test",
         "--job-id=42",
         "--cluster-utils-server=invalid_format",
-        "--dict",
+        "--parameter-dict",
         "{'foo': 13}",
     ]
     with pytest.raises(RuntimeError, match="--cluster-utils-server"):
@@ -225,7 +225,7 @@ def test_read_params_from_cmdline__errors(monkeypatch):
     argv = [
         "test",
         "--cluster-utils-server=127.0.0.1:12345",
-        "--dict",
+        "--parameter-dict",
         "{'foo': 13}",
     ]
     with pytest.raises(
@@ -234,11 +234,11 @@ def test_read_params_from_cmdline__errors(monkeypatch):
     ):
         s.read_params_from_cmdline(cmd_line=argv)
 
-    argv = ["test", "--dict", "'notadictionary'"]
+    argv = ["test", "--parameter-dict", "'notadictionary'"]
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "'parameter_file_or_dict' must be a dictionary (`--dict` is set)."
+            "'parameter_file_or_dict' must be a dictionary (`--parameter-dict` is set)."
         ),
     ):
         s.read_params_from_cmdline(cmd_line=argv)
