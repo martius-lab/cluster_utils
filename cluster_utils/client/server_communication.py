@@ -5,23 +5,29 @@ from __future__ import annotations
 import pickle
 import socket
 import traceback
-
-import pyuv
+from typing import Any
 
 from cluster_utils.communication_server import MessageTypes
 
 from . import submission_state
 
 
-def send_message(message_type, message):
-    loop = pyuv.Loop.default_loop()
-    udp = pyuv.UDP(loop)
-    udp.try_send(
+def send_message(message_type: MessageTypes, message: Any) -> None:
+    """Send message to the cluster_utils server.
+
+    Args:
+        message_type: The message type.
+        message: Additional information.  Needs to be pickleable.
+    """
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
+    msg_data = pickle.dumps((message_type, message))
+    sock.sendto(
+        msg_data,
         (
             submission_state.communication_server_ip,
             submission_state.communication_server_port,
         ),
-        pickle.dumps((message_type, message)),
     )
 
 

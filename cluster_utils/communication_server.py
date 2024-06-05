@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import asyncio
+import enum
 import logging
 import pickle
 import signal
@@ -5,13 +9,11 @@ import socket
 import threading
 import time
 
-import pyuv
-
 from . import constants
 from .job import JobStatus
 
 
-class MessageTypes:
+class MessageTypes(enum.IntEnum):
     JOB_STARTED = 0
     ERROR_ENCOUNTERED = 1
     JOB_SENT_RESULTS = 2
@@ -29,14 +31,30 @@ class MinJob:
         self.metrics = None
 
 
+class DatagramProtocol:
+    """Protocol class for receiving UDP messages from the jobs."""
+
+    def __init__(self, server: CommunicationServer):
+        self.server = server
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def datagram_received(self, data, addr):
+        if data is not None:
+            msg_type_idx, message = pickle.loads(data)
+            if msg_type_idx not in self.server.handlers:
+                self.server.handle_unidentified_message(data, msg_type_idx, message)
+            else:
+                self.server.handlers[msg_type_idx](message)
+
+
 class CommunicationServer:
     def __init__(self, cluster_system):
         logger = logging.getLogger("cluster_utils")
         self.event_loop = None
         self.ip_adress = self.get_own_ip()
         self.port = None
-        logger.info(f"Master script running on IP: {self.ip_adress}")
-        self.start_listening()
         self.cluster_system = cluster_system
 
         self.handlers = {
@@ -48,6 +66,9 @@ class CommunicationServer:
             MessageTypes.JOB_PROGRESS_PERCENTAGE: self.handle_job_progress,
             MessageTypes.METRIC_EARLY_REPORT: self.handle_metric_early_report,
         }
+
+        logger.info(f"Master script running on IP: {self.ip_adress}")
+        self.start_listening()
 
     @property
     def connection_info(self):
@@ -70,40 +91,26 @@ class CommunicationServer:
     def start_listening(self):
         logger = logging.getLogger("cluster_utils")
 
-        def on_read(handle, ip_port, flags, data, error):
-            if data is not None:
-                # handle.send(ip_port, data) This would be a way to ensure messaging
-                # worked well
-                msg_type_idx, message = pickle.loads(data)
-                if msg_type_idx not in self.handlers:
-                    self.handle_unidentified_message(data, msg_type_idx, message)
-                else:
-                    self.handlers[msg_type_idx](message)
+        self.event_loop = asyncio.get_event_loop()
 
-        def async_exit(async_connection):
-            async_connection.close()
-            signal_h.close()
-            server.close()
+        # create UDP server
+        coroutine = self.event_loop.create_datagram_endpoint(
+            lambda: DatagramProtocol(self),
+            # setting port to 0 makes it automatically pick a free port
+            local_addr=(self.ip_adress, 0),
+        )
+        transport, _ = self.event_loop.run_until_complete(coroutine)
 
-        self.event_loop = pyuv.Loop.default_loop()
-        async_connection = pyuv.Async(self.event_loop)
-
-        def signal_cb(sig, frame):
-            async_connection.send(async_exit)
-
-        server = pyuv.UDP(self.event_loop)
-        server.bind((self.ip_adress, 0))
-        self.port = server.getsockname()[1]
+        # get the port it chose from the underlying socket object
+        socket = transport.get_extra_info("socket")
+        self.port = socket.getsockname()[1]
         logger.info(f"Communication happening on port: {self.port}")
-        server.start_recv(on_read)
 
-        signal_h = pyuv.Signal(self.event_loop)
-        signal_h.start(signal_cb, signal.SIGINT)
+        # register a signal handler to stop the event loop on SIGINT
+        self.event_loop.add_signal_handler(signal.SIGINT, self.event_loop.stop)
 
-        t = threading.Thread(target=self.event_loop.run, daemon=True)
+        t = threading.Thread(target=self.event_loop.run_forever, daemon=True)
         t.start()
-
-        signal.signal(signal.SIGINT, signal_cb)
 
     def handle_job_started(self, message):
         logger = logging.getLogger("cluster_utils")
@@ -170,7 +177,7 @@ class CommunicationServer:
             # FAILED when a certain time passes without any received results.
             job.status = JobStatus.CONCLUDED_WITHOUT_RESULTS
 
-            def fail_job_if_still_no_results(timer):
+            def fail_job_if_still_no_results():
                 if job.status == JobStatus.CONCLUDED_WITHOUT_RESULTS:
                     job.status = JobStatus.FAILED
                     job.error_info = "Job concluded but sent no results."
@@ -181,10 +188,9 @@ class CommunicationServer:
                     )
 
             # We give the job some time to send its results and fail it otherwise.
-            pyuv.Timer(self.event_loop).start(
-                fail_job_if_still_no_results,
+            self.event_loop.call_later(
                 constants.CONCLUDED_WITHOUT_RESULTS_GRACE_TIME_IN_SECS,
-                repeat=0.0,  # No repeats
+                fail_job_if_still_no_results,
             )
             logger.info(
                 f"Job {job_id} announced its end but no results were sent so far."
