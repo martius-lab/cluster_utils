@@ -9,7 +9,7 @@ import os
 import pathlib
 import sys
 import time
-from typing import MutableMapping, Optional, cast
+from typing import MutableMapping, Optional
 
 import smart_settings
 
@@ -187,18 +187,13 @@ def read_params_from_cmdline(
         atexit.register(comm.report_exit_at_server)
         comm.submission_state.connection_active = True
 
-    read_params_from_cmdline.start_time = time.time()  # type: ignore
+    submission_state.start_time = time.time()
 
     if save_params and "working_dir" in final_params:
         os.makedirs(final_params.working_dir, exist_ok=True)
         _save_settings_to_json(final_params, final_params.working_dir)
 
     return final_params
-
-
-# TODO This doesn't look like a good use case for a function attribute. Maybe it should
-# be done differently?
-read_params_from_cmdline.start_time = None  # type: ignore[attr-defined]
 
 
 def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
@@ -222,8 +217,7 @@ def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
-    time_elapsed = time.time() - read_params_from_cmdline.start_time  # type: ignore
-    time_elapsed = cast(float, time_elapsed)
+    time_elapsed = time.time() - submission_state.start_time
     if "time_elapsed" not in metrics:
         metrics["time_elapsed"] = time_elapsed
     else:
