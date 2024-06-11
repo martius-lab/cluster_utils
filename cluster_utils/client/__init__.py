@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import ast
 import atexit
+import csv
 import functools
 import json
 import os
 import pathlib
 import sys
 import time
-from typing import MutableMapping, Optional
+from typing import Mapping, MutableMapping, Optional
 
 import smart_settings
 
@@ -20,10 +21,7 @@ from cluster_utils.settings import (
     add_cmd_line_params,
     check_reserved_params,
 )
-from cluster_utils.utils import (
-    flatten_nested_string_dict,
-    save_dict_as_one_line_csv,
-)
+from cluster_utils.utils import flatten_nested_string_dict
 
 from . import server_communication as comm
 from . import submission_state
@@ -98,6 +96,15 @@ def _sanitize_numpy_torch(possibly_np_or_tensor):
     if str(type(possibly_np_or_tensor)) == "<class 'numpy.ndarray'>":
         return float(possibly_np_or_tensor)
     return possibly_np_or_tensor
+
+
+def _save_dict_as_one_line_csv(
+    dct: Mapping[str, float], filename: str | os.PathLike
+) -> None:
+    with open(filename, "w") as f:
+        writer = csv.DictWriter(f, fieldnames=dct.keys())
+        writer.writeheader()
+        writer.writerow(dct)
 
 
 def read_params_from_cmdline(
@@ -215,7 +222,7 @@ def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
     """
     param_file = os.path.join(params.working_dir, constants.CLUSTER_PARAM_FILE)
     flattened_params = dict(flatten_nested_string_dict(params))
-    save_dict_as_one_line_csv(flattened_params, param_file)
+    _save_dict_as_one_line_csv(flattened_params, param_file)
 
     time_elapsed = time.time() - submission_state.start_time
     if "time_elapsed" not in metrics:
@@ -230,7 +237,7 @@ def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
     for key, value in metrics.items():
         metrics[key] = _sanitize_numpy_torch(value)
 
-    save_dict_as_one_line_csv(metrics, metric_file)
+    _save_dict_as_one_line_csv(metrics, metric_file)
     if submission_state.connection_active:
         comm.send_results_to_server(metrics)
 
