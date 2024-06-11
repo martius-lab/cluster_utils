@@ -16,3 +16,7 @@ cluster_utils.
 .. autofunction:: cluster_utils.announce_fraction_finished
 
 .. autofunction:: cluster_utils.cluster_main
+
+
+.. automodule:: cluster_utils.constants
+   :members:

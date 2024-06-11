@@ -118,8 +118,8 @@ class SettingsJsonEncoder(json.JSONEncoder):
 def cluster_main(main_func=None, **read_params_args):
     """Decorator for your main function to automatically register with cluster_utils.
 
-    Use this as a decorator to automatically wrap a function with falls to
-    :func:`read_params_from_cmdline` and :func:`save_metrics_params`.
+    Use this as a decorator to automatically wrap a function (usually ``main``) with
+    calls to :func:`read_params_from_cmdline` and :func:`save_metrics_params`.
 
     The parameters read by :func:`read_params_from_cmdline` will be passed as kwargs to
     the function.  Further, the function is expected to return the metrics dictionary as
@@ -202,6 +202,9 @@ def announce_fraction_finished(fraction_finished: float) -> None:
 def announce_early_results(metrics):
     """Report intermediate results to cluster_utils.
 
+    Results reported with this function are by hyperparameter optimization to stop bad
+    jobs early (see :confval:`kill_bad_jobs_early` option).
+
     Args:
         metrics:  Dictionary with metrics that should be sent to the server.
     """
@@ -223,10 +226,11 @@ def announce_early_results(metrics):
 
 
 def exit_for_resume() -> None:
-    """Send a "resume"-request to the cluster_utils server and exit with returncode 3.
+    """Send a "resume"-request to the cluster_utils server and exit with return code 3.
 
     Use this to split a single long-running job into multiple shorter jobs by frequently
-    saving intermediate results and restarting by calling this function.
+    saving the state of the job (e.g. checkpoints) and restarting by calling this
+    function.
 
     See :ref:`exit_for_resume` for more information.
     """
@@ -248,10 +252,16 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
 
 
 def save_metrics_params(metrics, params):
-    """Send results to the cluster_utils server.
+    """Save metrics and parameters and send metrics to the cluster_utils server.
 
-    Call this function at the end of your job script to report the results back to
-    cluster_utils.
+    Save the used parameters and resulting metrics to CSV files (filenames defined by
+    :attr:`~cluster_utils.constants.CLUSTER_PARAM_FILE` and
+    :attr:`~cluster_utils.constants.CLUSTER_METRIC_FILE`) in the job's working directory
+    and report the metrics to the cluster_utils main process.
+
+    Make sure to call this function at the end of your job script, otherwise
+    cluster_utils will not receive the resulting metrics and will consider the job as
+    failed.
 
     Args:
         metrics:  Dictionary with metrics that should be sent to the server.
