@@ -13,7 +13,7 @@ import socket
 import sys
 import time
 import traceback
-from typing import Any, NamedTuple, Optional
+from typing import Any, MutableMapping, NamedTuple, Optional, cast
 
 import pyuv
 import smart_settings
@@ -251,7 +251,7 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
     return possibly_np_or_tensor
 
 
-def save_metrics_params(metrics, params):
+def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
     """Save metrics and parameters and send metrics to the cluster_utils server.
 
     Save the used parameters and resulting metrics to CSV files (filenames defined by
@@ -272,7 +272,8 @@ def save_metrics_params(metrics, params):
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
-    time_elapsed = time.time() - read_params_from_cmdline.start_time
+    time_elapsed = time.time() - read_params_from_cmdline.start_time  # type: ignore
+    time_elapsed = cast(float, time_elapsed)
     if "time_elapsed" not in metrics:
         metrics["time_elapsed"] = time_elapsed
     else:
