@@ -79,6 +79,7 @@ Documentation Content
    :caption: References
 
    configuration
+   api
    changelog
 
 

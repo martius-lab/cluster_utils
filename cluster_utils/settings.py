@@ -13,7 +13,7 @@ import socket
 import sys
 import time
 import traceback
-from typing import Any, NamedTuple, Optional
+from typing import Any, MutableMapping, NamedTuple, Optional, cast
 
 import pyuv
 import smart_settings
@@ -116,6 +116,17 @@ class SettingsJsonEncoder(json.JSONEncoder):
 
 
 def cluster_main(main_func=None, **read_params_args):
+    """Decorator for your main function to automatically register with cluster_utils.
+
+    Use this as a decorator to automatically wrap a function (usually ``main``) with
+    calls to :func:`read_params_from_cmdline` and :func:`save_metrics_params`.
+
+    The parameters read by :func:`read_params_from_cmdline` will be passed as kwargs to
+    the function.  Further, the function is expected to return the metrics dictionary as
+    expected by :func:`save_metrics_params`.
+
+    See :ref:`example_cluster_main_decorator` for an usage example.
+    """
     if main_func is None:
         return functools.partial(cluster_main, **read_params_args)
 
@@ -163,7 +174,15 @@ def send_message(message_type, message):
     )
 
 
-def announce_fraction_finished(fraction_finished):
+def announce_fraction_finished(fraction_finished: float) -> None:
+    """Report job progress to cluster_utils.
+
+    You may use this function to report the progress of the job.  If done, the
+    information is used by cluster_utils to estimate the remaining duration of the job.
+
+    Args:
+        fraction_finished: Value between 0 and 1, indicating the progress of the job.
+    """
     if not submission_state.connection_active:
         return
 
@@ -181,6 +200,14 @@ def announce_fraction_finished(fraction_finished):
 
 
 def announce_early_results(metrics):
+    """Report intermediate results to cluster_utils.
+
+    Results reported with this function are by hyperparameter optimization to stop bad
+    jobs early (see :confval:`kill_bad_jobs_early` option).
+
+    Args:
+        metrics:  Dictionary with metrics that should be sent to the server.
+    """
     if not submission_state.connection_active:
         return
 
@@ -198,11 +225,14 @@ def announce_early_results(metrics):
     )
 
 
-def exit_for_resume():
-    """Send a "resume"-request to the cluster_utils server and exit with returncode 3.
+def exit_for_resume() -> None:
+    """Send a "resume"-request to the cluster_utils server and exit with return code 3.
 
     Use this to split a single long-running job into multiple shorter jobs by frequently
-    saving intermediate results and restarting by calling this function.
+    saving the state of the job (e.g. checkpoints) and restarting by calling this
+    function.
+
+    See :ref:`exit_for_resume` for more information.
     """
     if not submission_state.connection_active:
         # TODO: shouldn't it at least sys.exit() in any case?
@@ -221,12 +251,29 @@ def sanitize_numpy_torch(possibly_np_or_tensor):
     return possibly_np_or_tensor
 
 
-def save_metrics_params(metrics, params):
+def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
+    """Save metrics and parameters and send metrics to the cluster_utils server.
+
+    Save the used parameters and resulting metrics to CSV files (filenames defined by
+    :attr:`~cluster_utils.constants.CLUSTER_PARAM_FILE` and
+    :attr:`~cluster_utils.constants.CLUSTER_METRIC_FILE`) in the job's working directory
+    and report the metrics to the cluster_utils main process.
+
+    Make sure to call this function at the end of your job script, otherwise
+    cluster_utils will not receive the resulting metrics and will consider the job as
+    failed.
+
+    Args:
+        metrics:  Dictionary with metrics that should be sent to the server.
+        params:  Parameters that were used to run the job (given by
+            :func:`read_params_from_cmdline`).
+    """
     param_file = os.path.join(params.working_dir, constants.CLUSTER_PARAM_FILE)
     flattened_params = dict(flatten_nested_string_dict(params))
     save_dict_as_one_line_csv(flattened_params, param_file)
 
-    time_elapsed = time.time() - read_params_from_cmdline.start_time
+    time_elapsed = time.time() - read_params_from_cmdline.start_time  # type: ignore
+    time_elapsed = cast(float, time_elapsed)
     if "time_elapsed" not in metrics:
         metrics["time_elapsed"] = time_elapsed
     else:
@@ -486,7 +533,15 @@ def read_params_from_cmdline(
     dynamic: bool = True,
     save_params: bool = True,
 ) -> smart_settings.AttributeDict:
-    """Read parameters based on command line input.
+    """Read parameters from command line and register at cluster_utils server.
+
+    This function is intended to be called at the beginning of your job scripts.  It
+    does two things at once:
+
+    1. parse the command line arguments to get the parameters for the job, and
+    2. if server information is provided via command line arguments, register at the
+       cluster_utils server (i.e. the main process, that orchestrates the job
+       execution).
 
     Args:
         cmd_line:  Command line arguments (defaults to sys.argv).
@@ -496,7 +551,7 @@ def read_params_from_cmdline(
         save_params:  If true, save the settings as JSON file in the working_dir.
 
     Returns:
-        Parameters as loaded by smart_settings.
+        Parameters as loaded from the command line arguments with smart_settings.
     """
     if not cmd_line:
         cmd_line = sys.argv

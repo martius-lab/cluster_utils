@@ -18,7 +18,7 @@ import textwrap
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
-from typing import Any
+from typing import Any, Mapping
 
 import colorama
 
@@ -155,7 +155,9 @@ def flatten_nested_string_dict(nested_dict, prepend=""):
             yield prepend + str(key), value
 
 
-def save_dict_as_one_line_csv(dct, filename):
+def save_dict_as_one_line_csv(
+    dct: Mapping[str, float], filename: str | os.PathLike
+) -> None:
     with open(filename, "w") as f:
         writer = csv.DictWriter(f, fieldnames=dct.keys())
         writer.writeheader()

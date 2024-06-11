@@ -40,6 +40,7 @@ import sphinx.domains.python
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "myst_parser",
     "sphinx_immaterial",

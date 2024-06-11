@@ -1,5 +1,8 @@
+#: Name of the CSV file to which used parameters of a job are saved.
 CLUSTER_PARAM_FILE = "param_choice.csv"
+#: Name of the CSV file to which resulting metrics of a job are saved.
 CLUSTER_METRIC_FILE = "metrics.csv"
+#: Name of the JSON file to which used parameters of a job are saved.
 JSON_SETTINGS_FILE = "settings.json"
 
 METADATA_FILE = "metadata.json"
