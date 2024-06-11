@@ -17,7 +17,7 @@ from typing import MutableMapping, Optional, cast
 import pyuv
 import smart_settings
 
-from cluster_utils import constants, submission_state
+from cluster_utils import constants
 from cluster_utils.communication_server import MessageTypes
 from cluster_utils.settings import (
     SettingsJsonEncoder,
@@ -28,6 +28,8 @@ from cluster_utils.utils import (
     flatten_nested_string_dict,
     save_dict_as_one_line_csv,
 )
+
+from . import submission_state
 
 
 def send_message(message_type, message):
