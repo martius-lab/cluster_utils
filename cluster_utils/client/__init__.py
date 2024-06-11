@@ -7,14 +7,10 @@ import functools
 import json
 import os
 import pathlib
-import pickle
-import socket
 import sys
 import time
-import traceback
 from typing import MutableMapping, Optional, cast
 
-import pyuv
 import smart_settings
 
 from cluster_utils import constants
@@ -29,74 +25,8 @@ from cluster_utils.utils import (
     save_dict_as_one_line_csv,
 )
 
+from . import server_communication as comm
 from . import submission_state
-
-
-def send_message(message_type, message):
-    loop = pyuv.Loop.default_loop()
-    udp = pyuv.UDP(loop)
-    udp.try_send(
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-        pickle.dumps((message_type, message)),
-    )
-
-
-def send_results_to_server(metrics):
-    print(
-        "Sending results to: ",
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-    )
-    send_message(
-        MessageTypes.JOB_SENT_RESULTS, message=(submission_state.job_id, metrics)
-    )
-
-
-def report_exit_at_server():
-    print(
-        "Sending confirmation of exit to: ",
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-    )
-    send_message(MessageTypes.JOB_CONCLUDED, message=(submission_state.job_id,))
-
-
-def report_error_at_server(exctype, value, tb):
-    print(
-        "Sending errors to: ",
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-    )
-    send_message(
-        MessageTypes.ERROR_ENCOUNTERED,
-        message=(
-            submission_state.job_id,
-            traceback.format_exception(exctype, value, tb),
-        ),
-    )
-
-
-def register_at_server(final_params):
-    print(
-        "Sending registration to: ",
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-    )
-    send_message(
-        MessageTypes.JOB_STARTED,
-        message=(submission_state.job_id, socket.gethostname()),
-    )
 
 
 def _init_job_script_argument_parser() -> argparse.ArgumentParser:
@@ -161,7 +91,7 @@ def _save_settings_to_json(setting_dict, working_dir):
         json.dump(setting_dict, file, sort_keys=True, indent=4, cls=SettingsJsonEncoder)
 
 
-def sanitize_numpy_torch(possibly_np_or_tensor):
+def _sanitize_numpy_torch(possibly_np_or_tensor):
     # Hacky check for torch tensors without importing torch
     if str(type(possibly_np_or_tensor)) == "<class 'torch.Tensor'>":
         return possibly_np_or_tensor.item()  # silently convert to float
@@ -252,10 +182,10 @@ def read_params_from_cmdline(
         submission_state.connection_details_available
         and not submission_state.connection_active
     ):
-        register_at_server(final_params)
-        sys.excepthook = report_error_at_server
-        atexit.register(report_exit_at_server)
-        submission_state.connection_active = True
+        comm.register_at_server(final_params)
+        sys.excepthook = comm.report_error_at_server
+        atexit.register(comm.report_exit_at_server)
+        comm.submission_state.connection_active = True
 
     read_params_from_cmdline.start_time = time.time()  # type: ignore
 
@@ -304,11 +234,11 @@ def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
     metric_file = os.path.join(params.working_dir, constants.CLUSTER_METRIC_FILE)
 
     for key, value in metrics.items():
-        metrics[key] = sanitize_numpy_torch(value)
+        metrics[key] = _sanitize_numpy_torch(value)
 
     save_dict_as_one_line_csv(metrics, metric_file)
     if submission_state.connection_active:
-        send_results_to_server(metrics)
+        comm.send_results_to_server(metrics)
 
 
 def announce_early_results(metrics):
@@ -323,7 +253,7 @@ def announce_early_results(metrics):
     if not submission_state.connection_active:
         return
 
-    sanitized = {key: sanitize_numpy_torch(value) for key, value in metrics.items()}
+    sanitized = {key: _sanitize_numpy_torch(value) for key, value in metrics.items()}
 
     print(
         "Sending early results to: ",
@@ -332,7 +262,7 @@ def announce_early_results(metrics):
             submission_state.communication_server_port,
         ),
     )
-    send_message(
+    comm.send_message(
         MessageTypes.METRIC_EARLY_REPORT, message=(submission_state.job_id, sanitized)
     )
 
@@ -356,7 +286,7 @@ def announce_fraction_finished(fraction_finished: float) -> None:
             submission_state.communication_server_port,
         ),
     )
-    send_message(
+    comm.send_message(
         MessageTypes.JOB_PROGRESS_PERCENTAGE,
         message=(submission_state.job_id, fraction_finished),
     )
@@ -374,8 +304,8 @@ def exit_for_resume() -> None:
     if not submission_state.connection_active:
         # TODO: shouldn't it at least sys.exit() in any case?
         return
-    atexit.unregister(report_exit_at_server)  # Disable exit reporting
-    send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
+    atexit.unregister(comm.report_exit_at_server)  # Disable exit reporting
+    comm.send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
     sys.exit(3)  # With exit code 3 for resume
 
 
