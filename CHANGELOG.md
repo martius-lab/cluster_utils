@@ -55,7 +55,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local submissions now store stdout and stderr to log files, like they would do on the cluster.
   This should be useful for debugging scripts to work with the cluster locally, as previously,
   there was no way to access the outputs of locally running jobs.
+- Renamed `read_params_from_cmdline` to `initialize_job`.  An alias with the old name is
+  available but will raise a FutureWarning.
+- Renamed `save_metrics_params` to `finalize_job`.  An alias with the old name is
+  available but will raise a FutureWarning.
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
+
+### Removed
+- Removed option `save_params` from `read_params_from_cmdline`.  They will always be
+  saved now.
+- Removed option `make_immutable` from `read_params_from_cmdline`.  Returned parameters
+  are always immutable now.  If needed, a mutable copy can be created with
+  `smart_settings.param_classes.AttributeDict(params)`.
 
 ### Added
 - Setting `generate_report` to control automatic report generation (See
@@ -86,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The package has been renamed from "cluster" to "cluster_utils", please update your
   imports accordingly.  There is still a wrapper package with the old name (so existing
   code should still work) but it will be removed in the next major release.
+- `read_params_from_cmdline` is deprecated.  Use `initialize_job` instead.
+- `save_metrics_params` is deprecated.  Use `finalize_job` instead.
 
 
 ## 2.5 - 2023-10-05

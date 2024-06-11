@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 
-from cluster_utils import exit_for_resume, read_params_from_cmdline, save_metrics_params
+from cluster_utils import exit_for_resume, finalize_job, initialize_job
 
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
@@ -41,7 +41,7 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
 
 
 if __name__ == "__main__":
-    params = read_params_from_cmdline()
+    params = initialize_job()
 
     # simulate that the jobs take some time
     max_sleep_time = params.get("max_sleep_time", 10)
@@ -63,5 +63,5 @@ if __name__ == "__main__":
 
     noisy_result = noiseless_result + 0.5 * np.random.normal()
     metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
-    save_metrics_params(metrics, params)
+    finalize_job(metrics, params)
     print(noiseless_result)
