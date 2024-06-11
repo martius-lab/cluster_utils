@@ -16,7 +16,7 @@ multiple shorter jobs.  Reasons for this are:
   so it's more friendly to your colleagues.
 
 
-cluster_utils supports this via the function :func:`~cluster_utils.exit_for_resume`.
+cluster_utils supports this via the function :func:`~cluster_utils.client.exit_for_resume`.
 Calling it will send a resume-request to the cluster_utils main process and then
 terminate the job.  The main process will then re-submit the job with the same settings
 and same output directory.  This allows the job to load previously saved intermediate
@@ -24,20 +24,20 @@ results and proceed working on them.
 
 
 So the high level structure of a job script using
-:func:`~cluster_utils.exit_for_resume` looks like this:
+:func:`~cluster_utils.client.exit_for_resume` looks like this:
 
 1. In the beginning of your script check if there are intermediate results saved in the
    output directory by a previous job.  If yes, load them.
 2. Start/proceed your computations.
 3. Based on some criterion (e.g. after a certain number of iterations or when receiving
    a timeout-signal by Slurm) save current results to the output directory and terminate
-   the job by calling :func:`~cluster_utils.exit_for_resume`.
+   the job by calling :func:`~cluster_utils.client.exit_for_resume`.
 
 
 .. hint::
 
    It may be useful to report intermediate results using
-   :func:`~cluster_utils.announce_early_results` before exiting for resume.
+   :func:`~cluster_utils.client.announce_early_results` before exiting for resume.
 
 
 Usage Examples
