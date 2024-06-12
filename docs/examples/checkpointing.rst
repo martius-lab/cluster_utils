@@ -6,10 +6,9 @@ Use checkpointing with ``exit_for_resume()``
 
 
 This is an example how to use checkpointing and restarting jobs using
-:func:`~cluster_utils.client.exit_for_resume()` when training a neural network with
-PyTorch.
+:func:`~cluster_utils.exit_for_resume()` when training a neural network with PyTorch.
 
-For more information on :func:`~cluster_utils.client.exit_for_resume()` see
+For more information on :func:`~cluster_utils.exit_for_resume()` see
 :ref:`exit_for_resume`.
 
 

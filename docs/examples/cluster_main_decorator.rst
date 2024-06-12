@@ -4,7 +4,7 @@
 Using the ``cluster_main`` Decorator
 ************************************
 
-This is an example how to use the :func:`~cluster_utils.client.cluster_main` decorator.
+This is an example how to use the :func:`~cluster_utils.cluster_main` decorator.
 
 
 .. literalinclude:: ../../examples/basic/main_with_decorator.py
