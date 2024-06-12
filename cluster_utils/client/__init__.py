@@ -1,3 +1,12 @@
+"""Client API of cluster_utils.
+
+The cluster_utils client API is used in the job scripts implemented by the user and are
+used to communicate with the cluster_utils server process.  Most important are
+:func:`read_params_from_cmdline`, which has to be called in the beginning to register
+with the server, and :func:`save_metrics_params`, which is called in the end to
+send the results in the end.
+"""
+
 from __future__ import annotations
 
 import argparse
