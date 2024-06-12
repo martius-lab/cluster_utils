@@ -6,6 +6,8 @@ from .client import (
     announce_fraction_finished,
     cluster_main,
     exit_for_resume,
+    finalize_job,
+    initialize_job,
     read_params_from_cmdline,
     save_metrics_params,
 )
@@ -24,6 +26,8 @@ __all__ = [
     "announce_fraction_finished",
     "cluster_main",
     "exit_for_resume",
+    "finalize_job",
+    "initialize_job",
     "save_metrics_params",
     "read_params_from_cmdline",
 ]

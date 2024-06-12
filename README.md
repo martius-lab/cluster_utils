@@ -72,7 +72,7 @@ def main(
 If you don't want to use a decorator, use the following:
 
 ```python
-from cluster_utils import read_params_from_cmdline, save_metrics_params
+import cluster_utils
 
 def main(params):
     results = ...  # Code that computes something interesting
@@ -81,12 +81,12 @@ def main(params):
 if __name__ == "__main__":
     # Dictionary that contains parameters passed by cluster_utils. This call also establishes 
     # communication with the cluster_utils server. Also contains "working_dir" and "id", as above.
-    params = read_params_from_cmdline()
+    params = cluster_utils.initialize_job()
 
     results = main(params)
 
     # Report results back to cluster_utils.
-    save_metrics_params(results)
+    cluster_utils.finalize_job(results)
 ```
 
 To start a cluster run, start the cluster_utils server on the login node of the cluster.

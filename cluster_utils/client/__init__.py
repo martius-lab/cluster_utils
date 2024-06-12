@@ -19,6 +19,7 @@ import os
 import pathlib
 import sys
 import time
+import warnings
 from typing import Mapping, MutableMapping, Optional
 
 import smart_settings
@@ -122,7 +123,42 @@ def read_params_from_cmdline(
     verbose: bool = True,
     dynamic: bool = True,
     save_params: bool = True,
-) -> smart_settings.AttributeDict:
+) -> smart_settings.param_classes.AttributeDict:
+    """Alias for :func:`initialize_job`.
+
+    Deprecated:
+        This function is deprecated and will be removed in a future release.  Use
+        :func:`initialize_job` instead.
+    """
+    warnings.warn(
+        "`read_params_from_cmdline` is deprecated!  Use `initialize_job` instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+
+    if not make_immutable:
+        msg = (
+            "The option `make_immutable=False` is not supported anymore."
+            " You can create a mutable copy of the parameters with"
+            " `smart_settings.param_classes.AttributeDict(params)`"
+        )
+        raise RuntimeError(msg)
+
+    if not save_params:
+        msg = (
+            "The option `save_params=False` is not supported anymore."
+            " Parameters will always be saved."
+        )
+        raise RuntimeError(msg)
+
+    return initialize_job(cmd_line, verbose=verbose, dynamic=dynamic)
+
+
+def initialize_job(
+    cmd_line: Optional[list[str]] = None,
+    verbose: bool = True,
+    dynamic: bool = True,
+) -> smart_settings.param_classes.AttributeDict:
     """Read parameters from command line and register at cluster_utils server.
 
     This function is intended to be called at the beginning of your job scripts.  It
@@ -135,10 +171,8 @@ def read_params_from_cmdline(
 
     Args:
         cmd_line:  Command line arguments (defaults to sys.argv).
-        make_immutable:  See ``smart_settings.loads()``
         verbose:  If true, print the loaded parameters.
         dynamic:  See ``smart_settings.loads()``
-        save_params:  If true, save the settings as JSON file in the working_dir.
 
     Returns:
         Parameters as loaded from the command line arguments with smart_settings.
@@ -174,7 +208,7 @@ def read_params_from_cmdline(
 
         final_params = smart_settings.loads(
             json.dumps(parameter_dict),
-            make_immutable=make_immutable,
+            make_immutable=True,
             dynamic=dynamic,
             post_unpack_hooks=([add_cmd_params, check_reserved_params]),
         )
@@ -186,7 +220,7 @@ def read_params_from_cmdline(
 
         final_params = smart_settings.load(
             os.fspath(parameter_file),
-            make_immutable=make_immutable,
+            make_immutable=True,
             dynamic=dynamic,
             post_unpack_hooks=([add_cmd_params, check_reserved_params]),
         )
@@ -205,7 +239,8 @@ def read_params_from_cmdline(
 
     submission_state.start_time = time.time()
 
-    if save_params and "working_dir" in final_params:
+    # TODO should probably rather be an assert, there should always be a working dir
+    if "working_dir" in final_params:
         os.makedirs(final_params.working_dir, exist_ok=True)
         _save_settings_to_json(final_params, final_params.working_dir)
 
@@ -213,6 +248,22 @@ def read_params_from_cmdline(
 
 
 def save_metrics_params(metrics: MutableMapping[str, float], params) -> None:
+    """Alias for :func:`finalize_job`.
+
+    Deprecated:
+        This function is deprecated and will be removed in a future release.  Use
+        :func:`finalize_job` instead.
+    """
+    warnings.warn(
+        "`save_metric_params` is deprecated!  Use `finalize_job` instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+
+    finalize_job(metrics, params)
+
+
+def finalize_job(metrics: MutableMapping[str, float], params) -> None:
     """Save metrics and parameters and send metrics to the cluster_utils server.
 
     Save the used parameters and resulting metrics to CSV files (filenames defined by
@@ -339,9 +390,9 @@ def cluster_main(main_func=None, **read_params_args):
         """Saves settings file on beginning, calls wrapped function with params from cmd
         and saves metrics to working_dir
         """
-        params = read_params_from_cmdline(**read_params_args)
+        params = initialize_job(**read_params_args)
         metrics = main_func(**params)
-        save_metrics_params(metrics, params)
+        finalize_job(metrics, params)
         return metrics
 
     return wrapper
@@ -352,6 +403,8 @@ __all__ = [
     "announce_fraction_finished",
     "cluster_main",
     "exit_for_resume",
+    "finalize_job",
+    "initialize_job",
     "save_metrics_params",
     "read_params_from_cmdline",
 ]

@@ -5,8 +5,8 @@ import torch
 
 from cluster_utils import (
     exit_for_resume,
-    read_params_from_cmdline,
-    save_metrics_params,
+    finalize_job,
+    initialize_job,
 )
 
 
@@ -41,7 +41,7 @@ def load_checkpoint(load_path, model, optim):
 
 if __name__ == "__main__":
     # parameters are loaded from json file
-    params = read_params_from_cmdline()
+    params = initialize_job()
     # a folder for each run is created
     os.makedirs(params.working_dir, exist_ok=True)
     checkpoint_path = os.path.join(params.working_dir, "checkpoint.pt")
@@ -88,5 +88,5 @@ if __name__ == "__main__":
 
     metrics = {"loss": loss, "iterations": iteration}
     # save final metrics, you will only see the resuming in the cluster_run.log file
-    save_metrics_params(metrics, params)
+    finalize_job(metrics, params)
     print(f"Training finished, final loss {loss} at episode {iteration}")

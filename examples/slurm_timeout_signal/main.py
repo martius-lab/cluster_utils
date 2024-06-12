@@ -21,7 +21,7 @@ def timeout_signal_handler(sig, frame):
 
 def main() -> int:
     """Main function."""
-    params = cluster_utils.read_params_from_cmdline()
+    params = cluster_utils.initialize_job()
 
     n_training_iterations = 60
     start_iteration = 0
@@ -53,7 +53,7 @@ def main() -> int:
 
     # just return some dummy metric value here
     metrics = {"result": params.x + params.y, "n_iterations": i}
-    cluster_utils.save_metrics_params(metrics, params)
+    cluster_utils.finalize_job(metrics, params)
 
     return 0
 

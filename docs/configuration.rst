@@ -497,7 +497,7 @@ settings (i.e. the ones independent of the optimisation method set in
     **Required.**
 
     Name of the metric that is used for the optimisation.  Has to match the name of one
-    of the metrics that are saved with :func:`cluster_utils.save_metrics_params`.
+    of the metrics that are saved with :func:`~cluster_utils.client.finalize_job`.
 
 .. confval:: optimization_setting.minimize: bool
 
