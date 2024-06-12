@@ -8,8 +8,8 @@ Below is a list of error messages that may occur with potential solutions.
 
 **Pandas DataError: No numeric types to aggregate**
 
-If one of the values stored with :func:`save_metrics_params` has a non-numeric
-type (e.g. string).
+If one of the values stored with :func:`~cluster_utils.save_metrics_params` has a
+non-numeric type (e.g. string).
 
 
 ------

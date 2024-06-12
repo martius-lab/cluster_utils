@@ -72,6 +72,7 @@ Documentation Content
    :caption: Topic Guides
 
    usage_mindset_and_rule_of_thumb
+   architecture
 
 
 .. toctree::

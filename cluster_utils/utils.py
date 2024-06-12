@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import collections
 import contextlib
-import csv
 import datetime
 import enum
 import itertools
@@ -18,7 +17,7 @@ import textwrap
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
-from typing import Any, Mapping
+from typing import Any
 
 import colorama
 
@@ -153,15 +152,6 @@ def flatten_nested_string_dict(nested_dict, prepend=""):
                 yield sub
         else:
             yield prepend + str(key), value
-
-
-def save_dict_as_one_line_csv(
-    dct: Mapping[str, float], filename: str | os.PathLike
-) -> None:
-    with open(filename, "w") as f:
-        writer = csv.DictWriter(f, fieldnames=dct.keys())
-        writer.writeheader()
-        writer.writerow(dct)
 
 
 def get_sample_generator(

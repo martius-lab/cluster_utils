@@ -1,8 +1,7 @@
 import contextlib
 import importlib.metadata
 
-from .job_manager import grid_search, hp_optimization
-from .settings import (
+from .client import (
     announce_early_results,
     announce_fraction_finished,
     cluster_main,
@@ -10,6 +9,7 @@ from .settings import (
     read_params_from_cmdline,
     save_metrics_params,
 )
+from .job_manager import grid_search, hp_optimization
 
 # The version is set based on git at install time, so we get it from the metadata of the
 # installed package here.  If this file is imported without the package being installed,
