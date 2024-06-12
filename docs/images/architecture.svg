@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="199.24883mm"
+   height="158.03127mm"
+   viewBox="0 0 199.24883 158.03127"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="architecture.svg"
+   inkscape:export-filename="/home/felixwidmaier/ws/cluster/cluster_utils/docs/images/architecture.png"
+   inkscape:export-xdpi="119.95755"
+   inkscape:export-ydpi="119.95755"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.5554293"
+     inkscape:cx="273.23646"
+     inkscape:cy="324.66921"
+     inkscape:window-width="2560"
+     inkscape:window-height="1365"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:snap-bbox="false"
+     inkscape:snap-midpoints="true"
+     inkscape:snap-global="false"
+     lock-margins="true"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="marker142020"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:0.625;stroke-linejoin:round"
+         id="path142018" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:0.625;stroke-linejoin:round"
+         id="path141771" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-4.6620617,-6.1719809)">
+    <g
+       id="g181386">
+      <g
+         id="g54736"
+         transform="translate(1.6484203,-12.459334)">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.35px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+           x="13.812346"
+           y="47.162865"
+           id="text2960"><tspan
+             sodipodi:role="line"
+             style="font-size:6.35px;stroke-width:0.264583"
+             x="13.812346"
+             y="47.162865"
+             id="tspan2962">Cluster System</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+           x="18.055599"
+           y="53.409588"
+           id="text37552"><tspan
+             sodipodi:role="line"
+             id="tspan37550"
+             style="stroke-width:0.264583"
+             x="18.055599"
+             y="53.409588">Slurm, HTCondor, etc.</tspan></text>
+      </g>
+      <rect
+         style="fill:none;stroke:#000000;stroke-width:0.352778;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect41406"
+         width="54.119743"
+         height="35.250767"
+         x="9.8384504"
+         y="18.018167"
+         ry="2" />
+    </g>
+    <path
+       style="fill:none;stroke:#525252;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker142020)"
+       d="M 112.25327,37.385697 66.883793,35.860399"
+       id="path141748"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#525252;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker142020)"
+       d="M 31.583173,55.738622 27.956428,124.23244"
+       id="path142198"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#525252;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker142020)"
+       d="M 36.242476,55.738622 109.68618,124.23244"
+       id="path142200"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#525252;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker142020)"
+       d="M 65.70292,124.23244 130.63531,52.893282"
+       id="path142613"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#525252;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker142020)"
+       d="M 128.65237,124.23244 139.61099,52.893282"
+       id="path142615"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.52778px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;stroke-width:0.264583"
+       x="71.964058"
+       y="34.41959"
+       id="text150629"><tspan
+         sodipodi:role="line"
+         id="tspan150627"
+         style="font-size:3.52778px;fill:#525252;fill-opacity:1;stroke-width:0.264583"
+         x="71.964058"
+         y="34.41959">submit &amp; monitor jobs</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.52778px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;stroke-width:0.264583"
+       x="32.934967"
+       y="69.565178"
+       id="text157365"><tspan
+         sodipodi:role="line"
+         id="tspan157363"
+         style="font-size:3.52778px;fill:#525252;fill-opacity:1;stroke-width:0.264583"
+         x="32.934967"
+         y="69.565178">execute</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.52778px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;stroke-width:0.264583"
+       x="110.67171"
+       y="81.651985"
+       id="text160859"><tspan
+         sodipodi:role="line"
+         id="tspan160857"
+         style="font-size:3.52778px;fill:#525252;fill-opacity:1;stroke-width:0.264583"
+         x="110.67171"
+         y="81.651985">send status</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:3.52778px;fill:#525252;fill-opacity:1;stroke-width:0.264583"
+         x="110.67171"
+         y="86.061707"
+         id="tspan171718">and results</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:11.2889px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;stroke-width:0.264583"
+       x="173.8855"
+       y="140.55048"
+       id="text163046"><tspan
+         sodipodi:role="line"
+         id="tspan163044"
+         style="font-size:11.2889px;stroke-width:0.264583"
+         x="173.8855"
+         y="140.55048">···</tspan></text>
+    <g
+       id="g109351">
+      <g
+         id="g141308"
+         transform="translate(19.050006,-15.345837)">
+        <g
+           id="g94200"
+           transform="translate(0,1.0661936)">
+          <g
+             id="g54742"
+             transform="translate(0.53686678,0.64187727)">
+            <text
+               xml:space="preserve"
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+               x="127.83585"
+               y="48.866837"
+               id="text44292"><tspan
+                 sodipodi:role="line"
+                 id="tspan44290"
+                 style="font-size:4.93889px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+                 x="127.83585"
+                 y="48.866837">Server / Main Process</tspan></text>
+            <text
+               xml:space="preserve"
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+               x="127.81892"
+               y="54.569801"
+               id="text51376"><tspan
+                 sodipodi:role="line"
+                 id="tspan51374"
+                 style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+                 x="127.81892"
+                 y="54.569801">grid_search / hp_optimization</tspan></text>
+          </g>
+          <rect
+             style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+             id="rect94090"
+             width="65.912392"
+             height="25.733793"
+             x="95.401711"
+             y="37.891335"
+             ry="2" />
+        </g>
+        <rect
+           style="fill:none;stroke:#7f7f7f;stroke-width:0.352776;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:0.352776, 2.82222;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+           id="rect94298"
+           width="89.829109"
+           height="48.322155"
+           x="89.855385"
+           y="33.364002"
+           ry="0" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:end;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+           x="179.40933"
+           y="30.897903"
+           id="text97946"><tspan
+             sodipodi:role="line"
+             id="tspan97944"
+             style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.64444px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu Bold';text-align:end;text-anchor:end;fill:#808080;fill-opacity:1;stroke-width:0.264583"
+             x="179.40933"
+             y="30.897903">Login Node</tspan></text>
+      </g>
+    </g>
+    <g
+       id="g126804"
+       transform="translate(-30.330947,0.19800025)">
+      <g
+         id="g94217"
+         transform="translate(5.5861073,6.6750994)">
+        <g
+           id="g54742-3"
+           transform="translate(-53.323581,81.883646)">
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="123.71682"
+             y="48.866837"
+             id="text44292-6"><tspan
+               sodipodi:role="line"
+               id="tspan44290-7"
+               style="font-size:4.93889px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.71682"
+               y="48.866837">Client / Job Script</tspan></text>
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="123.94965"
+             y="54.569801"
+             id="text51376-5"><tspan
+               sodipodi:role="line"
+               style="font-size:2.82222px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.94965"
+               y="54.569801"
+               id="tspan93388">Executes user script defined</tspan><tspan
+               sodipodi:role="line"
+               style="font-size:2.82222px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.94965"
+               y="58.097576"
+               id="tspan93392">in `script_relative_path`</tspan></text>
+        </g>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+           id="rect94090-5"
+           width="48.275013"
+           height="25.733793"
+           x="46.354511"
+           y="120.82644"
+           ry="2" />
+      </g>
+      <rect
+         style="fill:none;stroke:#7f7f7f;stroke-width:0.352778;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:0.352778, 2.82222;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect94298-6"
+         width="62.626106"
+         height="36.920845"
+         x="44.765072"
+         y="121.90801"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:end;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="107.11601"
+         y="119.44191"
+         id="text97946-0"><tspan
+           sodipodi:role="line"
+           id="tspan97944-6"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.64444px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu Bold';text-align:end;text-anchor:end;fill:#808080;fill-opacity:1;stroke-width:0.264583"
+           x="107.11601"
+           y="119.44191">Compute Node 1</tspan></text>
+    </g>
+    <g
+       id="g126804-2"
+       transform="translate(50.082957,0.19800025)">
+      <g
+         id="g94217-6"
+         transform="translate(5.5861073,6.6750994)">
+        <g
+           id="g54742-3-1"
+           transform="translate(-53.323581,81.883646)">
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="123.71682"
+             y="48.866837"
+             id="text44292-6-8"><tspan
+               sodipodi:role="line"
+               id="tspan44290-7-7"
+               style="font-size:4.93889px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.71682"
+               y="48.866837">Client / Job Script</tspan></text>
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="123.94965"
+             y="54.569801"
+             id="text51376-5-9"><tspan
+               sodipodi:role="line"
+               style="font-size:2.82222px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.94965"
+               y="54.569801"
+               id="tspan93388-2">Executes user script defined</tspan><tspan
+               sodipodi:role="line"
+               style="font-size:2.82222px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="123.94965"
+               y="58.097576"
+               id="tspan93392-0">in `script_relative_path`</tspan></text>
+        </g>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+           id="rect94090-5-2"
+           width="48.275013"
+           height="25.733793"
+           x="46.354511"
+           y="120.82644"
+           ry="2" />
+      </g>
+      <rect
+         style="fill:none;stroke:#7f7f7f;stroke-width:0.352778;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:0.352778, 2.82222;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect94298-6-3"
+         width="62.626106"
+         height="36.920845"
+         x="44.765072"
+         y="121.90801"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:end;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="107.11601"
+         y="119.44191"
+         id="text97946-0-7"><tspan
+           sodipodi:role="line"
+           id="tspan97944-6-5"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.64444px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu Bold';text-align:end;text-anchor:end;fill:#808080;fill-opacity:1;stroke-width:0.264583"
+           x="107.11601"
+           y="119.44191">Compute Node 2</tspan></text>
+    </g>
+  </g>
+</svg>
