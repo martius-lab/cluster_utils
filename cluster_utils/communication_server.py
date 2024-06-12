@@ -23,14 +23,6 @@ class MessageTypes(enum.IntEnum):
     METRIC_EARLY_REPORT = 6
 
 
-class MinJob:
-    def __init__(self, job_id, settings, status):
-        self.id = job_id
-        self.settings = settings
-        self.status = status
-        self.metrics = None
-
-
 class DatagramProtocol:
     """Protocol class for receiving UDP messages from the jobs."""
 
