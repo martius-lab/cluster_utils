@@ -24,7 +24,7 @@ maintainers = [
 dependencies = [
     "colorama",
     "gitpython>=3.0.5",
-    "numpy",
+    "numpy<2",
     "pandas[output_formatting]==2.0.3",
     "pyuv @ git+https://github.com/saghul/pyuv.git@2a3d42d44c6315ebd73899a35118380d2d5979b5",
     "scipy",
