@@ -19,16 +19,17 @@ def send_message(message_type: MessageTypes, message: Any) -> None:
         message_type: The message type.
         message: Additional information.  Needs to be pickleable.
     """
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
     msg_data = pickle.dumps((message_type, message))
-    sock.sendto(
-        msg_data,
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Internet, TCP
+    sock.connect(
         (
             submission_state.communication_server_ip,
             submission_state.communication_server_port,
-        ),
+        )
     )
+    sock.sendall(msg_data)
+    sock.close()
 
 
 def send_results_to_server(metrics):

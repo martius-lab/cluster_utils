@@ -23,22 +23,29 @@ class MessageTypes(enum.IntEnum):
     METRIC_EARLY_REPORT = 6
 
 
-class DatagramProtocol:
-    """Protocol class for receiving UDP messages from the jobs."""
+class TCPProtocol(asyncio.Protocol):
+    """Protocol class for receiving TCP messages from the jobs."""
 
     def __init__(self, server: CommunicationServer):
         self.server = server
 
     def connection_made(self, transport):
+        logger = logging.getLogger("cluster_utils")
+        peername = transport.get_extra_info("peername")
+        logger.debug("Connection from {}".format(peername))
+
         self.transport = transport
 
-    def datagram_received(self, data, addr):
+    def data_received(self, data):
         if data is not None:
             msg_type_idx, message = pickle.loads(data)
             if msg_type_idx not in self.server.handlers:
                 self.server.handle_unidentified_message(data, msg_type_idx, message)
             else:
                 self.server.handlers[msg_type_idx](message)
+
+        # close the client socket
+        self.transport.close()
 
 
 class CommunicationServer:
@@ -85,17 +92,16 @@ class CommunicationServer:
 
         self.event_loop = asyncio.get_event_loop()
 
-        # create UDP server
-        coroutine = self.event_loop.create_datagram_endpoint(
-            lambda: DatagramProtocol(self),
+        coroutine = self.event_loop.create_server(
+            lambda: TCPProtocol(self),
+            host=self.ip_adress,
             # setting port to 0 makes it automatically pick a free port
-            local_addr=(self.ip_adress, 0),
+            port=0,
         )
-        transport, _ = self.event_loop.run_until_complete(coroutine)
+        server = self.event_loop.run_until_complete(coroutine)
 
         # get the port it chose from the underlying socket object
-        socket = transport.get_extra_info("socket")
-        self.port = socket.getsockname()[1]
+        self.port = server.sockets[0].getsockname()[1]
         logger.info(f"Communication happening on port: {self.port}")
 
         # register a signal handler to stop the event loop on SIGINT
