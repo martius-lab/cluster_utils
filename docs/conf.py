@@ -173,9 +173,7 @@ def setup(app):
 
         if value_type is not None:
             node += sphinx.addnodes.desc_sig_punctuation(" : ", " : ")
-
-            annotations = sphinx.domains.python._parse_annotation(value_type, env)
-            node += sphinx.addnodes.desc_type("", "", *annotations)
+            node += sphinx.addnodes.desc_type("", value_type)
 
         if default_value is not None:
             node += sphinx.addnodes.desc_sig_punctuation(" = ", " = ")
