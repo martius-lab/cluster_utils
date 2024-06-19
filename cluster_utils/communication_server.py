@@ -38,11 +38,7 @@ class TCPProtocol(asyncio.Protocol):
 
     def data_received(self, data):
         if data is not None:
-            msg_type_idx, message = pickle.loads(data)
-            if msg_type_idx not in self.server.handlers:
-                self.server.handle_unidentified_message(data, msg_type_idx, message)
-            else:
-                self.server.handlers[msg_type_idx](message)
+            self.server.handle_message(data)
 
         # close the client socket
         self.transport.close()
@@ -228,9 +224,17 @@ class CommunicationServer:
             job.reported_metric_values = job.reported_metric_values or []
             job.reported_metric_values.append(metrics[job.metric_to_watch])
 
-    def handle_unidentified_message(self, data, msg_type_idx, message):
-        logger = logging.getLogger("cluster_utils")
-        logger.error(
-            f"Received a message I did not understand: {data}, {msg_type_idx},"
-            f" {message}"
-        )
+    def handle_message(self, pickled_data: bytes) -> None:
+        """Handle a pickled message."""
+        msg_type_idx, message = pickle.loads(pickled_data)
+
+        if msg_type_idx in self.handlers:
+            self.handlers[msg_type_idx](message)
+        else:
+            logger = logging.getLogger("cluster_utils")
+            logger.error(
+                "Received invalid message: type: %s, message: %s, raw data: %s.",
+                msg_type_idx,
+                message,
+                pickled_data,
+            )
