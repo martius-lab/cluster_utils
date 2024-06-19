@@ -25,7 +25,6 @@ Client / Job Script
 
 The jobs are executed by the cluster system on the compute nodes of the cluster.  They
 execute the user script that is specified with the :confval:`script_relative_path`
-setting.  This script is expected to call :func:`cluster_utils.read_params_from_cmdline`
-in the beginning, to register at the server (so the server knows that the job started),
-and :func:`cluster_utils.save_metrics_params` at the end to send its results to the
-server.
+setting.  This script is expected to call :func:`cluster_utils.initialize_job` in the
+beginning, to register at the server (so the server knows that the job started), and
+:func:`cluster_utils.finalize_job` at the end to send its results to the server.

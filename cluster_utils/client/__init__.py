@@ -2,9 +2,9 @@
 
 The cluster_utils client API is used in the job scripts implemented by the user and are
 used to communicate with the cluster_utils server process.  Most important are
-:func:`read_params_from_cmdline`, which has to be called in the beginning to register
-with the server, and :func:`save_metrics_params`, which is called in the end to
-send the results in the end.
+:func:`initialize_job`, which has to be called in the beginning to register with the
+server, and :func:`finalize_job`, which is called in the end to send the results in the
+end.
 """
 
 from __future__ import annotations
@@ -278,7 +278,7 @@ def finalize_job(metrics: MutableMapping[str, float], params) -> None:
     Args:
         metrics:  Dictionary with metrics that should be sent to the server.
         params:  Parameters that were used to run the job (given by
-            :func:`read_params_from_cmdline`).
+            :func:`initialize_job`).
     """
     param_file = os.path.join(params.working_dir, constants.CLUSTER_PARAM_FILE)
     flattened_params = dict(flatten_nested_string_dict(params))
@@ -374,11 +374,11 @@ def cluster_main(main_func=None, **read_params_args):
     """Decorator for your main function to automatically register with cluster_utils.
 
     Use this as a decorator to automatically wrap a function (usually ``main``) with
-    calls to :func:`read_params_from_cmdline` and :func:`save_metrics_params`.
+    calls to :func:`initialize_job` and :func:`finalize_job`.
 
-    The parameters read by :func:`read_params_from_cmdline` will be passed as kwargs to
-    the function.  Further, the function is expected to return the metrics dictionary as
-    expected by :func:`save_metrics_params`.
+    The parameters read by :func:`initialize_job` will be passed as kwargs to the
+    function.  Further, the function is expected to return the metrics dictionary as
+    expected by :func:`finalize_job`.
 
     See :ref:`example_cluster_main_decorator` for an usage example.
     """
