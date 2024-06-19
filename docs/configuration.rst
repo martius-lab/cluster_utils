@@ -119,20 +119,20 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
     Note: while the ``environment_setup`` argument itself is mandatory, all its
     content are optional (i.e. it can be empty).
 
-    .. confval:: environment_setup.pre_job_script: str:
+    .. confval:: environment_setup.pre_job_script: str
 
         Path to an executable (e.g. bash script) that is executed before the main script
         runs.
 
-    .. confval:: environment_setup.virtual_env_path: str:
+    .. confval:: environment_setup.virtual_env_path: str
 
         Path of folder of virtual environment to activate.
 
-    .. confval:: environment_setup.conda_env_path: str:
+    .. confval:: environment_setup.conda_env_path: str
 
         Name of conda environment to activate (this option might be broken).
 
-    .. confval:: environment_setup.variables: dict[str]:
+    .. confval:: environment_setup.variables: dict[str]
 
         Environment variables to set. Variables are set *after* a virtual/conda environment 
         is activated, thus override environment variables set before. They are also set 
@@ -140,11 +140,11 @@ These parameters are the same for ``grid_search`` and ``hp_optimization``.
         parameters to the script, e.g. to setup a generic script that changes its behavior based 
         on the values defined in the cluster_utils config file.
 
-    .. confval:: environment_setup.is_python_script: bool, default=true:
+    .. confval:: environment_setup.is_python_script: bool = true
 
         Whether the target to run is a Python script.
 
-    .. confval:: environment_setup.run_as_module: bool, default=false:
+    .. confval:: environment_setup.run_as_module: bool = false
 
         Whether to run the script as a Python module
         (``python -m my_package.my_module``) or as a script
