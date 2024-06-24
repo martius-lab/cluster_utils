@@ -40,6 +40,7 @@ import sphinx.domains.python
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "myst_parser",
@@ -139,6 +140,9 @@ html_theme_options = {
 html_static_path: typing.List[str] = []
 
 
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+
 object_description_options = [
     ("std:confval", dict(toc_icon_class="data", toc_icon_text="C")),
 ]
@@ -173,9 +177,7 @@ def setup(app):
 
         if value_type is not None:
             node += sphinx.addnodes.desc_sig_punctuation(" : ", " : ")
-
-            annotations = sphinx.domains.python._parse_annotation(value_type, env)
-            node += sphinx.addnodes.desc_type("", "", *annotations)
+            node += sphinx.addnodes.desc_type("", value_type)
 
         if default_value is not None:
             node += sphinx.addnodes.desc_sig_punctuation(" = ", " = ")
