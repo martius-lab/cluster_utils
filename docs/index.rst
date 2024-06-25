@@ -3,13 +3,15 @@ Cluster Utils Documentation
 ***************************
 
 
-`cluster_utils`_ is a tool for easily running hyperparameter optimization or
-grid search on a HTCondor or Slurm cluster.  It takes care of submitting and
-monitoring the jobs as well as aggregating the results.
+`cluster_utils`_ is a tool for easily running hyperparameter optimization or grid search
+on a Slurm or HTCondor [1]_ cluster.  It takes care of submitting and monitoring the
+jobs as well as aggregating the results.
 
-Note that the implementation for HTCondor is tailored specifically for the
-cluster of the Max Planck Institute of Intelligent Systems.  The Slurm
-implementation is more generic but not as feature-complete yet.
+It is geared towards tasks typical for *machine learning research*, for example running
+multiple seeds, grid searches, and hyperparameter optimization.
+
+cluster_utils is developed by the `Autonomous Learning group`_ at the University of
+Tübingen.
 
 
 Main Features
@@ -17,17 +19,18 @@ Main Features
 
 A non-exhaustive list of features is the following:
 
-- **Automatic Condor/Slurm usage** Jobs are submitted, monitored (with error
-  reporting), and cleaned up in an automated and highly customizable way.
-- **Integrated with git**. Jobs are run from a ``git clone`` with customizable
-  branch and commit number.
-- **PDF & CSV reporting** Both grid search and optimization produce a pdf report
-  with the specification, basic summaries, and plots.
-- **Advanced setting handling** Cluster utils offer a customized settings system
-  based on JSON. Pointers within the JSON file and to other JSON files are
-  supported.
-- **A LOT OF ADDITIONAL SWEETNESS** Most are demonstrated in the examples. Also,
-  read the code ;).
+- **Parametrized jobs and hyperparameter optimization**: run grid searches or
+  multi-stage hyperparameter optimization.
+- **Supports several cluster backends**: currently, Slurm_ and HTCondor_ [1]_, as well
+  as local (single machine runs) are supported. 
+- **Automatic job management**: jobs are submitted, monitored (with error reporting),
+  and cleaned up in an automated way.
+- **Timeouts & restarting of failed jobs**: jobs can be stopped and resubmitted after
+  some time; failed jobs can be (manually) restarted.
+- **Integrated with git**: jobs are run from a `git clone` with customizable branch and
+  commit number to enhance reproducility.
+- **Reporting**: results are summarized in CSV files, and optionally PDF reports with
+  basic summaries and plots.
 
 
 Basic Usage
@@ -84,4 +87,11 @@ Documentation Content
    changelog
 
 
+.. [1] Note that the implementation for HTCondor is tailored specifically for the
+   cluster of the Max Planck Institute of Intelligent Systems and may not work as-is on
+   other HTCondor clusters.
+
 .. _cluster_utils: https://github.com/martius-lab/cluster_utils
+.. _Autonomous Learning group: https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/distributed-intelligence
+.. _Slurm: https://slurm.schedmd.com/
+.. _HTCondor: https://htcondor.org/
