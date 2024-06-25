@@ -42,15 +42,16 @@ There are two basic functionalities:
 
    python3 -m cluster_utils.grid_search specification_of_grid_search.json
 
-and
+for grid search and
 
 .. code-block:: bash
 
    python3 -m cluster_utils.hp_optimization specification_of_hp_opt.json
 
-for hyperparameter optimization
+for hyperparameter optimization.
 
-See ``examples/basic`` and ``examples/rosenbrock`` for simple demonstrations.
+For more information see :doc:`usage` and the examples in the ``examples/basic/`` and
+``examples/rosenbrock/`` for simple demonstrations.
 
 
 Documentation Content
@@ -60,9 +61,17 @@ Documentation Content
 
 .. toctree::
    :caption: How-to Guides
+   :caption: Basics
    :maxdepth: 1
 
    installation
+   usage
+
+
+.. toctree::
+   :caption: How-to Guides
+   :maxdepth: 1
+
    report
    troubleshooting
    setup_devel_env
