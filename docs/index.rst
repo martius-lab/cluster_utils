@@ -54,15 +54,13 @@ For more information see :doc:`usage` and the examples in the ``examples/basic/`
 ``examples/rosenbrock/`` for simple demonstrations.
 
 
-Documentation Content
-=====================
 
-.. If something is changed here, please also update docs/README.md
+.. TABLE OF CONTENTS (all hidden, so they only appear in the navigation bar)
 
 .. toctree::
-   :caption: How-to Guides
    :caption: Basics
    :maxdepth: 1
+   :hidden:
 
    installation
    usage
@@ -71,6 +69,7 @@ Documentation Content
 .. toctree::
    :caption: How-to Guides
    :maxdepth: 1
+   :hidden:
 
    report
    troubleshooting
@@ -82,6 +81,7 @@ Documentation Content
 .. toctree::
    :maxdepth: 1
    :caption: Topic Guides
+   :hidden:
 
    usage_mindset_and_rule_of_thumb
    architecture
@@ -90,6 +90,7 @@ Documentation Content
 .. toctree::
    :maxdepth: 1
    :caption: References
+   :hidden:
 
    configuration
    api
