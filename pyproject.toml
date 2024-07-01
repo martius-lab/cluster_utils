@@ -70,7 +70,7 @@ docs = [
 ]
 lint = [
     "black==24.3.0",
-    "ruff==0.1.15",
+    "ruff==0.5.0",
 ]
 mypy = [
     "mypy==1.10.1",
@@ -108,7 +108,7 @@ target-version = "py38"
 # for a complete list of available rules see https://docs.astral.sh/ruff/rules/
 # TODO commented-out rules below should be enabled but currently result in quite
 # a lot of warnings, which need to be fixed first.
-select = [
+lint.select = [
     "F", # pyflakes
     "E", # pycodestyle
     "W", # pycodestyle
@@ -127,12 +127,15 @@ select = [
     # "NPY", # numpy
     "RUF100",  # unused 'noqa' directive
 ]
-ignore = [
+lint.ignore = [
     "E501",  # line too long (mostly handled by black)
     # E731: Do not use a lambda expression use a def (local def is often ugly)
     "E731",
     "PT011",  # pytest-raises-too-broad (use `match` parameter)
     "SIM108",  # Use ternary operator instead of if-else-block
+    # SIM910: use dict.get("foo") instead of dict.get("foo", None)
+    # Disabled as it's sometimes nice to be explicit.
+    "SIM910",
 ]
 
 [tool.mypy]
