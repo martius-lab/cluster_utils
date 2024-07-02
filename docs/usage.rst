@@ -2,13 +2,12 @@
 Usage
 *****
 
-Run Hyperparameter Search
-=========================
+Run Batch of Jobs
+=================
 
-cluster_utils provides two main commands to run hyperparameter search in different
-modes:
+cluster_utils provides two main commands to run batches of jobs on the cluster:
 
-- ``grid_search``:  Simple grid search over specified hyperparameter ranges.
+- ``grid_search``:  Simple grid search over specified parameter ranges.
 - ``hp_optimization``:  Uses sampling-based optimization to search for best combination
   of hyperparameters within the specified ranges.
 
@@ -34,7 +33,8 @@ single settings from the config file.  Use dot-notation to specify nested keys. 
 
 Both commands can also be run with ``--help`` to get a complete list of arguments.
 
-You can abort the hyperparameter search with Ctrl + C at any time.
+You can abort cluster_utils with Ctrl + C at any time. All running jobs are stopped, and
+submitted jobs are removed from the cluster queue.
 
 
 Interactive Mode
