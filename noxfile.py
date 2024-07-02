@@ -19,7 +19,7 @@ LOCATIONS = (
 def lint(session):
     session.install(".[lint]")
     session.run("black", "--check", *LOCATIONS)
-    session.run("ruff", ".")
+    session.run("ruff", "check", ".")
 
 
 @nox.session(python=PYTHON_VERSIONS, tags=["lint"])
