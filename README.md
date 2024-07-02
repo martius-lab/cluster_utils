@@ -2,7 +2,7 @@
 
 *cluster_utils* is a Python package that simplifies interacting with compute clusters. 
 It is geared towards tasks typical for *machine learning research*, for example running multiple seeds, grid searches, and hyperparameter optimization.
-The package was developed in the [Autonomous Learning group](https://al.is.mpg.de/) at the University of Tübingen.
+The package was developed in the [Autonomous Learning group](https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/distributed-intelligence) at the University of Tübingen.
 
 **A note on support.**
 *cluster_utils* was initially developed for inhouse use.
