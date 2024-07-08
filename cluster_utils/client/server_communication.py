@@ -4,25 +4,42 @@ from __future__ import annotations
 
 import pickle
 import socket
+import sys
 import traceback
-
-import pyuv
+from typing import Any
 
 from cluster_utils.communication_server import MessageTypes
 
 from . import submission_state
 
 
-def send_message(message_type, message):
-    loop = pyuv.Loop.default_loop()
-    udp = pyuv.UDP(loop)
-    udp.try_send(
-        (
-            submission_state.communication_server_ip,
-            submission_state.communication_server_port,
-        ),
-        pickle.dumps((message_type, message)),
-    )
+def send_message(message_type: MessageTypes, message: Any) -> None:
+    """Send message to the cluster_utils server.
+
+    Args:
+        message_type: The message type.
+        message: Additional information.  Needs to be pickleable.
+    """
+    msg_data = pickle.dumps((message_type, message))
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet (IP)  # UDP
+        # not sure if timeout is actually relevant for SOCK_DGRAM but let's set one to
+        # be sure
+        sock.settimeout(10)
+        sock.sendto(
+            msg_data,
+            (
+                submission_state.communication_server_ip,
+                submission_state.communication_server_port,
+            ),
+        )
+    except socket.error as e:
+        print(
+            f"ERROR: Failed to send message {message_type.name} to cluster_utils"
+            f" server. | {e}",
+            file=sys.stderr,
+        )
 
 
 def send_results_to_server(metrics):

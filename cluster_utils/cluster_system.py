@@ -361,10 +361,11 @@ class ClusterSubmission(ABC):
             for job in self.submitted_jobs
             if job.status == JobStatus.SUBMITTED or job.waiting_for_resume
         ]
-        self.mark_failed_jobs(jobs)
+        if jobs:
+            self.mark_failed_jobs(jobs)
 
-        # potentially print error messages
-        self._check_error_msgs()
+            # potentially print error messages
+            self._check_error_msgs()
 
     def _check_error_msgs(self) -> None:
         logger = logging.getLogger("cluster_utils")
