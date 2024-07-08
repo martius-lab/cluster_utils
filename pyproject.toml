@@ -27,7 +27,7 @@ dependencies = [
     "numpy<2",
     "pandas[output_formatting]>=2.0.3",
     "scipy",
-    "smart_settings @ git+https://github.com/martius-lab/smart-settings.git@eb7331fdcad58d314a842087bbf136735e890013",
+    "al-smart-settings",
     "tqdm",
 ]
 
