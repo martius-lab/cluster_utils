@@ -7,6 +7,9 @@ server, and :func:`finalize_job`, which is called in the end to send the results
 end.
 """
 
+# NOTE FOR DEVELOPERS: Since this sub-package is needed by the client, try to keep
+# third-party dependencies here as minimal as possible.
+
 from __future__ import annotations
 
 import argparse
