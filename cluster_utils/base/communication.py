@@ -1,0 +1,11 @@
+import enum
+
+
+class MessageTypes(enum.IntEnum):
+    JOB_STARTED = 0
+    ERROR_ENCOUNTERED = 1
+    JOB_SENT_RESULTS = 2
+    JOB_CONCLUDED = 3
+    EXIT_FOR_RESUME = 4
+    JOB_PROGRESS_PERCENTAGE = 5
+    METRIC_EARLY_REPORT = 6

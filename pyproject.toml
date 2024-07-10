@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["cluster_utils", "cluster_utils.client", "cluster"]
+packages = ["cluster_utils", "cluster_utils.base", "cluster_utils.client", "cluster"]
 
 [tool.setuptools_scm]
 # Can be empty if no extra settings are needed, presence enables setuptools_scm.

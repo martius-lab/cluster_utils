@@ -6,7 +6,8 @@ import numpy as np
 import scipy
 import scipy.stats
 
-from . import constants
+from cluster_utils.base import constants
+
 from .utils import check_valid_param_name
 
 

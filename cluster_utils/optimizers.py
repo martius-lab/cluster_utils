@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING, Sequence
 
 import pandas as pd
 
-from . import constants, data_analysis, distributions
+from cluster_utils.base import constants
+
+from . import data_analysis, distributions
 from .utils import OptionalDependencyImport, get_sample_generator, nested_to_dict
 
 if TYPE_CHECKING:

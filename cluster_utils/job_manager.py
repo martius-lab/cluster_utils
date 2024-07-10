@@ -12,7 +12,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from . import constants
+from cluster_utils.base import constants
+
 from .cluster_system import get_cluster_type
 from .communication_server import CommunicationServer
 from .git_utils import ClusterSubmissionGitHook

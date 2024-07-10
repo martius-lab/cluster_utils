@@ -5,7 +5,8 @@ import re
 
 import pytest
 
-from cluster_utils import client, constants
+from cluster_utils import client
+from cluster_utils.base import constants
 
 
 @pytest.fixture()

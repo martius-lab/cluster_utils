@@ -17,7 +17,9 @@ with OptionalDependencyImport("report"):
     from matplotlib import rc
     from sklearn.ensemble import RandomForestRegressor
 
-from . import constants, data_analysis, distributions
+from cluster_utils.base import constants
+
+from . import data_analysis, distributions
 from .latex_utils import LatexFile
 from .optimizers import Optimizer
 from .utils import log_and_print, shorten_string

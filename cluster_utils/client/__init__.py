@@ -13,6 +13,7 @@ import argparse
 import ast
 import atexit
 import csv
+import enum
 import functools
 import json
 import os
@@ -20,21 +21,27 @@ import pathlib
 import sys
 import time
 import warnings
-from typing import Mapping, MutableMapping, Optional
+from typing import Any, Mapping, MutableMapping, Optional
 
 import smart_settings
 
-from cluster_utils import constants
-from cluster_utils.communication_server import MessageTypes
-from cluster_utils.settings import (
-    SettingsJsonEncoder,
-    add_cmd_line_params,
-    check_reserved_params,
-)
-from cluster_utils.utils import flatten_nested_string_dict
+from cluster_utils.base import constants
+from cluster_utils.base.communication import MessageTypes
+from cluster_utils.base.settings import add_cmd_line_params, check_reserved_params
+from cluster_utils.base.utils import flatten_nested_string_dict
 
 from . import server_communication as comm
 from . import submission_state
+
+
+class SettingsJsonEncoder(json.JSONEncoder):
+    """JSON encoder that handles custom types used in the settings structure."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, enum.Enum):
+            return obj.name
+
+        return json.JSONEncoder.default(self, obj)
 
 
 def _init_job_script_argument_parser() -> argparse.ArgumentParser:

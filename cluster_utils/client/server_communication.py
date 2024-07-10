@@ -8,7 +8,7 @@ import sys
 import traceback
 from typing import Any
 
-from cluster_utils.communication_server import MessageTypes
+from cluster_utils.base.communication import MessageTypes
 
 from . import submission_state
 

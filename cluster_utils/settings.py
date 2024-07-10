@@ -3,25 +3,19 @@ from __future__ import annotations
 import argparse
 import ast
 import enum
-import json
 import os
 import pathlib
 from typing import Any, NamedTuple, Optional
 
 import smart_settings
 
-from . import constants
+from cluster_utils.base.settings import add_cmd_line_params, check_reserved_params
+
 from .optimizers import GridSearchOptimizer, Metaoptimizer, NGOptimizer
 from .utils import (
     check_import_in_fixed_params,
     rename_import_promise,
 )
-
-
-class SettingsError(Exception):
-    """Custom error for anything related to the settings."""
-
-    ...
 
 
 class GenerateReportSetting(enum.Enum):
@@ -92,16 +86,6 @@ class SingularitySettings(NamedTuple):
             raise FileNotFoundError(f"Singularity image {obj.image} not found.")
 
         return obj
-
-
-class SettingsJsonEncoder(json.JSONEncoder):
-    """JSON encoder that handles custom types used in the settings structure."""
-
-    def default(self, obj: Any) -> Any:
-        if isinstance(obj, enum.Enum):
-            return obj.name
-
-        return json.JSONEncoder.default(self, obj)
 
 
 def is_settings_file(cmd_line):
@@ -179,26 +163,6 @@ def read_main_script_params_from_args(args: argparse.Namespace):
             GenerateReportSetting.parse_generate_report_setting_hook,
         ],
     )
-
-
-def check_reserved_params(orig_dict: dict) -> None:
-    """Check if the given dict contains reserved keys.  If yes, raise ValueError."""
-    for key in orig_dict:
-        if key in constants.RESERVED_PARAMS:
-            msg = f"'{key}' is a reserved param name"
-            raise ValueError(msg)
-
-
-def add_cmd_line_params(base_dict, extra_flags):
-    for extra_flag in extra_flags:
-        lhs, eq, rhs = extra_flag.rpartition("=")
-        parsed_lhs = lhs.split(".")
-        new_lhs = "base_dict" + "".join([f'["{item}"]' for item in parsed_lhs])
-        cmd = new_lhs + eq + rhs
-        try:
-            exec(cmd)
-        except Exception as e:
-            raise RuntimeError(f"Command {cmd} failed") from e
 
 
 def read_main_script_params_with_smart_settings(
