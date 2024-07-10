@@ -367,7 +367,7 @@ def exit_for_resume() -> None:
         return
     atexit.unregister(comm.report_exit_at_server)  # Disable exit reporting
     comm.send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
-    sys.exit(3)  # With exit code 3 for resume
+    sys.exit(constants.RETURN_CODE_FOR_RESUME)
 
 
 def cluster_main(main_func=None, **read_params_args):
