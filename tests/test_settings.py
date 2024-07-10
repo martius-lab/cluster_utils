@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import pathlib
 
@@ -6,7 +7,8 @@ import pytest
 import tomli_w
 import yaml
 
-from cluster_utils import settings as s
+import cluster_utils.base.settings as bs
+import cluster_utils.settings as s
 from cluster_utils.utils import (
     check_import_in_fixed_params,
     rename_import_promise,
@@ -59,6 +61,45 @@ def base_config() -> dict:
             {"param": "fn_args.v", "values": [10, 50]},
         ],
     }
+
+
+def test_add_cmd_line_params():
+    base = {"lvl1": {"lvl2": {"lvl3": 42}}, "foo": "bar"}
+
+    test = copy.deepcopy(base)
+    bs.add_cmd_line_params(test, ["lvl1.lvl2.lvl3=43", "foo='baz'"])
+    assert test == {"lvl1": {"lvl2": {"lvl3": 43}}, "foo": "baz"}
+
+    test = copy.deepcopy(base)
+    bs.add_cmd_line_params(test, [])
+    assert test == base
+
+    test = copy.deepcopy(base)
+    bs.add_cmd_line_params(test, ["bla=13", "lvl1.foo=42"])
+    assert test == {"lvl1": {"lvl2": {"lvl3": 42}, "foo": 42}, "foo": "bar", "bla": 13}
+
+    test = copy.deepcopy(base)
+    bs.add_cmd_line_params(test, ["foo='string with = sign'"])
+    assert test == {"lvl1": {"lvl2": {"lvl3": 42}}, "foo": "string with = sign"}
+
+    test = copy.deepcopy(base)
+    bs.add_cmd_line_params(test, ["foo = 'with spaces'"])
+    assert test == {"lvl1": {"lvl2": {"lvl3": 42}}, "foo": "with spaces"}
+
+    # bad input
+    test = copy.deepcopy(base)
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, [""])
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, ["foo="])
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, ["=42"])
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, ["foo: 42"])
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, ["foo=bad_string"])
+    with pytest.raises(bs.SettingsError):
+        bs.add_cmd_line_params(test, ["lvl1.doesnt_exit.foo=42"])
 
 
 def test_init_main_script_argument_parser():

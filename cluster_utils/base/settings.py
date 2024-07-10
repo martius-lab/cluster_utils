@@ -1,3 +1,4 @@
+import ast
 from typing import Any, Mapping
 
 from cluster_utils.base import constants
@@ -19,11 +20,31 @@ def check_reserved_params(orig_dict: Mapping[str, Any]) -> None:
 
 def add_cmd_line_params(base_dict, extra_flags):
     for extra_flag in extra_flags:
-        lhs, eq, rhs = extra_flag.rpartition("=")
-        parsed_lhs = lhs.split(".")
-        new_lhs = "base_dict" + "".join([f'["{item}"]' for item in parsed_lhs])
-        cmd = new_lhs + eq + rhs
+        name_path, eq, value = extra_flag.partition("=")
+        name_path = name_path.strip()
+        value = value.strip()
+
+        # fail if extra_flag doesn't have the format "<xxx>=<yyy>"
+        if any([not name_path, not eq, not value]):
+            raise SettingsError(f"Invalid format for {extra_flag}")
+
+        # parse value
         try:
-            exec(cmd)
+            literal_value = ast.literal_eval(value)
         except Exception as e:
-            raise RuntimeError(f"Command {cmd} failed") from e
+            raise SettingsError(
+                f"Failed to parse value '{value}' in '{extra_flag}'"
+            ) from e
+
+        # walk through base_dict, based on name_path
+        try:
+            name_segments = name_path.split(".")
+            _dict = base_dict
+            for seg in name_segments[:-1]:
+                _dict = _dict[seg]
+        except KeyError as e:
+            raise SettingsError(
+                f"Invalid settings path '{name_path}' in '{extra_flag}'"
+            ) from e
+
+        _dict[name_segments[-1]] = literal_value
