@@ -31,16 +31,6 @@ dependencies = [
     "tqdm",
 ]
 
-[tool.setuptools]
-# TODO: move packages to src/ and remove this entry
-packages = [
-    "cluster_utils",
-    "cluster_utils.base",
-    "cluster_utils.client",
-    "cluster_utils.server",
-    "cluster",
-]
-
 [tool.setuptools_scm]
 # Can be empty if no extra settings are needed, presence enables setuptools_scm.
 # You can check which version it picked by running `python3 -m setuptools_scm` in the
