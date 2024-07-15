@@ -10,19 +10,16 @@ import os
 import sys
 from pathlib import Path
 
-from . import (
-    distributions,
-    hp_optimization,
-    latex_utils,
-)
-from .git_utils import make_git_params
-from .settings import (
+from cluster_utils.server import distributions, latex_utils
+from cluster_utils.server.git_utils import make_git_params
+from cluster_utils.server.job_manager import hp_optimization
+from cluster_utils.server.settings import (
     GenerateReportSetting,
     SingularitySettings,
     init_main_script_argument_parser,
     read_main_script_params_from_args,
 )
-from .utils import (
+from cluster_utils.server.utils import (
     get_time_string,
     make_temporary_dir,
 )
@@ -68,7 +65,7 @@ def main() -> int:
     if params["generate_report"] is not GenerateReportSetting.NEVER:
         # conditional import as it depends on optional dependencies (not used here but
         # already import to fail early in case dependencies are missing)
-        from . import report  # noqa:F401
+        import cluster_utils.server.report  # noqa:F401
 
     json_full_name = os.path.abspath(sys.argv[1])
 

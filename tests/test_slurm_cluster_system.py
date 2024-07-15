@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from cluster_utils.job import Job
-from cluster_utils.slurm_cluster_system import (
+from cluster_utils.server.job import Job
+from cluster_utils.server.slurm_cluster_system import (
     SBatchArgumentBuilder,
     SlurmClusterSubmission,
     SlurmJobStatus,

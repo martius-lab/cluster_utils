@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from cluster_utils import data_analysis
+from cluster_utils.server import data_analysis
 
 
 @pytest.fixture()

@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `save_metrics_params` to `finalize_job`.  An alias with the old name is
   available but will raise a FutureWarning.
 - *Relevant for Dev's only:* Use ruff instead of flake8 for linting.
+- Internal modules have been moved to sub-packages.  This should not affect normal users
+  which just run cluster_utils via the provided scripts but in cause you have some
+  custom scripts, running cluster_utils, you may need to update them.
 
 ### Removed
 - Removed option `save_params` from `read_params_from_cmdline`.  They will always be
@@ -67,6 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed option `make_immutable` from `read_params_from_cmdline`.  Returned parameters
   are always immutable now.  If needed, a mutable copy can be created with
   `smart_settings.param_classes.AttributeDict(params)`.
+- Removed imports of `grid_search()` and `hp_optimization()` functions directly from
+  `cluster_utils`.  They can still be imported from `cluster_utils.server.job_manager`
+  if needed (though regular users shouldn't need to call them directly).
 
 ### Added
 - Setting `generate_report` to control automatic report generation (See

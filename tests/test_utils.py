@@ -1,6 +1,6 @@
 import pytest
 
-from cluster_utils import utils
+from cluster_utils.server import utils
 
 
 def test_check_valid_param_name():
