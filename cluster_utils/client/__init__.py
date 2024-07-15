@@ -7,12 +7,16 @@ server, and :func:`finalize_job`, which is called in the end to send the results
 end.
 """
 
+# NOTE FOR DEVELOPERS: Since this sub-package is needed by the client, try to keep
+# third-party dependencies here as minimal as possible.
+
 from __future__ import annotations
 
 import argparse
 import ast
 import atexit
 import csv
+import enum
 import functools
 import json
 import os
@@ -20,21 +24,27 @@ import pathlib
 import sys
 import time
 import warnings
-from typing import Mapping, MutableMapping, Optional
+from typing import Any, Mapping, MutableMapping, Optional
 
 import smart_settings
 
-from cluster_utils import constants
-from cluster_utils.communication_server import MessageTypes
-from cluster_utils.settings import (
-    SettingsJsonEncoder,
-    add_cmd_line_params,
-    check_reserved_params,
-)
-from cluster_utils.utils import flatten_nested_string_dict
+from cluster_utils.base import constants
+from cluster_utils.base.communication import MessageTypes
+from cluster_utils.base.settings import add_cmd_line_params, check_reserved_params
+from cluster_utils.base.utils import flatten_nested_string_dict
 
 from . import server_communication as comm
 from . import submission_state
+
+
+class SettingsJsonEncoder(json.JSONEncoder):
+    """JSON encoder that handles custom types used in the settings structure."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, enum.Enum):
+            return obj.name
+
+        return json.JSONEncoder.default(self, obj)
 
 
 def _init_job_script_argument_parser() -> argparse.ArgumentParser:
@@ -367,7 +377,7 @@ def exit_for_resume() -> None:
         return
     atexit.unregister(comm.report_exit_at_server)  # Disable exit reporting
     comm.send_message(MessageTypes.EXIT_FOR_RESUME, message=(submission_state.job_id,))
-    sys.exit(3)  # With exit code 3 for resume
+    sys.exit(constants.RETURN_CODE_FOR_RESUME)
 
 
 def cluster_main(main_func=None, **read_params_args):

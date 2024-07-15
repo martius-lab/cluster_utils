@@ -6,7 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from . import constants
+from cluster_utils.base import constants
 
 DISTR_BASE_COLORS = [
     (0.99, 0.7, 0.18),

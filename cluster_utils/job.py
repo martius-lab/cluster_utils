@@ -9,8 +9,10 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 import pandas as pd
 
-from . import constants
-from .utils import dict_to_dirname, flatten_nested_string_dict, update_recursive
+from cluster_utils.base import constants
+from cluster_utils.base.utils import flatten_nested_string_dict
+
+from .utils import dict_to_dirname, update_recursive
 
 if TYPE_CHECKING:
     import concurrent.futures

@@ -10,9 +10,10 @@ from collections import deque
 from subprocess import PIPE, run
 from typing import Any, NamedTuple, Optional, Sequence
 
-from . import settings
+from cluster_utils.base.constants import RETURN_CODE_FOR_RESUME
+from cluster_utils.base.settings import SettingsError
+
 from .cluster_system import ClusterJobId, ClusterSubmission, SubmissionError
-from .constants import RETURN_CODE_FOR_RESUME
 from .job import Job
 
 # TODO: handle return codes != 0,1,3 ?
@@ -143,7 +144,7 @@ class SlurmJobRequirements(NamedTuple):
                 extra_submission_options=req.pop("extra_submission_options", []),
             )
         except KeyError as e:
-            raise settings.SettingsError(
+            raise SettingsError(
                 f"'cluster_requirements' settings for Slurm require a value for {e}"
                 " but none is provided."
             ) from e

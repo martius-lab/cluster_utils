@@ -11,8 +11,9 @@ from copy import copy
 from subprocess import PIPE, run
 from typing import Any, Sequence
 
+from cluster_utils.base.constants import RETURN_CODE_FOR_RESUME
+
 from .cluster_system import ClusterJobId, ClusterSubmission
-from .constants import RETURN_CODE_FOR_RESUME
 from .job import Job
 
 MPI_CLUSTER_MAX_NUM_TOKENS = 10000

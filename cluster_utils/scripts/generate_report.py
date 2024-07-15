@@ -20,7 +20,7 @@ import colorama
 import pandas as pd
 
 from cluster_utils import report
-from cluster_utils.constants import (
+from cluster_utils.base.constants import (
     FULL_DF_FILE,
     METADATA_FILE,
     REPORT_DATA_FILE,

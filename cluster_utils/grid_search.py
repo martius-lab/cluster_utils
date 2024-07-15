@@ -6,8 +6,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from cluster_utils.base.constants import FULL_DF_FILE
+
 from . import grid_search
-from .constants import FULL_DF_FILE
 from .git_utils import make_git_params
 from .latex_utils import SectionFromJsonHook, StaticSectionGenerator
 from .settings import (
