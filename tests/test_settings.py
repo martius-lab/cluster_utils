@@ -8,8 +8,8 @@ import tomli_w
 import yaml
 
 import cluster_utils.base.settings as bs
-import cluster_utils.settings as s
-from cluster_utils.utils import (
+import cluster_utils.server.settings as s
+from cluster_utils.server.utils import (
     check_import_in_fixed_params,
     rename_import_promise,
 )

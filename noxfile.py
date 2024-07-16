@@ -6,19 +6,11 @@ import nox
 
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
-LOCATIONS = (
-    "cluster_utils/",
-    "cluster/",
-    "examples/",
-    "tests/",
-    "noxfile.py",
-)
-
 
 @nox.session(python=PYTHON_VERSIONS, tags=["lint"])
 def lint(session):
     session.install(".[lint]")
-    session.run("black", "--check", *LOCATIONS)
+    session.run("black", "--check", ".")
     session.run("ruff", "check", ".")
 
 

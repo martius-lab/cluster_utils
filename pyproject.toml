@@ -31,9 +31,6 @@ dependencies = [
     "tqdm",
 ]
 
-[tool.setuptools]
-packages = ["cluster_utils", "cluster_utils.base", "cluster_utils.client", "cluster"]
-
 [tool.setuptools_scm]
 # Can be empty if no extra settings are needed, presence enables setuptools_scm.
 # You can check which version it picked by running `python3 -m setuptools_scm` in the
@@ -103,6 +100,7 @@ target-version = ['py38']
 
 [tool.ruff]
 target-version = "py38"
+src = ["src"]
 
 # for a complete list of available rules see https://docs.astral.sh/ruff/rules/
 # TODO commented-out rules below should be enabled but currently result in quite

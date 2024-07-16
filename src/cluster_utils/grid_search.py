@@ -7,17 +7,16 @@ from collections import Counter
 from pathlib import Path
 
 from cluster_utils.base.constants import FULL_DF_FILE
-
-from . import grid_search
-from .git_utils import make_git_params
-from .latex_utils import SectionFromJsonHook, StaticSectionGenerator
-from .settings import (
+from cluster_utils.server.git_utils import make_git_params
+from cluster_utils.server.job_manager import grid_search
+from cluster_utils.server.latex_utils import SectionFromJsonHook, StaticSectionGenerator
+from cluster_utils.server.settings import (
     GenerateReportSetting,
     SingularitySettings,
     init_main_script_argument_parser,
     read_main_script_params_from_args,
 )
-from .utils import (
+from cluster_utils.server.utils import (
     get_time_string,
     make_temporary_dir,
     save_report_data,
@@ -45,7 +44,7 @@ def main() -> int:
     if params["generate_report"] is not GenerateReportSetting.NEVER:
         # conditional import as it depends on optional dependencies
         # (already import here to fail early in case dependencies are missing)
-        from .report import produce_gridsearch_report
+        from cluster_utils.server.report import produce_gridsearch_report
 
     json_full_name = os.path.abspath(sys.argv[1])
 

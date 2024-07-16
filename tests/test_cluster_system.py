@@ -1,4 +1,4 @@
-import cluster_utils.cluster_system as cs
+import cluster_utils.server.cluster_system as cs
 
 
 def test_is_command_available():
