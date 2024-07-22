@@ -63,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Internal modules have been moved to sub-packages.  This should not affect normal users
   which just run cluster_utils via the provided scripts but in cause you have some
   custom scripts, running cluster_utils, you may need to update them.
+- Base dependencies cover only needs of `client` and `base` sub-packages.  For the
+  `server` sub-package (needed to run the cluster_utils applications), install the
+  optional-dependencies group "server".
 
 ### Removed
 - Removed option `save_params` from `read_params_from_cmdline`.  They will always be

@@ -183,7 +183,7 @@ def plot_timeline(
         color = colors[job_id % len(colors)]
         for interval in intervals:
             ax.plot(
-                [interval.start_time, interval.end_time],
+                [interval.start_time, interval.end_time],  # type: ignore
                 [job_id, job_id],
                 "-",
                 lw=3,

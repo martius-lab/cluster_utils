@@ -28,7 +28,7 @@ The constants listed below define names of output files that are written by
 cluster_utils.  They are listed here, so that other parts of the documentation can
 reference them.
 
-.. automodule:: cluster_utils.constants
+.. automodule:: cluster_utils.base.constants
    :members:
 
 

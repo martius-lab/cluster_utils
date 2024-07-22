@@ -7,7 +7,7 @@ from itertools import combinations, count
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator, Mapping, Optional, Sequence
 
-from .utils import OptionalDependencyImport
+from cluster_utils.base.utils import OptionalDependencyImport
 
 with OptionalDependencyImport("report"):
     import matplotlib.pyplot as plt
