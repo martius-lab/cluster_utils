@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING, Sequence
 import pandas as pd
 
 from cluster_utils.base import constants
+from cluster_utils.base.utils import OptionalDependencyImport
 
 from . import data_analysis, distributions
-from .utils import OptionalDependencyImport, get_sample_generator, nested_to_dict
+from .utils import get_sample_generator, nested_to_dict
 
 if TYPE_CHECKING:
     from . import latex_utils
