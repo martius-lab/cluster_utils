@@ -53,7 +53,9 @@ class OptionalDependencyNotFoundError(ModuleNotFoundError):
             # when installing from local working copy:
             pip install ".[{group}]"
             ```
-        """.format(module=module, group=optional_dependency_group)
+        """.format(
+                module=module, group=optional_dependency_group
+            )
         )
 
     def __str__(self) -> str:
