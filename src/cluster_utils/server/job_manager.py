@@ -5,7 +5,6 @@ import logging
 import logging.handlers
 import os
 import shutil
-import signal
 import sys
 import time
 
@@ -29,6 +28,7 @@ from .settings import GenerateReportSetting, optimizer_dict
 from .user_interaction import InteractiveMode, NonInteractiveMode
 from .utils import (
     ClusterRunType,
+    SignalWatcher,
     log_and_print,
     make_red,
     process_other_params,
@@ -219,13 +219,6 @@ def pre_opt(
     cluster_interface.exec_pre_run_routines()
     comm_server = CommunicationServer(cluster_interface)
 
-    def signal_handler(sig, frame):
-        cluster_interface.close()
-        logger.info("Exiting now")
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-
     return hp_optimizer, cluster_interface, comm_server, processed_other_params
 
 
@@ -350,6 +343,8 @@ def hp_optimization(
         optimizer_settings,
     )
 
+    signal_watcher = SignalWatcher()
+
     now = datetime.datetime.now()
     save_metadata(
         base_paths_and_files["result_dir"], ClusterRunType.HP_OPTIMIZATION, now
@@ -368,7 +363,10 @@ def hp_optimization(
     ) as running_bar, CompletedJobsBar(
         total_jobs=number_of_samples, minimize=minimize
     ) as successful_jobs_bar:
-        while cluster_interface.n_completed_jobs < number_of_samples:
+        while (
+            cluster_interface.n_completed_jobs < number_of_samples
+            and not signal_watcher.has_received_signal()
+        ):
             check_for_keyboard_input()
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
 
@@ -486,6 +484,11 @@ def hp_optimization(
 
     print()  # empty line after progress bars
 
+    if signal_watcher.has_received_signal():
+        cluster_interface.close()
+        logger.info("Exiting now")
+        sys.exit(1)
+
     post_iteration_opt(
         cluster_interface,
         hp_optimizer,
@@ -593,6 +596,8 @@ def grid_search(
         dict(restarts=restarts),
     )
 
+    signal_watcher = SignalWatcher()
+
     now = datetime.datetime.now()
     save_metadata(base_paths_and_files["result_dir"], ClusterRunType.GRID_SEARCH, now)
 
@@ -631,11 +636,15 @@ def grid_search(
         total_jobs=len(jobs), minimize=None
     ) as successful_jobs_bar:
         num_jobs_to_submit_per_iteration = 5
-        while cluster_interface.n_completed_jobs != len(jobs):
+        while (
+            not signal_watcher.has_received_signal()
+            and cluster_interface.n_completed_jobs != len(jobs)
+        ):
             # submit next batch of jobs
             i = 0
             while (
-                cluster_interface.has_unsubmitted_jobs()
+                not signal_watcher.has_received_signal()
+                and cluster_interface.has_unsubmitted_jobs()
                 and i < num_jobs_to_submit_per_iteration
             ):
                 cluster_interface.submit_next()
@@ -669,6 +678,11 @@ def grid_search(
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
 
     print()  # empty line after progress bars
+
+    if signal_watcher.has_received_signal():
+        cluster_interface.close()
+        logger.info("Exiting now")
+        sys.exit(1)
 
     post_opt(cluster_interface)
 

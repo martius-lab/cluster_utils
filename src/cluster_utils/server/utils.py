@@ -29,6 +29,35 @@ class ClusterRunType(enum.Enum):
     HP_OPTIMIZATION = 1
 
 
+class SignalWatcher:
+    """Watch for a signal."""
+
+    def __init__(self, signal_to_watch_for: int = signal.SIGINT) -> None:
+        """
+        Args:
+            signal_to_watch_for: The signal to watch for.
+        """
+        self.received_signal = False
+        signal.signal(signal_to_watch_for, self._signal_handler)
+
+    def _signal_handler(self, sig, frame) -> None:
+        """Handles the received signal.
+
+        Args:
+            sig (int): The signal number.
+            frame (frame object): The current stack frame.
+        """
+        self.received_signal = True
+
+    def has_received_signal(self) -> bool:
+        """Checks if the signal has been received.
+
+        Returns:
+            bool: True if the signal has been received, False otherwise.
+        """
+        return self.received_signal
+
+
 def shorten_string(string, max_len):
     if len(string) > max_len - 3:
         return "..." + string[-max_len + 3 :]
