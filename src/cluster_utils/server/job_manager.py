@@ -361,13 +361,13 @@ def hp_optimization(
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
     with interaction_mode(
         cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
-        running_bar = RunningJobsBar(total_jobs=number_of_samples)
-        successful_jobs_bar = CompletedJobsBar(
-            total_jobs=number_of_samples, minimize=minimize
-        )
-
+    ) as check_for_keyboard_input, redirect_stdout_to_tqdm(), SubmittedJobsBar(
+        total_jobs=number_of_samples
+    ) as submitted_bar, RunningJobsBar(
+        total_jobs=number_of_samples
+    ) as running_bar, CompletedJobsBar(
+        total_jobs=number_of_samples, minimize=minimize
+    ) as successful_jobs_bar:
         while cluster_interface.n_completed_jobs < number_of_samples:
             check_for_keyboard_input()
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
@@ -483,6 +483,8 @@ def hp_optimization(
                     minimize,
                     **early_killing_params,
                 )
+
+    print()  # empty line after progress bars
 
     post_iteration_opt(
         cluster_interface,
@@ -621,11 +623,13 @@ def grid_search(
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
     with interaction_mode(
         cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
-        running_bar = RunningJobsBar(total_jobs=len(jobs))
-        successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
-
+    ) as check_for_keyboard_input, redirect_stdout_to_tqdm(), SubmittedJobsBar(
+        total_jobs=len(jobs)
+    ) as submitted_bar, RunningJobsBar(
+        total_jobs=len(jobs)
+    ) as running_bar, CompletedJobsBar(
+        total_jobs=len(jobs), minimize=None
+    ) as successful_jobs_bar:
         num_jobs_to_submit_per_iteration = 5
         while cluster_interface.n_completed_jobs != len(jobs):
             # submit next batch of jobs
@@ -663,6 +667,8 @@ def grid_search(
                 )
             check_for_keyboard_input()
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
+
+    print()  # empty line after progress bars
 
     post_opt(cluster_interface)
 
