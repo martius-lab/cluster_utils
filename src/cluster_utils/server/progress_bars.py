@@ -55,6 +55,7 @@ class ProgressBar(ABC):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.close()
 
+
 # Color disabled until a bug in tqdm is fixed.
 # see https://stackoverflow.com/questions/58328625/tqdm-colored-progress-bar-printing-on-multiple-lines
 

@@ -12,6 +12,7 @@ import pickle
 import random
 import re
 import shutil
+import signal
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
