@@ -31,7 +31,14 @@ class ClusterRunType(enum.Enum):
 
 
 class SignalWatcher:
-    """Watch for a signal."""
+    """Watch for a signal.
+
+    Upon initialization, a signal handler is registered to watch for the specified
+    signal.  The method :meth:`has_received_signal` can then be used to check if the
+    signal was received.
+
+    **Note:** This overwrites any existing signal handler for the specified signal.
+    """
 
     def __init__(self, signal_to_watch_for: int = signal.SIGINT) -> None:
         """
