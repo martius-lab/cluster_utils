@@ -40,7 +40,7 @@ Issues = "https://github.com/martius-lab/cluster_utils/issues"
 [project.optional-dependencies]
 # all the dependencies that are needed for running the server process of cluster_utils
 # (grid_search/hp_optimization) but are not needed by the job scripts.
-server = [
+runner = [
     "colorama",
     "gitpython>=3.0.5",
     "numpy<2",
@@ -50,7 +50,7 @@ server = [
 ]
 
 all = [
-    "cluster_utils[server]",
+    "cluster_utils[runner]",
     "cluster_utils[nevergrad]",
     "cluster_utils[report]",
 ]

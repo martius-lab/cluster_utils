@@ -16,11 +16,11 @@ Basic Installation
 for the job scripts.  This is to avoid unnecessary dependencies in your user code
 (assuming you are using a separate virtual environment for it).
 **To be able to run the cluster_utils applications, you need to install it with the
-optional "server" dependencies:**
+optional "runner" dependencies:**
 
 .. code-block:: bash
 
-   pip install "cluster_utils[server] @ git+https://github.com/martius-lab/cluster_utils.git"
+   pip install "cluster_utils[runner] @ git+https://github.com/martius-lab/cluster_utils.git"
 
 
 .. _optional_dependencies:
@@ -30,11 +30,11 @@ Optional Dependencies
 
 Some features require additional dependencies that are not installed by default.  They
 can be installed by specifying the corresponding "optional dependencies group".  Keep in
-mind that you should always also include the "server" group:
+mind that you should always also include the "runner" group:
 
 .. code-block:: bash
 
-   pip install "cluster_utils[server,EXTRA] @ git+https://github.com/martius-lab/cluster_utils.git"
+   pip install "cluster_utils[runner,EXTRA] @ git+https://github.com/martius-lab/cluster_utils.git"
 
 where ``EXTRA`` should be replaced by one of the following identifiers (or multiple,
 separated by commas):
@@ -45,7 +45,7 @@ separated by commas):
 
    * - Identifier
      - Needed for
-   * - **server**
+   * - **runner**
      - Basic dependencies for running cluster_utils applications (see
        :ref:`basic_installation`).
    * - **report**
@@ -53,7 +53,7 @@ separated by commas):
    * - **nevergrad**
      - To use the *nevergrad* optimizer in ``hp_optimization``.
    * - **all**
-     - Alias for 'server,report,nevergrad'.
+     - Alias for 'runner,report,nevergrad'.
    * - **docs**
      - For building the documentation.
    * - **dev**

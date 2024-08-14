@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   custom scripts, running cluster_utils, you may need to update them.
 - Base dependencies cover only needs of `client` and `base` sub-packages.  For the
   `server` sub-package (needed to run the cluster_utils applications), install the
-  optional-dependencies group "server".
+  optional-dependencies group "runner".
 
 ### Removed
 - Removed option `save_params` from `read_params_from_cmdline`.  They will always be

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cluster_utils.base.utils import OptionalDependencyImport
 
-with OptionalDependencyImport("server"):
+with OptionalDependencyImport("runner"):
     from cluster_utils.base.constants import FULL_DF_FILE
     from cluster_utils.server.git_utils import make_git_params
     from cluster_utils.server.job_manager import grid_search
