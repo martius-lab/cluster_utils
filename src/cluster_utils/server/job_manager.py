@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 import time
+from contextlib import ExitStack
 
 import numpy as np
 import pandas as pd
@@ -354,15 +355,21 @@ def hp_optimization(
     pre_iteration_opt(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(
-        cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm(), SubmittedJobsBar(
-        total_jobs=number_of_samples
-    ) as submitted_bar, RunningJobsBar(
-        total_jobs=number_of_samples
-    ) as running_bar, CompletedJobsBar(
-        total_jobs=number_of_samples, minimize=minimize
-    ) as successful_jobs_bar:
+
+    with ExitStack() as stack:
+        check_for_keyboard_input = stack.enter_context(
+            interaction_mode(cluster_interface, comm_server)
+        )
+        stack.enter_context(redirect_stdout_to_tqdm())
+        submitted_bar = stack.enter_context(
+            SubmittedJobsBar(total_jobs=number_of_samples)
+        )
+        running_bar = stack.enter_context(RunningJobsBar(total_jobs=number_of_samples))
+        successful_jobs_bar = stack.enter_context(
+            CompletedJobsBar(total_jobs=number_of_samples, minimize=minimize)
+        )
+        # END with statements
+
         while (
             cluster_interface.n_completed_jobs < number_of_samples
             and not signal_watcher.has_received_signal()
@@ -626,15 +633,18 @@ def grid_search(
             job.try_load_results_from_filesystem(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(
-        cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm(), SubmittedJobsBar(
-        total_jobs=len(jobs)
-    ) as submitted_bar, RunningJobsBar(
-        total_jobs=len(jobs)
-    ) as running_bar, CompletedJobsBar(
-        total_jobs=len(jobs), minimize=None
-    ) as successful_jobs_bar:
+    with ExitStack() as stack:
+        check_for_keyboard_input = stack.enter_context(
+            interaction_mode(cluster_interface, comm_server)
+        )
+        stack.enter_context(redirect_stdout_to_tqdm())
+        submitted_bar = stack.enter_context(SubmittedJobsBar(total_jobs=len(jobs)))
+        running_bar = stack.enter_context(RunningJobsBar(total_jobs=len(jobs)))
+        successful_jobs_bar = stack.enter_context(
+            CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+        )
+        # END with statements
+
         num_jobs_to_submit_per_iteration = 5
         while (
             not signal_watcher.has_received_signal()
