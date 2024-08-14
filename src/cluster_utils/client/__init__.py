@@ -277,9 +277,9 @@ def finalize_job(metrics: MutableMapping[str, float], params) -> None:
     """Save metrics and parameters and send metrics to the cluster_utils server.
 
     Save the used parameters and resulting metrics to CSV files (filenames defined by
-    :attr:`~cluster_utils.constants.CLUSTER_PARAM_FILE` and
-    :attr:`~cluster_utils.constants.CLUSTER_METRIC_FILE`) in the job's working directory
-    and report the metrics to the cluster_utils main process.
+    :attr:`~cluster_utils.base.constants.CLUSTER_PARAM_FILE` and
+    :attr:`~cluster_utils.base.constants.CLUSTER_METRIC_FILE`) in the job's working
+    directory and report the metrics to the cluster_utils main process.
 
     Make sure to call this function at the end of your job script, otherwise
     cluster_utils will not receive the resulting metrics and will consider the job as

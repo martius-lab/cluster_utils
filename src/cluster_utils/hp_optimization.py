@@ -10,19 +10,22 @@ import os
 import sys
 from pathlib import Path
 
-from cluster_utils.server import distributions, latex_utils
-from cluster_utils.server.git_utils import make_git_params
-from cluster_utils.server.job_manager import hp_optimization
-from cluster_utils.server.settings import (
-    GenerateReportSetting,
-    SingularitySettings,
-    init_main_script_argument_parser,
-    read_main_script_params_from_args,
-)
-from cluster_utils.server.utils import (
-    get_time_string,
-    make_temporary_dir,
-)
+from cluster_utils.base.utils import OptionalDependencyImport
+
+with OptionalDependencyImport("runner"):
+    from cluster_utils.server import distributions, latex_utils
+    from cluster_utils.server.git_utils import make_git_params
+    from cluster_utils.server.job_manager import hp_optimization
+    from cluster_utils.server.settings import (
+        GenerateReportSetting,
+        SingularitySettings,
+        init_main_script_argument_parser,
+        read_main_script_params_from_args,
+    )
+    from cluster_utils.server.utils import (
+        get_time_string,
+        make_temporary_dir,
+    )
 
 
 def get_distribution(distribution, **kwargs):

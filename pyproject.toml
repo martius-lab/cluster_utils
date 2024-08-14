@@ -22,13 +22,9 @@ maintainers = [
     { email = "georg.martius@uni-tuebingen.de" },
 ]
 dependencies = [
-    "colorama",
-    "gitpython>=3.0.5",
-    "numpy<2",
-    "pandas[output_formatting]>=2.0.3",
-    "scipy",
+    # NOTE: List only dependencies of the 'client' and 'base' sub-packages here.
+    # Dependencies of the 'server' sub-package should go to the optional-dependencies.
     "al-smart-settings",
-    "tqdm",
 ]
 
 [tool.setuptools_scm]
@@ -42,7 +38,19 @@ Repository = "https://github.com/martius-lab/cluster_utils"
 Issues = "https://github.com/martius-lab/cluster_utils/issues"
 
 [project.optional-dependencies]
+# all the dependencies that are needed for running the server process of cluster_utils
+# (grid_search/hp_optimization) but are not needed by the job scripts.
+runner = [
+    "colorama",
+    "gitpython>=3.0.5",
+    "numpy<2",
+    "pandas[output_formatting]>=2.0.3",
+    "scipy",
+    "tqdm",
+]
+
 all = [
+    "cluster_utils[runner]",
     "cluster_utils[nevergrad]",
     "cluster_utils[report]",
 ]
@@ -69,6 +77,7 @@ lint = [
     "ruff==0.5.0",
 ]
 mypy = [
+    "cluster_utils[all]",
     "mypy==1.10.1",
     "pandas-stubs",
     "tomli-w",

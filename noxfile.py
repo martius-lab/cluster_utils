@@ -24,14 +24,13 @@ def mypy(session):
 
 @nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def pytest(session):
-    session.install(".[all]")
-    session.install(".[test]")
+    session.install(".[all,test]")
     session.run("pytest")
 
 
 @nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def integration_tests(session):
-    session.install(".")
+    session.install(".[runner]")
 
     with tempfile.TemporaryDirectory() as test_dir:
         session.run("bash", "tests/run_integration_tests.sh", test_dir, external=True)
@@ -46,7 +45,7 @@ def integration_tests(session):
 
 @nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def integration_tests_with_report_generation(session):
-    session.install(".[report]")
+    session.install(".[runner,report]")
 
     with tempfile.TemporaryDirectory() as test_dir:
         session.run(
@@ -59,12 +58,25 @@ def integration_tests_with_report_generation(session):
 
 @nox.session(python=PYTHON_VERSIONS, tags=["test"])
 def integration_tests_with_nevergrad(session):
-    session.install(".[nevergrad]")
+    session.install(".[runner,nevergrad]")
 
     with tempfile.TemporaryDirectory() as test_dir:
         session.run(
             "bash",
             "tests/run_integration_tests_with_nevergrad.sh",
+            test_dir,
+            external=True,
+        )
+
+
+@nox.session(python=PYTHON_VERSIONS, tags=["test"])
+def integration_tests_with_venv(session):
+    session.install(".[runner]")
+
+    with tempfile.TemporaryDirectory() as test_dir:
+        session.run(
+            "bash",
+            "tests/run_integration_tests_with_venv.sh",
             test_dir,
             external=True,
         )

@@ -6,21 +6,27 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from cluster_utils.base.constants import FULL_DF_FILE
-from cluster_utils.server.git_utils import make_git_params
-from cluster_utils.server.job_manager import grid_search
-from cluster_utils.server.latex_utils import SectionFromJsonHook, StaticSectionGenerator
-from cluster_utils.server.settings import (
-    GenerateReportSetting,
-    SingularitySettings,
-    init_main_script_argument_parser,
-    read_main_script_params_from_args,
-)
-from cluster_utils.server.utils import (
-    get_time_string,
-    make_temporary_dir,
-    save_report_data,
-)
+from cluster_utils.base.utils import OptionalDependencyImport
+
+with OptionalDependencyImport("runner"):
+    from cluster_utils.base.constants import FULL_DF_FILE
+    from cluster_utils.server.git_utils import make_git_params
+    from cluster_utils.server.job_manager import grid_search
+    from cluster_utils.server.latex_utils import (
+        SectionFromJsonHook,
+        StaticSectionGenerator,
+    )
+    from cluster_utils.server.settings import (
+        GenerateReportSetting,
+        SingularitySettings,
+        init_main_script_argument_parser,
+        read_main_script_params_from_args,
+    )
+    from cluster_utils.server.utils import (
+        get_time_string,
+        make_temporary_dir,
+        save_report_data,
+    )
 
 
 def main() -> int:
