@@ -5,9 +5,9 @@ import logging
 import logging.handlers
 import os
 import shutil
-import signal
 import sys
 import time
+from contextlib import ExitStack
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,7 @@ from .settings import GenerateReportSetting, optimizer_dict
 from .user_interaction import InteractiveMode, NonInteractiveMode
 from .utils import (
     ClusterRunType,
+    SignalWatcher,
     log_and_print,
     make_red,
     process_other_params,
@@ -219,13 +220,6 @@ def pre_opt(
     cluster_interface.exec_pre_run_routines()
     comm_server = CommunicationServer(cluster_interface)
 
-    def signal_handler(sig, frame):
-        cluster_interface.close()
-        logger.info("Exiting now")
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-
     return hp_optimizer, cluster_interface, comm_server, processed_other_params
 
 
@@ -350,6 +344,8 @@ def hp_optimization(
         optimizer_settings,
     )
 
+    signal_watcher = SignalWatcher()
+
     now = datetime.datetime.now()
     save_metadata(
         base_paths_and_files["result_dir"], ClusterRunType.HP_OPTIMIZATION, now
@@ -359,16 +355,25 @@ def hp_optimization(
     pre_iteration_opt(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(
-        cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=number_of_samples)
-        running_bar = RunningJobsBar(total_jobs=number_of_samples)
-        successful_jobs_bar = CompletedJobsBar(
-            total_jobs=number_of_samples, minimize=minimize
-        )
 
-        while cluster_interface.n_completed_jobs < number_of_samples:
+    with ExitStack() as stack:
+        check_for_keyboard_input = stack.enter_context(
+            interaction_mode(cluster_interface, comm_server)
+        )
+        stack.enter_context(redirect_stdout_to_tqdm())
+        submitted_bar = stack.enter_context(
+            SubmittedJobsBar(total_jobs=number_of_samples)
+        )
+        running_bar = stack.enter_context(RunningJobsBar(total_jobs=number_of_samples))
+        successful_jobs_bar = stack.enter_context(
+            CompletedJobsBar(total_jobs=number_of_samples, minimize=minimize)
+        )
+        # END with statements
+
+        while (
+            cluster_interface.n_completed_jobs < number_of_samples
+            and not signal_watcher.has_received_signal()
+        ):
             check_for_keyboard_input()
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
 
@@ -484,6 +489,13 @@ def hp_optimization(
                     **early_killing_params,
                 )
 
+    print()  # empty line after progress bars
+
+    if signal_watcher.has_received_signal():
+        cluster_interface.close()
+        logger.info("Exiting now")
+        sys.exit(1)
+
     post_iteration_opt(
         cluster_interface,
         hp_optimizer,
@@ -591,6 +603,8 @@ def grid_search(
         dict(restarts=restarts),
     )
 
+    signal_watcher = SignalWatcher()
+
     now = datetime.datetime.now()
     save_metadata(base_paths_and_files["result_dir"], ClusterRunType.GRID_SEARCH, now)
 
@@ -619,19 +633,28 @@ def grid_search(
             job.try_load_results_from_filesystem(base_paths_and_files)
 
     interaction_mode = NonInteractiveMode if no_user_interaction else InteractiveMode
-    with interaction_mode(
-        cluster_interface, comm_server
-    ) as check_for_keyboard_input, redirect_stdout_to_tqdm():
-        submitted_bar = SubmittedJobsBar(total_jobs=len(jobs))
-        running_bar = RunningJobsBar(total_jobs=len(jobs))
-        successful_jobs_bar = CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+    with ExitStack() as stack:
+        check_for_keyboard_input = stack.enter_context(
+            interaction_mode(cluster_interface, comm_server)
+        )
+        stack.enter_context(redirect_stdout_to_tqdm())
+        submitted_bar = stack.enter_context(SubmittedJobsBar(total_jobs=len(jobs)))
+        running_bar = stack.enter_context(RunningJobsBar(total_jobs=len(jobs)))
+        successful_jobs_bar = stack.enter_context(
+            CompletedJobsBar(total_jobs=len(jobs), minimize=None)
+        )
+        # END with statements
 
         num_jobs_to_submit_per_iteration = 5
-        while cluster_interface.n_completed_jobs != len(jobs):
+        while (
+            not signal_watcher.has_received_signal()
+            and cluster_interface.n_completed_jobs != len(jobs)
+        ):
             # submit next batch of jobs
             i = 0
             while (
-                cluster_interface.has_unsubmitted_jobs()
+                not signal_watcher.has_received_signal()
+                and cluster_interface.has_unsubmitted_jobs()
                 and i < num_jobs_to_submit_per_iteration
             ):
                 cluster_interface.submit_next()
@@ -663,6 +686,13 @@ def grid_search(
                 )
             check_for_keyboard_input()
             time.sleep(constants.JOB_MANAGER_LOOP_SLEEP_TIME_IN_SECS)
+
+    print()  # empty line after progress bars
+
+    if signal_watcher.has_received_signal():
+        cluster_interface.close()
+        logger.info("Exiting now")
+        sys.exit(1)
 
     post_opt(cluster_interface)
 

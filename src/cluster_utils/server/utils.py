@@ -12,6 +12,7 @@ import pickle
 import random
 import re
 import shutil
+import signal
 from collections import defaultdict
 from pathlib import Path
 from time import sleep
@@ -27,6 +28,52 @@ class ClusterRunType(enum.Enum):
 
     GRID_SEARCH = 0
     HP_OPTIMIZATION = 1
+
+
+class SignalWatcher:
+    """Watch for a signal.
+
+    Upon initialization, a signal handler is registered to watch for the specified
+    signal.  The method :meth:`has_received_signal` can then be used to check if the
+    signal was received.
+
+    **Note:** This overwrites any existing signal handler for the specified signal.
+
+    Signal flags are stored in a class variable, so they are shared among all instances.
+    This allows use of multiple instances for the same signal in different places of the
+    code.
+    """
+
+    # Use a class variable dict to store received signals.  This dict will be shared
+    # among all instances of SignalWatcher and thus allow multiple instances to watch
+    # the same signal without ousting each other (since new instances will overwrite the
+    # signal handler of the older ones).
+    received_signals: dict[signal.Signals, bool] = {}
+
+    def __init__(self, signal_to_watch_for: int = signal.SIGINT) -> None:
+        """
+        Args:
+            signal_to_watch_for: The signal to watch for.
+        """
+        self.signal = signal_to_watch_for
+        signal.signal(signal_to_watch_for, self._signal_handler)
+
+    def _signal_handler(self, sig, frame) -> None:
+        """Handles the received signal.
+
+        Args:
+            sig (int): The signal number.
+            frame (frame object): The current stack frame.
+        """
+        SignalWatcher.received_signals[sig] = True
+
+    def has_received_signal(self) -> bool:
+        """Checks if the signal has been received.
+
+        Returns:
+            bool: True if the signal has been received, False otherwise.
+        """
+        return self.signal in SignalWatcher.received_signals
 
 
 def shorten_string(string, max_len):
