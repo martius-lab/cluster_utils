@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # (Note: {ref}/{doc} roles are used for references to the documentation)
 
-## Unreleased (3.0.0)
+## Unreleased
+
+## [3.0.0] - 2024-08-19
 
 ### Changed
 - **Breaking:** Drop support for Python versions < 3.8
@@ -110,13 +112,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `save_metrics_params` is deprecated.  Use `finalize_job` instead.
 
 
-## 2.5 - 2023-10-05
+## [2.5] - 2023-10-05
 
 **Last version supporting Python 3.6.**
 
 
 ## 2.4 - 2022-02-08
 
-## 2.1 - 2020-06-20
+## [2.1] - 2020-06-20
 
-## 2.0 - 2020-03-25
+## [2.0] - 2020-03-25
+
+---
+
+[Unreleased]: https://github.com/martius-lab/cluster_utils/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/martius-lab/cluster_utils/compare/v2.5...v3.0.0
+[2.5]: https://github.com/martius-lab/cluster_utils/compare/v2.1...v2.5
+[2.1]: https://github.com/martius-lab/cluster_utils/compare/v2.0...v2.1
+[2.0]: https://github.com/martius-lab/cluster_utils/releases/tag/v2.0
