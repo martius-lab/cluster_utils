@@ -28,7 +28,7 @@ If you encounter any bugs or have suggestions for improvements, please submit an
 ## Installation
 
 ```
-pip install git+https://github.com/martius-lab/cluster_utils.git
+pip install "cluster_utils[runner]"
 ```
 
 See [documentation](https://martius-lab.github.io/cluster_utils/installation.html) for more details.

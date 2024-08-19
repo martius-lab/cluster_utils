@@ -20,7 +20,7 @@ optional "runner" dependencies:**
 
 .. code-block:: bash
 
-   pip install "cluster_utils[runner] @ git+https://github.com/martius-lab/cluster_utils.git"
+   pip install "cluster_utils[runner]"
 
 
 .. _optional_dependencies:
@@ -34,7 +34,7 @@ mind that you should always also include the "runner" group:
 
 .. code-block:: bash
 
-   pip install "cluster_utils[runner,EXTRA] @ git+https://github.com/martius-lab/cluster_utils.git"
+   pip install "cluster_utils[runner,EXTRA]"
 
 where ``EXTRA`` should be replaced by one of the following identifiers (or multiple,
 separated by commas):
