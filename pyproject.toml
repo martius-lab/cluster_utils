@@ -5,7 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cluster-utils"
 dynamic = ["version"]
-description = "Cluster utilities"
+description = """
+A tool for easily running hyperparameter optimization or grid search on Slurm or \
+HTCondor clusters.  It takes care of submitting and monitoring the jobs as well as \
+aggregating the results.\
+"""
+readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
 authors = [
@@ -20,6 +25,11 @@ authors = [
 ]
 maintainers = [
     { email = "georg.martius@uni-tuebingen.de" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
 ]
 dependencies = [
     # NOTE: List only dependencies of the 'client' and 'base' sub-packages here.

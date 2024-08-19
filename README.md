@@ -6,7 +6,7 @@ The package was developed in the [Autonomous Learning group](https://uni-tuebing
 
 **A note on support.**
 *cluster_utils* was initially developed for inhouse use.
-In particular, this means that documentation is sparse, and the user experience is suboptimal in some places.
+In particular, this means that documentation is sparse (though we're working on extending it), and the user experience is suboptimal in some places.
 We are open sourcing the package now because we think it could also be useful for other people in the machine learning community.
 However, we can only provide limited support for user questions and requests.
 
