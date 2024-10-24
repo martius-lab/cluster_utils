@@ -140,7 +140,7 @@ lint.select = [
     # "ARG", # unused-arguments
     # "PD", # pandas-vet
     # "PL", # pylint
-    # "NPY", # numpy
+    "NPY", # numpy
     "RUF100",  # unused 'noqa' directive
 ]
 lint.ignore = [
