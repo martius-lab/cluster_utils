@@ -7,6 +7,7 @@ import scipy
 import scipy.stats
 
 from cluster_utils.base import constants
+from cluster_utils.base.utils import get_rng
 
 from .utils import check_valid_param_name
 
@@ -123,7 +124,7 @@ class TruncatedNormal(NumericalDistribution):
         )  # a momentum term 3/4
         if not (self.lower <= mean_to_use <= self.upper):
             mean_to_use = self.mean
-        self.samples = np.random.normal(size=howmany) * self.std + mean_to_use
+        self.samples = get_rng().normal(size=howmany) * self.std + mean_to_use
         super().prepare_samples(howmany)
 
     def plot(self):
@@ -173,7 +174,7 @@ class TruncatedLogNormal(NumericalDistribution):
         if not (self.lower <= log_mean_to_use <= self.upper):
             log_mean_to_use = self.log_mean
         self.samples = np.exp(
-            np.random.normal(size=howmany) * self.log_std + log_mean_to_use
+            get_rng().normal(size=howmany) * self.log_std + log_mean_to_use
         )
         super().prepare_samples(howmany)
 
@@ -245,7 +246,7 @@ class Discrete(Distribution):
         howmany = min(
             10, howmany
         )  # HACK: for smart rounding a reasonable sample size is needed
-        self.samples = np.random.choice(self.option_list, p=self.probs, size=howmany)
+        self.samples = get_rng().choice(self.option_list, p=self.probs, size=howmany)
         super().prepare_samples(howmany)
 
     def plot(self):
