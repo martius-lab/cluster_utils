@@ -27,7 +27,7 @@ class OptionalDependencyNotFoundError(ModuleNotFoundError):
             You can do this with:
             ```
             # when installing directly from git:
-            pip install "cluster_utils[{group}] @ git+https://github.com/martius-lab/cluster_utils.git"
+            pip install "cluster_utils[{group}]"
 
             # when installing from local working copy:
             pip install ".[{group}]"

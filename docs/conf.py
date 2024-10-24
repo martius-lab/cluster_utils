@@ -72,7 +72,7 @@ author = "Autonomous Learning Group, Distributed Intelligence, University of Tü
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = "3.0-devel"
+release = "3.0.0"
 # The short X.Y version.
 version = "3.0"
 

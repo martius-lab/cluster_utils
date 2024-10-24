@@ -6,7 +6,7 @@ The package was developed in the [Autonomous Learning group](https://uni-tuebing
 
 **A note on support.**
 *cluster_utils* was initially developed for inhouse use.
-In particular, this means that documentation is sparse, and the user experience is suboptimal in some places.
+In particular, this means that documentation is sparse (though we're working on extending it), and the user experience is suboptimal in some places.
 We are open sourcing the package now because we think it could also be useful for other people in the machine learning community.
 However, we can only provide limited support for user questions and requests.
 
@@ -28,7 +28,7 @@ If you encounter any bugs or have suggestions for improvements, please submit an
 ## Installation
 
 ```
-pip install git+https://github.com/martius-lab/cluster_utils.git
+pip install "cluster_utils[runner]"
 ```
 
 See [documentation](https://martius-lab.github.io/cluster_utils/installation.html) for more details.
