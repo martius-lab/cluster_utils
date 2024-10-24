@@ -5,6 +5,8 @@ import numpy as np
 
 from cluster_utils import cluster_main, exit_for_resume
 
+random_generator = np.random.default_rng()
+
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     """
@@ -35,7 +37,7 @@ def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     if sharp_penalty and x > 3.20:
         result += 1
 
-    if np.random.rand() < 0.1:
+    if random_generator.random() < 0.1:
         raise ValueError("10 percent of all jobs die here on purpose")
 
     return result
@@ -51,7 +53,7 @@ def main(working_dir, id, **kwargs):  # noqa A002
     test_resume = kwargs["test_resume"]
 
     # simulate that the jobs take some time
-    time.sleep(np.random.randint(0, 10))
+    time.sleep(random_generator.integers(0, 10))
     result_file = os.path.join(working_dir, "result.npy")
 
     # here we do a little simulation for checkpointing and resuming
@@ -66,7 +68,7 @@ def main(working_dir, id, **kwargs):  # noqa A002
         if test_resume:
             exit_for_resume()
 
-    noisy_result = noiseless_result + 0.5 * np.random.normal()
+    noisy_result = noiseless_result + 0.5 * random_generator.normal()
     metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
     return metrics
 

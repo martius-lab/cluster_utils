@@ -1,7 +1,12 @@
 import contextlib
 import textwrap
 
+import numpy as np
+
 from cluster_utils.base import constants
+
+# global random generator that is returned by get_rng()
+_global_random_generator = None
 
 
 class OptionalDependencyNotFoundError(ModuleNotFoundError):
@@ -69,3 +74,12 @@ def flatten_nested_string_dict(nested_dict, prepend=""):
                 yield sub
         else:
             yield prepend + str(key), value
+
+
+def get_rng() -> np.random.Generator:
+    """Get reference to a global random generator (created on first call)."""
+    global _global_random_generator
+    if _global_random_generator is None:
+        _global_random_generator = np.random.default_rng()
+
+    return _global_random_generator
