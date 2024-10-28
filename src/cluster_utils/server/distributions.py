@@ -246,7 +246,16 @@ class Discrete(Distribution):
         howmany = min(
             10, howmany
         )  # HACK: for smart rounding a reasonable sample size is needed
-        self.samples = get_rng().choice(self.option_list, p=self.probs, size=howmany)
+
+        _samples = get_rng().choice(self.option_list, p=self.probs, size=howmany)
+        # choice() returns a numpy array, implicitly converting value types to numpy
+        # types (e.g. native bool becomes np.bool).  This causes trouble later on, as
+        # the parameters passed to the job script are parsed with ast.literal_eval,
+        # which can only handle native types.  Converting back to list here, should also
+        # get us back to native types for the elements (at least successfully tested
+        # with bool).
+        self.samples = _samples.tolist()
+
         super().prepare_samples(howmany)
 
     def plot(self):

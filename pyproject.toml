@@ -53,7 +53,7 @@ Issues = "https://github.com/martius-lab/cluster_utils/issues"
 runner = [
     "colorama",
     "gitpython>=3.0.5",
-    "numpy<2",
+    "numpy",
     "pandas[output_formatting]>=2.0.3",
     "scipy",
     "tqdm",
