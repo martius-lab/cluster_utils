@@ -22,7 +22,7 @@ from cluster_utils.base import constants
 from . import data_analysis, distributions
 from .latex_utils import LatexFile
 from .optimizers import Optimizer
-from .utils import log_and_print, shorten_string
+from .utils import log_and_print, make_red, shorten_string
 
 
 def init_plotting():
@@ -313,7 +313,12 @@ def produce_gridsearch_report(
             latex.produce_pdf(output_file)
             log_and_print(logger, f"Report saved at {output_file}")
         except Exception:
-            logging.warning("Could not generate PDF report", exc_info=True)
+            logging.warning("Failed to generate PDF report", exc_info=True)
+            print(
+                make_red(
+                    "Warning: Failed to generate PDF report.  See log for details."
+                )
+            )
 
 
 def distribution_plots(
@@ -494,4 +499,9 @@ def produce_optimization_report(
             latex.produce_pdf(output_file)
             logger.info("Saved report to %s", output_file)
         except Exception:
-            logger.warning("Could not generate PDF report", exc_info=True)
+            logger.warning("Failed to generate PDF report", exc_info=True)
+            print(
+                make_red(
+                    "Warning: Failed to generate PDF report.  See log for details."
+                )
+            )
