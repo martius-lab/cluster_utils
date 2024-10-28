@@ -208,7 +208,12 @@ def initialize_job(
         add_cmd_line_params(orig_dict, args.parameter_overwrites)
 
     if args.parameter_dict:
-        parameter_dict = ast.literal_eval(args.parameter_file_or_dict)
+        try:
+            parameter_dict = ast.literal_eval(args.parameter_file_or_dict)
+        except ValueError as e:
+            msg = f"Error while evaluating {args.parameter_file_or_dict}. Error: {e}"
+            raise ValueError(msg) from e
+
         if not isinstance(parameter_dict, dict):
             msg = (
                 "'parameter_file_or_dict' must be a dictionary"
