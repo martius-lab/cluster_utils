@@ -31,23 +31,13 @@ If you encounter any bugs or have suggestions for improvements, please submit an
 pip install "cluster_utils[runner]"
 ```
 
-See [documentation](https://martius-lab.github.io/cluster_utils/installation.html) for more details.
+See [documentation](#documentation) for more details.
 
 ## Documentation
 
-The documentation is hosted at https://martius-lab.github.io/cluster_utils.
+- Documentation of last stable release: https://cluster-utils.readthedocs.io/stable/
+- Documentation of current development version: https://cluster-utils.readthedocs.io/latest/
 
-You can also build the documentation locally with the following commands:
-
-```bash
-git clone https://github.com/martius-lab/cluster_utils.git
-cd cluster_utils
-# install package with the additional dependencies needed to build the documentation
-pip install ".[docs]"
-cd docs/
-make html  # build documentation
-```
-When the build is finished, open ``docs/_build/html/index.html`` with the browser of your choice.
 
 ## Quick Start
 
@@ -116,11 +106,4 @@ The simplest way to specify your Python environment is to activate it (using vir
 The jobs will automatically inherit this environment.
 A caveat of this approach is that if you *installed your local package in the environment*, this package *might override* the repository cluster_utils clones using git, i.e. you are not using a clean clone of your project.
 
-There are multiple options to further customize the environment in the `environment_setup` configuration section, see [the documentation](https://martius-lab.github.io/cluster_utils/configuration.html).
-
-### Further Documentation Links
-
-- [Configuration for Slurm & Condor Cluster Systems](https://martius-lab.github.io/cluster_utils/configuration.html#cluster-requirements)
-- [Hyperparameter Optimization Settings](https://martius-lab.github.io/cluster_utils/configuration.html#optimizer-settings)
-- [Hyperparameter Optimization Mindset and Rules of Thumb](https://martius-lab.github.io/cluster_utils/usage_mindset_and_rule_of_thumb.html)
-- [Development](https://martius-lab.github.io/cluster_utils/setup_devel_env.html)
+There are multiple options to further customize the environment in the `environment_setup` configuration section, see [the documentation](https://cluster-utils.readthedocs.io/stable/configuration.html).

@@ -109,3 +109,28 @@ In fact, this is useful to make sure a commit runs through without any checks
 failing.
 
 
+Build Documentation
+===================
+
+To build the documentation locally, first install the documentation requirements (using
+the "docs" extra options):
+
+.. code-block:: sh
+
+    pip install -e ".[docs]"
+
+To build the docs, run the following command from the root of the repository:
+
+.. code-block:: sh
+
+    make -C docs/ html
+
+When the build is finished, open ``docs/_build/html/index.html`` with the browser of
+your choice.
+
+To enable "nitpicky" mode of Sphinx (warns about all missing references, recommended to
+always set during development):
+
+.. code-block:: sh
+
+   make -C docs/ SPHINXOPTS=-n html
