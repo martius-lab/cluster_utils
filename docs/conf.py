@@ -104,7 +104,7 @@ html_theme = "sphinx_immaterial"
 
 # Material theme options
 html_theme_options = {
-    "site_url": "https://martius-lab.github.io/cluster_utils",
+    "site_url": "https://cluster-utils.readthedocs.io/",
     "repo_url": "https://github.com/martius-lab/cluster_utils",
     "palette": {"primary": "blue-grey", "accent": "orange"},
     "globaltoc_includehidden": False,

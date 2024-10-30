@@ -43,7 +43,7 @@ dependencies = [
 # package root.
 
 [project.urls]
-Documentation = "https://martius-lab.github.io/cluster_utils"
+Documentation = "https://cluster-utils.readthedocs.io/"
 Repository = "https://github.com/martius-lab/cluster_utils"
 Issues = "https://github.com/martius-lab/cluster_utils/issues"
 
