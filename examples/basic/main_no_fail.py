@@ -7,6 +7,8 @@ import numpy as np
 
 from cluster_utils import exit_for_resume, finalize_job, initialize_job
 
+random_generator = np.random.default_rng()
+
 
 def fn_to_optimize(*, u, v, w, x, y, sharp_penalty, tuple_input=None):
     """
@@ -45,7 +47,7 @@ if __name__ == "__main__":
 
     # simulate that the jobs take some time
     max_sleep_time = params.get("max_sleep_time", 10)
-    time.sleep(np.random.randint(0, max_sleep_time))
+    time.sleep(random_generator.integers(0, max_sleep_time))
 
     result_file = os.path.join(params.working_dir, "result.npy")
     os.makedirs(params.working_dir, exist_ok=True)
@@ -61,7 +63,7 @@ if __name__ == "__main__":
         if "test_resume" in params and params.test_resume:
             exit_for_resume()
 
-    noisy_result = noiseless_result + 0.5 * np.random.normal()
+    noisy_result = noiseless_result + 0.5 * random_generator.normal()
     metrics = {"result": noisy_result, "noiseless_result": noiseless_result}
     finalize_job(metrics, params)
     print(noiseless_result)

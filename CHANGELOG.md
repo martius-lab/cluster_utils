@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved documentation from GitHub Pages to Read the Docs.  This allows to more easily
   manage docs for different versions.
 
+### Added
+- Support for Numpy 2.
+
+
 ## [3.0.0] - 2024-08-19
 
 ### Changed
