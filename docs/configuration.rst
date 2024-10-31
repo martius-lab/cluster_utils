@@ -530,6 +530,8 @@ settings (i.e. the ones independent of the optimisation method set in
     not set, the user will be asked at runtime in this case.
 
 
+.. _config.hp_optimization_iterations:
+
 About Iterations
 ~~~~~~~~~~~~~~~~
 
