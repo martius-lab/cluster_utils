@@ -120,17 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Last version supporting Python 3.6.**
 
-
-## 2.4 - 2022-02-08
-
-## [2.1] - 2020-06-20
-
-## [2.0] - 2020-03-25
-
 ---
 
 [Unreleased]: https://github.com/martius-lab/cluster_utils/compare/v3.0.0...HEAD
 [3.0.0]: https://github.com/martius-lab/cluster_utils/compare/v2.5...v3.0.0
 [2.5]: https://github.com/martius-lab/cluster_utils/compare/v2.1...v2.5
-[2.1]: https://github.com/martius-lab/cluster_utils/compare/v2.0...v2.1
-[2.0]: https://github.com/martius-lab/cluster_utils/releases/tag/v2.0
