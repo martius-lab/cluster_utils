@@ -5,6 +5,11 @@ Usage
 Run Batch of Jobs
 =================
 
+.. note::
+
+   If you are new to cluster_utils, we recommend that you start with
+   :doc:`tutorials/grid_search`.
+
 cluster_utils provides two main commands to run batches of jobs on the cluster:
 
 - ``grid_search``:  Simple grid search over specified parameter ranges.

@@ -2,13 +2,29 @@
 Tutorial: Basic Hyperparameter Optimization
 *******************************************
 
-In this tutorial, we learn how to set up cluster_utils to run a basic hyperparameter
-optimization on an arbitrary optimization function.  It does not cover all available
-options but instead shows the minimal steps needed to get started.
+In this tutorial, we reuse the script with the Rosenbrock function from
+:doc:`grid_search`, but instead of a simple grid search, we run a more sophisticated
+hyperparameter optimization on it.
+
+Again, this tutorial does not cover all available options but instead shows the minimal
+steps needed to get started.
 
 .. note:: If you haven't done so, please read :doc:`grid_search` first.
 
 --------
+
+
+What is hyperparameter optimization
+===================================
+
+In the previous tutorial, we used ``grid_search`` to do an exhaustive search over a
+discrete set of possible parameter values.  In this tutorial, we will use
+``hp_optimization``, which instead samples parameter values them from continuous
+distributions, based on results of previous jobs.
+
+When given enough iterations, this ideally converges towards good values for the
+hyperparameters (w.r.t. to the metric you specified).
+
 
 Prepare your code
 =================

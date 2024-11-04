@@ -2,11 +2,49 @@
 Tutorial: Basic Grid Search
 ***************************
 
-In this tutorial, we learn how to set up cluster_utils to run a basic grid search on an
-arbitrary optimization function.  It does not cover all available options but instead
-shows the minimal steps needed to get started.
+In this tutorial you will learn
+
+- how to write a simple script that can be executed by cluster-utils, and
+- how to configure cluster-utils to run a grid search over a few parameters on your
+  script.
+
+It does not cover all available options but instead shows the minimal steps needed to
+get started.
 
 --------
+
+
+What is grid search?
+====================
+
+For grid search, you specify a list of parameters and, for each of them, a list of
+values to check.  cluster-utils will then execute your script with all possible
+combinations of parameter values and collect the resulting metrics (e.g. the reward
+achieved by a policy trained with the given parameters).
+In the end, you will get an overview of the results and a list of parameter values that
+performed best with respect to your metric.
+
+In the example below, we use the Rosenbrock function::
+
+   f(x,y) = (1 - x)² + 100 · (y - x²)²
+
+For each of the two parameters ``x`` and ``y``, we will check the values ``[0.0, 0.5,
+1.0, 1.5, 2.0]``.  That is, a total of 25 jobs will be run with the following parameter
+values:
+
+.. csv-table::
+   :header-rows: 1
+
+   x,y
+   0.0,0.0
+   0.0,0.5
+   0.0,1.0
+   0.0,1.5
+   0.0,2.0
+   0.5,0.0
+   0.5,0.5
+   ...,...
+
 
 Prepare your code
 =================
