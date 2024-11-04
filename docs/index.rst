@@ -64,6 +64,8 @@ For more information see :doc:`usage` and the examples in the ``examples/basic/`
 
    installation
    usage
+   tutorials/grid_search.rst
+   tutorials/hp_optimization.rst
 
 
 .. toctree::
