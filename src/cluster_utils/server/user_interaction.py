@@ -1,41 +1,31 @@
 from __future__ import annotations
 
+import cmd
 import logging
-import readline
 import select
 import sys
 import termios
+import textwrap
 import tty
 
 from .utils import log_and_print, make_red
 
 
-class InteractiveMode:
+class InteractiveMode(cmd.Cmd):
+    intro = textwrap.dedent(
+        """
+        ============= COMMAND MODE =============
+        Type 'help' or '?' to list commands.
+        Press enter with empty line to exit command mode.
+        """
+    )
+    prompt = ">>> "
+
     def __init__(self, cluster_interface, comm_server):
+        super().__init__()
+
         self.cluster_interface = cluster_interface
         self.comm_server = comm_server
-        self.input_to_fn_dict = {
-            "list_jobs": self.list_jobs,
-            "list_running_jobs": self.list_running_jobs,
-            "list_successful_jobs": self.list_successful_jobs,
-            "list_idle_jobs": self.list_idle_jobs,
-            "show_job": self.show_job,
-            "stop_remaining_jobs": self.stop_remaining_jobs,
-        }
-
-        # set up tab completion
-        def complete(text: str, n: int) -> str | None:
-            """Return the n-th possible completion for text.
-
-            If there are less then n possible completions, return None.
-            """
-            matches = [cmd for cmd in self.input_to_fn_dict if cmd.startswith(text)]
-            if n < len(matches):
-                return matches[n]
-            return None
-
-        readline.parse_and_bind("tab: complete")
-        readline.set_completer(complete)
 
     def __enter__(self):
         self.old_settings = termios.tcgetattr(sys.stdin)
@@ -46,23 +36,31 @@ class InteractiveMode:
     def __exit__(self, _type, _value, _traceback):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
 
-    def list_jobs(self):
+    def do_list_jobs(self, _):
+        """List IDs of all jobs that have been submitted so far.
+
+        This includes jobs that have finished already.
+        """
         self.print("List of all jobs:")
         self.print([job.id for job in self.cluster_interface.jobs])
 
-    def list_running_jobs(self):
+    def do_list_running_jobs(self, _):
+        """List IDs of all jobs that are currently running."""
         self.print("List of running jobs:")
         self.print([job.id for job in self.cluster_interface.running_jobs])
 
-    def list_successful_jobs(self):
+    def do_list_successful_jobs(self, _):
+        """List IDs of all jobs that finished successfully."""
         self.print("List of successful jobs:")
         self.print([job.id for job in self.cluster_interface.successful_jobs])
 
-    def list_idle_jobs(self):
+    def do_list_idle_jobs(self, _):
+        """List IDs of all jobs that have been submitted but not yet started."""
         self.print("List of idle jobs:")
         self.print([job.id for job in self.cluster_interface.idle_jobs])
 
-    def show_job(self):
+    def do_show_job(self, _):
+        "Show information about a specific job."
         try:
             self.print("Enter ID")
             job_id = int(input())
@@ -71,7 +69,15 @@ class InteractiveMode:
         except Exception:
             self.print("Error encountered, maybe invalid ID?")
 
-    def stop_remaining_jobs(self):
+    def do_stop_remaining_jobs(self, _):
+        """Abort all submitted jobs.
+
+        Abort all currently running jobs as well as jobs that already have been
+        submitted but didn't start yet.
+
+        Note: This will currently not stop submission of new jobs.  If you want to stop
+        cluster_utils completely, press Ctrl + C instead.
+        """
         try:
             self.print(
                 make_red("Are you sure you want to stop all remaining jobs? [y/N]")
@@ -95,6 +101,19 @@ class InteractiveMode:
         except Exception:
             self.print("Error encountered")
 
+    def emptyline(self):
+        # do not execute a command when pressing enter with empty line
+        pass
+
+    def postcmd(self, stop, line):
+        # exit loop after one command, except for help command
+        if line.startswith("?") or line.startswith("help"):
+            return False
+
+        # print a line to separate command output from progress output
+        print("========================================")
+        return True
+
     def keyboard_input_available(self):
         # checks if theres sth to read from stdin
         return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
@@ -107,17 +126,12 @@ class InteractiveMode:
                 c = sys.stdin.read(1)
                 if c == "\x1b":  # x1b is ESC
                     esc_key_pushed = True
+
             if esc_key_pushed:
                 termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
                 self.print("\n\n")  # hack to get into right line after tqdms
-                self.print(
-                    "Enter command, e.g. ", ", ".join(self.input_to_fn_dict.keys())
-                )
-                self.print(">>>")
 
-                fn_string = input()
-                if fn_string in self.input_to_fn_dict:
-                    self.input_to_fn_dict[fn_string]()
+                self.cmdloop()
 
                 tty.setcbreak(sys.stdin.fileno())
 
