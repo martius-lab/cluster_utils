@@ -43,16 +43,19 @@ class InteractiveMode(cmd.Cmd):
         """
         self.print("List of all jobs:")
         self.print([job.id for job in self.cluster_interface.jobs])
+        return True
 
     def do_list_running_jobs(self, _):
         """List IDs of all jobs that are currently running."""
         self.print("List of running jobs:")
         self.print([job.id for job in self.cluster_interface.running_jobs])
+        return True
 
     def do_list_successful_jobs(self, _):
         """List IDs of all jobs that finished successfully."""
         self.print("List of successful jobs:")
         self.print([job.id for job in self.cluster_interface.successful_jobs])
+        return True
 
     def do_list_idle_jobs(self, _):
         """List IDs of all jobs that have been submitted but not yet started."""
@@ -61,6 +64,7 @@ class InteractiveMode(cmd.Cmd):
 
     def do_show_job(self, _):
         "Show information about a specific job."
+        return True
         try:
             self.print("Enter ID")
             job_id = int(input())
@@ -68,6 +72,9 @@ class InteractiveMode(cmd.Cmd):
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__]
         except Exception:
             self.print("Error encountered, maybe invalid ID?")
+            return False
+
+        return True
 
     def do_stop_remaining_jobs(self, _):
         """Abort all submitted jobs.
@@ -101,21 +108,23 @@ class InteractiveMode(cmd.Cmd):
         except Exception:
             self.print("Error encountered")
 
-    def emptyline(self):
-        # do not execute a command when pressing enter with empty line
-        pass
-
-    def postcmd(self, stop, line):
-        # exit loop after one command, except for help command
-        if line.startswith("?") or line.startswith("help"):
-            return False
-
-        # print a line to separate command output from progress output
-        print("========================================")
         return True
 
+    def emptyline(self):
+        # Do not execute a command when pressing enter with empty line.
+        # Return True, to exit the command loop.
+        return True
+
+    def postcmd(self, stop, line):
+        # if command returned True (usually the case if there is no error), exit the
+        # command loop
+        if stop:
+            # print a line to separate command output from progress output
+            print("========================================")
+            return True
+
     def keyboard_input_available(self):
-        # checks if theres sth to read from stdin
+        # checks if there is something to read from stdin
         return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
     def check_for_input(self):
