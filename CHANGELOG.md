@@ -11,9 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Moved documentation from GitHub Pages to Read the Docs.  This allows to more easily
   manage docs for different versions.
+- Interactive command `show_job` now expects job ID as argument.
 
 ### Added
 - Support for Numpy 2.
+- Tab-completion and history for interactive mode.
+- `help` command in interactive mode.
 
 
 ## [3.0.0] - 2024-08-19

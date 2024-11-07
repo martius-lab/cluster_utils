@@ -45,14 +45,16 @@ get some information about finished and running jobs, as well as to stop running
 
 To enter the command prompt, press ESC.  You should now see the following prompt:
 
-::
+.. code-block:: text
 
-   Enter command, e.g.  list_jobs, list_running_jobs, list_successful_jobs,
-   list_idle_jobs, show_job, stop_remaining_jobs
-   >>>
+    ============= COMMAND MODE =============
+    Type 'help' or '?' to list commands.
+    Press enter with empty line to exit command mode.
 
-You now may enter one of the listed commands or simply press Enter to leave the prompt
-without executing a command.
+    >>>
+
+You now may enter one of the commands listed below (you can use tab-completion).  To
+leave the command mode, simply press Enter without a command.
 
 .. important::
 
@@ -66,6 +68,11 @@ Commands
 .. I'm a bit misusing the confval directive here, but I think as long as there is no
    name collision with an actual config value, this should be fine and much easier than
    adding a dedicated directive.
+
+.. confval:: help
+
+   Show help.  Without argument, a list of all commands is shown.  Specify a command as
+   argument to see the help for that command.
 
 .. confval:: list_jobs
 
@@ -94,5 +101,3 @@ Commands
 
    This will not stop submission of new jobs.  If you want to stop cluster_utils
    completely, press Ctrl + C instead.
-
-
