@@ -42,25 +42,25 @@ class InteractiveMode(cmd.Cmd):
         This includes jobs that have finished already.
         """
         self.print("List of all jobs:")
-        self.print([job.id for job in self.cluster_interface.jobs])
+        self.columnize([str(job.id) for job in self.cluster_interface.jobs])
         return True
 
     def do_list_running_jobs(self, _):
         """List IDs of all jobs that are currently running."""
         self.print("List of running jobs:")
-        self.print([job.id for job in self.cluster_interface.running_jobs])
+        self.columnize([str(job.id) for job in self.cluster_interface.running_jobs])
         return True
 
     def do_list_successful_jobs(self, _):
         """List IDs of all jobs that finished successfully."""
         self.print("List of successful jobs:")
-        self.print([job.id for job in self.cluster_interface.successful_jobs])
+        self.columnize([str(job.id) for job in self.cluster_interface.successful_jobs])
         return True
 
     def do_list_idle_jobs(self, _):
         """List IDs of all jobs that have been submitted but not yet started."""
         self.print("List of idle jobs:")
-        self.print([job.id for job in self.cluster_interface.idle_jobs])
+        self.columnize([str(job.id) for job in self.cluster_interface.idle_jobs])
         return True
 
     def do_show_job(self, arg: str):
@@ -109,7 +109,7 @@ class InteractiveMode(cmd.Cmd):
                 for job in self.cluster_interface.jobs
                 if job not in self.cluster_interface.successful_jobs
             ]
-            self.print(jobs_to_cancel)
+            self.columnize(list(map(str, jobs_to_cancel)))
             answer = input()
             if answer.lower() in ["y", "yes"]:
                 logger = logging.getLogger("cluster_utils")
