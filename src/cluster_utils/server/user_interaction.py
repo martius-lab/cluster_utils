@@ -61,13 +61,20 @@ class InteractiveMode(cmd.Cmd):
         """List IDs of all jobs that have been submitted but not yet started."""
         self.print("List of idle jobs:")
         self.print([job.id for job in self.cluster_interface.idle_jobs])
-
-    def do_show_job(self, _):
-        "Show information about a specific job."
         return True
+
+    def do_show_job(self, arg: str):
+        """Show information about a specific job.
+
+        Usage: show_job <job_id>
+        """
+        if not arg:
+            self.print("No job ID provided.")
+            self.print("Usage: show_job <job_id>")
+            return False
+
         try:
-            self.print("Enter ID")
-            job_id = int(input())
+            job_id = int(arg)
             job = self.cluster_interface.get_job(job_id)
             [self.print(attr, ": ", job.__dict__[attr]) for attr in job.__dict__]
         except Exception:
@@ -75,6 +82,14 @@ class InteractiveMode(cmd.Cmd):
             return False
 
         return True
+
+    def complete_show_job(self, text, line, begidx, endidx):
+        """Tab completion for show_job command."""
+        return [
+            str(job.id)
+            for job in self.cluster_interface.jobs
+            if str(job.id).startswith(text)
+        ]
 
     def do_stop_remaining_jobs(self, _):
         """Abort all submitted jobs.
