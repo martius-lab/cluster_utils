@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+import readline
 import select
 import sys
 import termios
@@ -19,6 +22,20 @@ class InteractiveMode:
             "show_job": self.show_job,
             "stop_remaining_jobs": self.stop_remaining_jobs,
         }
+
+        # set up tab completion
+        def complete(text: str, n: int) -> str | None:
+            """Return the n-th possible completion for text.
+
+            If there are less then n possible completions, return None.
+            """
+            matches = [cmd for cmd in self.input_to_fn_dict if cmd.startswith(text)]
+            if n < len(matches):
+                return matches[n]
+            return None
+
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(complete)
 
     def __enter__(self):
         self.old_settings = termios.tcgetattr(sys.stdin)

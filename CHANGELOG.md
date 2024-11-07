@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support for Numpy 2.
+- Tab-completion and history for interactive mode.
 
 
 ## [3.0.0] - 2024-08-19
