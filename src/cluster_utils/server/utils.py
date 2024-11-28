@@ -287,7 +287,7 @@ def get_cache_directory() -> str:
         cache_dir = os.path.join(home, ".cache", "cluster_utils")
 
     if not os.path.exists(cache_dir):
-        os.mkdir(cache_dir)
+        os.makedirs(cache_dir)
 
     return cache_dir
 
