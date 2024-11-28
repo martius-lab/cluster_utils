@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [//]: # (Note: {ref}/{doc} roles are used for references to the documentation)
 
 ## Unreleased
+### Fixed
+- Fixed error if parent(s) of the cache directory do not exist.
 
 ### Changed
 - Moved documentation from GitHub Pages to Read the Docs.  This allows to more easily
