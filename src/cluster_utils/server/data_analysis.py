@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from cluster_utils.base import constants
+from cluster_utils.base.utils import get_rng
 
 DISTR_BASE_COLORS = [
     (0.99, 0.7, 0.18),
@@ -171,7 +172,7 @@ def performance_gain_for_iteration(clf, df_for_iter, params, metric, minimum):
 
         for param in params:
             copy_df = df.copy()
-            copy_df[param] = np.random.permutation(copy_df[param])
+            copy_df[param] = get_rng().permutation(copy_df[param])
             ys = clf.predict(copy_df[params])
             diffs = ys - copy_df[metric]
             error = np.mean(np.abs(diffs))
